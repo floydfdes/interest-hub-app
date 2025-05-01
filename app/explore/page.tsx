@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { FiEdit, FiMessageCircle, FiPlus, FiThumbsUp, FiTrash } from "react-icons/fi";
+import {
+  Edit,
+  MessageCircle,
+  Plus,
+  ThumbsUp,
+  Trash2,
+} from "lucide-react";
 import { deletePost, getAllPosts } from "../api/api";
 import { useEffect, useState } from "react";
 
@@ -82,7 +88,7 @@ export default function Explore() {
           href="/create"
           className="mt-4 md:mt-0 flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90 text-sm"
         >
-          <FiPlus size={16} />
+          <Plus size={16} />
           Create Post
         </Link>
       </div>
@@ -127,11 +133,11 @@ export default function Explore() {
               <div className="mt-3 flex justify-between text-gray-500 text-sm">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1">
-                    <FiThumbsUp className="text-primary" size={14} />
+                    <ThumbsUp className="text-primary" size={14} />
                     <span>{post.likes?.length || 0}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <FiMessageCircle className="text-primary" size={14} />
+                    <MessageCircle className="text-primary" size={14} />
                     <span>{post.comments?.length || 0}</span>
                   </div>
                 </div>
@@ -143,7 +149,7 @@ export default function Explore() {
                       onClick={(e) => e.stopPropagation()}
                       className="text-primary hover:underline text-xs flex items-center gap-1"
                     >
-                      <FiEdit size={14} />
+                      <Edit size={14} />
                       <span className="hidden sm:inline">Edit</span>
                     </Link>
                     <button
@@ -154,7 +160,7 @@ export default function Explore() {
                       }}
                       className="text-red-500 hover:underline text-xs flex items-center gap-1"
                     >
-                      <FiTrash size={14} />
+                      <Trash2 size={14} />
                       <span className="hidden sm:inline">Delete</span>
                     </button>
                   </div>

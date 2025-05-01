@@ -87,3 +87,37 @@ export const blockUser = (id: string) => request("POST", `/users/block/${id}`);
 export const unblockUser = (id: string) => request("POST", `/users/unblock/${id}`);
 export const searchUsers = (query: string) =>
     request("GET", `/users/search`, { queryParams: { q: query } });
+
+// Comments
+export const createComment = (postId: string, content: string) =>
+    request("POST", "/comments", { body: { postId, content } });
+
+export const editComment = (commentId: string, content: string) =>
+    request("PATCH", `/comments/${commentId}`, { body: { content } });
+
+export const deleteComment = (commentId: string) =>
+    request("DELETE", `/comments/${commentId}`);
+
+export const likeComment = (commentId: string) =>
+    request("POST", `/comments/${commentId}/like`);
+
+export const unlikeComment = (commentId: string) =>
+    request("POST", `/comments/${commentId}/unlike`);
+
+export const replyToComment = (commentId: string, content: string) =>
+    request("POST", `/comments/${commentId}/reply`, { body: { content } });
+
+export const editReply = (commentId: string, replyIndex: number, content: string) =>
+    request("PATCH", `/comments/${commentId}/reply/${replyIndex}`, { body: { content } });
+
+export const deleteReply = (commentId: string, replyIndex: number) =>
+    request("DELETE", `/comments/${commentId}/reply/${replyIndex}`);
+
+export const likeReply = (commentId: string, replyIndex: number) =>
+    request("POST", `/comments/${commentId}/reply/${replyIndex}/like`);
+
+export const unlikeReply = (commentId: string, replyIndex: number) =>
+    request("POST", `/comments/${commentId}/reply/${replyIndex}/unlike`);
+
+export const replyToReply = (commentId: string, parentReplyIndex: number, content: string) =>
+    request("POST", `/comments/${commentId}/reply/${parentReplyIndex}/reply`, { body: { content } });
