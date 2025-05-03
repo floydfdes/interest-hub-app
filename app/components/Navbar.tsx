@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-import Avatar from "react-avatar";
 import Link from "next/link";
+import Avatar from "react-avatar";
 import { getUserFromLocalStorage } from "../api/auth";
 
 export default function Navbar() {
@@ -19,6 +19,7 @@ export default function Navbar() {
     // Sync user state with localStorage on route change
     useEffect(() => {
         const storedUser = getUserFromLocalStorage();
+        console.log(storedUser);
         setUser(storedUser);
     }, [pathname]);
 

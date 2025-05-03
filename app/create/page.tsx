@@ -3,9 +3,10 @@
 
 import { useRef, useState } from "react";
 
-import { compressAndConvertToBase64 } from "../api/imageUtil";
-import { createPost } from "../api/api";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { createPost } from "../api/api";
+import { compressAndConvertToBase64 } from "../api/imageUtil";
 
 const categories = ["Tech", "Health", "Travel", "Design", "Education"];
 const visibilities = ["public", "private", "followersOnly"];
@@ -19,7 +20,7 @@ export default function CreatePostPage() {
         content: "",
         category: "",
         tags: "",
-        images: [""],
+        image: "",
         visibility: "public",
     });
 
@@ -35,7 +36,7 @@ export default function CreatePostPage() {
             const base64 = await compressAndConvertToBase64(url);
             if (base64) {
                 setImagePreview(base64);
-                handleChange("images", [base64]);
+                handleChange("image", base64);
             } else {
                 setError("Failed to load image from URL");
             }
@@ -49,7 +50,7 @@ export default function CreatePostPage() {
         const base64 = await compressAndConvertToBase64(file);
         if (base64) {
             setImagePreview(base64);
-            handleChange("images", [base64]);
+            handleChange("image", base64);
         }
     };
 
@@ -158,12 +159,17 @@ export default function CreatePostPage() {
 
                 {/* Preview */}
                 {imagePreview && (
-                    <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-52 object-cover rounded-md mb-6 border"
-                    />
+                    <div className="relative w-full h-52 mb-6 border rounded-md overflow-hidden">
+                        <Image
+                            src={imagePreview}
+                            alt="Preview"
+                            fill
+                            className="object-cover rounded-md"
+                            sizes="(max-width: 768px) 100vw, 600px"
+                        />
+                    </div>
                 )}
+
 
                 {/* Visibility */}
                 <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>

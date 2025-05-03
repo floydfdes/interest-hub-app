@@ -59,7 +59,7 @@ export interface IPost {
     _id: string;
     title: string;
     content: string;
-    images: string[];
+    image: string;
     category: string;
     tags: string[];
     author: IUserPreview;

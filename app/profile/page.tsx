@@ -1,12 +1,12 @@
 "use client";
 
-import { FiEdit, FiLogOut, FiSettings } from "react-icons/fi";
 import { useEffect, useState } from "react";
+import { FiEdit, FiLogOut, FiSettings } from "react-icons/fi";
 
-import Avatar from "react-avatar";
-import { IUser } from "../types/user";
-import { getMe } from "../api/api";
 import { useRouter } from "next/navigation";
+import Avatar from "react-avatar";
+import { getMe } from "../api/api";
+import { IUser } from "../types/user";
 
 export default function ProfilePage() {
     const [user, setUser] = useState<IUser | null>(null);
@@ -21,6 +21,7 @@ export default function ProfilePage() {
 
                 const userData = await getMe() as { user: IUser };
                 setUser(userData.user);
+                localStorage.setItem("user", JSON.stringify(userData.user));
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : "Failed to fetch user");
             }

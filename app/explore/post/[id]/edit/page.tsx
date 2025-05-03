@@ -2,12 +2,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { compressAndConvertToBase64, resizeImageToBase64 } from "@/app/api/imageUtil";
 import { getPostById, updatePost } from "@/app/api/api";
-import { useEffect, useRef, useState } from "react";
+import { compressAndConvertToBase64, resizeImageToBase64 } from "@/app/api/imageUtil";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { IPost } from "@/app/types/user";
+import Image from "next/image";
 
 const categories = ["Tech", "Health", "Travel", "Design", "Education"];
 const visibilities = ["public", "private", "followersOnly"];
@@ -23,7 +24,7 @@ export default function EditPostPage() {
         content: "",
         category: "",
         tags: "",
-        images: [""],
+        image: "",
         visibility: "public",
     });
 
@@ -40,10 +41,10 @@ export default function EditPostPage() {
                     content: data.content,
                     category: data.category,
                     tags: data.tags.join(", "),
-                    images: data.images || [],
+                    image: data.image,
                     visibility: data.visibility,
                 });
-                setImagePreview(data.images?.[0] || null);
+                setImagePreview(data.image || null);
             } catch (err: any) {
                 setError("Failed to fetch post");
             } finally {
@@ -61,7 +62,7 @@ export default function EditPostPage() {
         const base64 = await resizeImageToBase64(file, 400, 250);
         if (base64) {
             setImagePreview(base64);
-            handleChange("images", [base64]);
+            handleChange("image", base64);
         }
     };
 
@@ -70,7 +71,7 @@ export default function EditPostPage() {
             const base64 = await compressAndConvertToBase64(url);
             if (base64) {
                 setImagePreview(base64);
-                handleChange("images", [base64]);
+                handleChange("image", base64);
             }
         } catch {
             setError("Invalid image URL");
@@ -168,12 +169,17 @@ export default function EditPostPage() {
                 </div>
 
                 {imagePreview && (
-                    <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-52 object-cover rounded-md mb-4 border"
-                    />
+                    <div className="relative w-full h-52 mb-6 border rounded-md overflow-hidden">
+                        <Image
+                            src={imagePreview}
+                            alt="Preview"
+                            fill
+                            className="object-cover rounded-md"
+                            sizes="(max-width: 768px) 100vw, 600px"
+                        />
+                    </div>
                 )}
+
 
                 <select
                     className="mb-6 p-3 w-full border rounded-md"

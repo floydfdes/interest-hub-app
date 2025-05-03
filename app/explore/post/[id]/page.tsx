@@ -1,8 +1,8 @@
+import { getPostById } from "@/app/api/api";
 import { IPost } from "@/app/types/user";
+import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
-import { getPostById } from "@/app/api/api";
 
 export default async function PostPage({ params }: { params: { id: string } }) {
     const post = await getPostById(params.id) as IPost;
@@ -15,7 +15,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         <div className="flex flex-col items-center min-h-screen bg-background px-4 py-10">
             <div className="w-full max-w-4xl bg-white border border-gray-200 rounded-md p-6">
                 <Image
-                    src={post.images?.[0] || "/Placeholder.png"}
+                    src={post.image || "/Placeholder.png"}
                     alt={post.title}
                     width={800}
                     height={400}

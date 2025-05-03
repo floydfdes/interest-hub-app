@@ -8,19 +8,20 @@ import {
   ThumbsUp,
   Trash2,
 } from "lucide-react";
-import { deletePost, getAllPosts } from "../api/api";
 import { useEffect, useState } from "react";
+import { deletePost, getAllPosts } from "../api/api";
 
+import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import Swal from "sweetalert2";
-import { formatDistanceToNow } from "date-fns";
 
 export default function Explore() {
   const [posts, setPosts] = useState<any[]>([]);
   const [error, setError] = useState("");
 
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  console.log(currentUser);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -30,8 +31,10 @@ export default function Explore() {
           throw new Error("You must be logged in to view posts.");
         }
         const data: any = await getAllPosts();
+        console.log(data);
         setPosts(data);
       } catch (err: any) {
+        console.log(err);
         setError(err.message || "Failed to fetch posts.");
       }
     };
@@ -101,7 +104,7 @@ export default function Explore() {
             className="border border-gray-200 rounded-md bg-white hover:shadow-sm transition duration-200"
           >
             <Image
-              src={post.images?.[0] || "/Placeholder.png"}
+              src={post.image || "/Placeholder.png"}
               alt={post.title}
               width={400}
               height={250}
@@ -141,8 +144,7 @@ export default function Explore() {
                     <span>{post.comments?.length || 0}</span>
                   </div>
                 </div>
-
-                {post.author?._id === currentUser?.id && (
+                {post.author?._id === currentUser?._id && (
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/explore/post/${post._id}/edit`}
