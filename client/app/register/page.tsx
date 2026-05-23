@@ -1,20 +1,21 @@
 'use client';
 
-import { useState } from 'react';
-import { Form, Input, Button, Card, message, Typography } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { getErrorMessage, registerUser } from '@/app/api/api';
 import { notifyAuthChanged } from '@/app/hooks/useCurrentUser';
 import { RegisterInput } from '@/app/types/user';
+import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
+import { App, Button, Card, Form, Input, Typography } from 'antd';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const { Title, Text } = Typography;
 
 const Register = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const { message } = App.useApp();
 
     const onFinish = async (values: RegisterInput) => {
         setLoading(true);

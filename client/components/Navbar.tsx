@@ -1,10 +1,10 @@
 'use client';
 
+import { notifyAuthChanged, useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { Avatar, Dropdown } from 'antd';
 import { ChevronDown, Compass, LogIn, LogOut, PenLine, Search, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { notifyAuthChanged, useCurrentUser } from '@/app/hooks/useCurrentUser';
 
 const navItems = [
     { href: '/', label: 'Feed', icon: Compass },
@@ -58,11 +58,10 @@ const Navbar = () => {
                             <Link
                                 key={href}
                                 href={href}
-                                className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition sm:px-4 ${
-                                    selected
+                                className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition sm:px-4 ${selected
                                         ? 'bg-white text-indigo-600 shadow-sm'
                                         : 'text-slate-500 hover:text-slate-900'
-                                }`}
+                                    }`}
                             >
                                 <Icon size={16} />
                                 <span className="hidden md:block">{label}</span>
@@ -80,7 +79,7 @@ const Navbar = () => {
                             </Link>
                             <Dropdown menu={{ items: userMenu }} placement="bottomRight" trigger={['click']}>
                                 <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1.5 pr-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200">
-                                    <Avatar src={user.profilePic} size={32}>{user.name.charAt(0)}</Avatar>
+                                    <Avatar src={user.profilePic || null} size={32}>{user.name.charAt(0)}</Avatar>
                                     <span className="hidden lg:inline">{user.name}</span>
                                     <ChevronDown className="hidden text-slate-400 lg:block" size={14} />
                                 </button>

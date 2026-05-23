@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Empty, message, Skeleton } from 'antd';
 import { deletePost, getAllPosts } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { IPost } from '@/app/types/user';
+import { App, Empty, Skeleton } from 'antd';
+import { useEffect, useState } from 'react';
 import PostCard from './PostCard';
 
 const PostList = () => {
     const [posts, setPosts] = useState<IPost[]>([]);
     const [loading, setLoading] = useState(true);
     const currentUser = useCurrentUser();
+    const { message } = App.useApp();
 
     useEffect(() => {
         const fetchPosts = async () => {

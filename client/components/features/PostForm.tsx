@@ -1,14 +1,14 @@
 'use client';
 
-import { Button, Card, Form, Input, message, Select, Typography, Upload } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
-import { ImagePlus, Sparkles } from 'lucide-react';
-import type { UploadChangeParam, UploadFile } from 'antd/es/upload/interface';
-import imageCompression from 'browser-image-compression';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { createPost, getErrorMessage } from '@/app/api/api';
 import { IPost } from '@/app/types/user';
+import { UploadOutlined } from '@ant-design/icons';
+import { App, Button, Card, Form, Input, Select, Typography, Upload } from 'antd';
+import type { UploadChangeParam, UploadFile } from 'antd/es/upload/interface';
+import imageCompression from 'browser-image-compression';
+import { ImagePlus, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -24,6 +24,7 @@ const PostForm = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const { message } = App.useApp();
 
     const getBase64 = (file: File): Promise<string> =>
         new Promise((resolve, reject) => {

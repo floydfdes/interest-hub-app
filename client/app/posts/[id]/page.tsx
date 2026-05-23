@@ -1,14 +1,14 @@
 'use client';
 
-import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Button, message, Skeleton } from 'antd';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { getPostById } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { IPost } from '@/app/types/user';
 import CommentList from '@/components/features/CommentList';
 import PostCard from '@/components/features/PostCard';
+import { ArrowLeftOutlined } from '@ant-design/icons';
+import { App, Button, Skeleton } from 'antd';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function PostDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -16,6 +16,7 @@ export default function PostDetailPage() {
     const [post, setPost] = useState<IPost | null>(null);
     const [loading, setLoading] = useState(true);
     const currentUser = useCurrentUser();
+    const { message } = App.useApp();
 
     const fetchPost = async () => {
         try {

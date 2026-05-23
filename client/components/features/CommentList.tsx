@@ -1,17 +1,17 @@
 'use client';
 
-import { Avatar, Button, Input, message, Typography } from 'antd';
-import { LikeFilled, LikeOutlined, UserOutlined } from '@ant-design/icons';
-import { formatDistanceToNow } from 'date-fns';
-import { useState } from 'react';
 import {
     createComment,
     likeComment,
     replyToComment,
     unlikeComment,
 } from '@/app/api/api';
-import { IComment, IReply, IUser, Like } from '@/app/types/user';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
+import { IComment, IReply, IUser, Like } from '@/app/types/user';
+import { LikeFilled, LikeOutlined, UserOutlined } from '@ant-design/icons';
+import { App, Avatar, Button, Input, Typography } from 'antd';
+import { formatDistanceToNow } from 'date-fns';
+import { useState } from 'react';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -32,6 +32,7 @@ const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
     const [showReply, setShowReply] = useState(false);
     const [replyContent, setReplyContent] = useState('');
     const [likes, setLikes] = useState<Like[]>(comment.likes || []);
+    const { message } = App.useApp();
     const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
 
     const handleLike = async () => {
@@ -55,7 +56,7 @@ const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
     return (
         <div className="mb-4">
             <div className="flex gap-3">
-                <Avatar src={comment.user?.profilePic} icon={<UserOutlined />} size="small" />
+                <Avatar src={comment.user?.profilePic || null} icon={<UserOutlined />} size="small" />
                 <div className="flex-1 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                     <div className="flex justify-between items-center mb-1">
                         <Text strong className="text-sm">{comment.user?.name || 'Unknown'}</Text>
@@ -63,7 +64,7 @@ const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
                             {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true }) : ''}
                         </Text>
                     </div>
-                        <Text className="!text-slate-600">{comment.content}</Text>
+                    <Text className="!text-slate-600">{comment.content}</Text>
                     <div className="flex gap-4 mt-2">
                         <Button
                             type="text"
@@ -95,9 +96,9 @@ const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
 
             {comment.replies && comment.replies.length > 0 && (
                 <div className="ml-10 mt-2 border-l-2 pl-4 border-gray-100">
-                    {comment.replies.map((reply) => (
+                    {comment.replies.map((reply, index) => (
                         <CommentItem
-                            key={reply._id}
+                            key={reply._id || `${reply.user?._id || 'reply'}-${index}`}
                             comment={reply}
                             onReply={onReply}
                             currentUser={currentUser}
@@ -119,6 +120,7 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
     const currentUser = useCurrentUser();
     const [newComment, setNewComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const { message } = App.useApp();
 
     const handleAddComment = async () => {
         if (!newComment.trim()) return;
@@ -150,7 +152,7 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
             <Typography.Title level={4} className="!mb-5 !text-slate-900">Conversation</Typography.Title>
             {currentUser ? (
                 <div className="mb-7 flex gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                    <Avatar src={currentUser.profilePic} icon={<UserOutlined />} />
+                    <Avatar src={currentUser.profilePic || null} icon={<UserOutlined />} />
                     <div className="flex-1">
                         <TextArea
                             rows={2}
@@ -170,9 +172,9 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
                 </div>
             )}
             <div className="space-y-4">
-                {comments.map((comment) => (
+                {comments.map((comment, index) => (
                     <CommentItem
-                        key={comment._id}
+                        key={comment._id || `${comment.user?._id || 'comment'}-${index}`}
                         comment={comment}
                         onReply={handleReply}
                         currentUser={currentUser}
