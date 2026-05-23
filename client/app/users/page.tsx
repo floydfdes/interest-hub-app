@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import Avatar from "react-avatar";
 import { IUser } from "@/app/types/user";
 import { formatDistanceToNow } from "date-fns";
+import { Search, UsersRound } from "lucide-react";
 
 export default function UserSearchPage() {
     const [query, setQuery] = useState("");
@@ -76,28 +77,31 @@ export default function UserSearchPage() {
     }, [results, selectedInterest, sortBy]);
 
     return (
-        <div className="min-h-screen bg-background p-6 flex flex-col items-center">
-            <h1 className="text-4xl font-bold text-primary mb-6">Search Users</h1>
+        <div className="shell-container">
+            <header className="mb-8">
+                <span className="eyebrow"><UsersRound size={12} /> Community</span>
+                <h1 className="gradient-heading mt-4 text-4xl font-bold">Find your people</h1>
+                <p className="mt-2 text-slate-500">Discover creators through the interests you share.</p>
+            </header>
 
-            {/* Controls */}
-            <div className="w-full max-w-4xl flex flex-wrap gap-3 mb-6">
+            <div className="surface mb-7 flex w-full flex-wrap gap-3 p-4">
                 <input
                     type="text"
                     placeholder="Search by name or interest..."
-                    className="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-primary text-sm"
+                    className="soft-input min-w-[15rem] flex-grow px-4 text-sm outline-none"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                 />
                 <button
                     onClick={handleSearch}
-                    className="px-5 py-2 rounded-md bg-primary text-white hover:bg-opacity-90 text-sm"
+                    className="primary-button"
                 >
-                    Search
+                    <Search size={15} /> Search
                 </button>
                 <select
                     value={selectedInterest}
                     onChange={(e) => setSelectedInterest(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm"
+                    className="soft-input px-4 text-sm text-slate-600 outline-none"
                 >
                     {uniqueInterests.map((interest) => (
                         <option key={interest}>{interest}</option>
@@ -106,7 +110,7 @@ export default function UserSearchPage() {
                 <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm"
+                    className="soft-input px-4 text-sm text-slate-600 outline-none"
                 >
                     <option value="name">Sort by Name</option>
                     <option value="followers">Sort by Followers</option>
@@ -116,13 +120,13 @@ export default function UserSearchPage() {
             {error && <p className="text-red-500 mb-4">{error}</p>}
 
             {/* Results */}
-            <div className="w-full max-w-4xl space-y-4">
+            <div className="grid w-full gap-4 lg:grid-cols-2">
                 {filteredResults.map((user) => {
                     const isFollowing = followingIds.includes(user._id);
                     return (
                         <div
                             key={user._id}
-                            className="border border-gray-200 bg-white rounded-md px-5 py-4 flex justify-between items-center"
+                            className="surface flex items-center justify-between gap-4 px-5 py-5"
                         >
                             <div className="flex items-start sm:items-center gap-4 w-full">
                                 <Avatar
@@ -132,7 +136,7 @@ export default function UserSearchPage() {
                                     round
                                 />
                                 <div className="flex-grow">
-                                    <p className="font-semibold text-primary">{user.name}</p>
+                                    <p className="font-semibold text-slate-900">{user.name}</p>
                                     {user.bio && (
                                         <p className="text-sm text-gray-600">{user.bio}</p>
                                     )}
@@ -141,7 +145,7 @@ export default function UserSearchPage() {
                                             {user.interests.map((i) => (
                                                 <span
                                                     key={i}
-                                                    className="bg-secondary text-white text-xs px-2 py-0.5 rounded-full"
+                                                    className="tag-pill !px-2 !py-0.5"
                                                 >
                                                     {i}
                                                 </span>
@@ -157,9 +161,9 @@ export default function UserSearchPage() {
                             </div>
                             <button
                                 onClick={() => handleFollowToggle(user._id, isFollowing)}
-                                className={`ml-4 px-4 py-1.5 text-sm rounded-md font-medium text-white ${isFollowing
-                                    ? "bg-red-500 hover:bg-red-600"
-                                    : "bg-primary hover:bg-opacity-90"
+                                className={`ml-4 rounded-xl px-4 py-2 text-sm font-semibold transition ${isFollowing
+                                    ? "bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600"
+                                    : "bg-indigo-600 text-white hover:bg-indigo-700"
                                     }`}
                             >
                                 {isFollowing ? "Unfollow" : "Follow"}

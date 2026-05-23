@@ -223,32 +223,33 @@ export default function EditPostPage() {
         }
     };
 
-    if (loading) return <div className="text-center py-10">Loading...</div>;
+    if (loading) return <div className="surface shell-container max-w-2xl p-12 text-center text-slate-500">Loading post...</div>;
 
     return (
-        <div className="min-h-screen bg-background flex justify-center items-center px-4 py-10">
-            <div className="w-full max-w-2xl bg-white shadow-md rounded-lg p-6">
-                <h1 className="text-3xl font-bold text-primary mb-6 text-center">Edit Post</h1>
+        <div className="shell-container flex justify-center">
+            <div className="surface w-full max-w-3xl p-6 sm:p-8">
+                <span className="eyebrow">Edit</span>
+                <h1 className="mb-7 mt-4 text-3xl font-bold tracking-tight text-slate-900">Update post</h1>
 
                 {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
                 <input
                     type="text"
                     placeholder="Post Title"
-                    className="mb-4 p-3 w-full border rounded-md"
+                    className="soft-input mb-4 w-full px-4 outline-none"
                     value={form.title}
                     onChange={(e) => handleChange("title", e.target.value)}
                 />
 
                 <textarea
                     placeholder="Content"
-                    className="mb-4 p-3 w-full border rounded-md min-h-[120px]"
+                    className="soft-input mb-4 min-h-[120px] w-full p-4 outline-none"
                     value={form.content}
                     onChange={(e) => handleChange("content", e.target.value)}
                 />
 
                 <select
-                    className="mb-4 p-3 w-full border rounded-md"
+                    className="soft-input mb-4 w-full px-4 outline-none"
                     value={form.category}
                     onChange={(e) => handleChange("category", e.target.value)}
                 >
@@ -261,18 +262,18 @@ export default function EditPostPage() {
                 <input
                     type="text"
                     placeholder="Tags (comma-separated)"
-                    className="mb-4 p-3 w-full border rounded-md"
+                    className="soft-input mb-4 w-full px-4 outline-none"
                     value={form.tags}
                     onChange={(e) => handleChange("tags", e.target.value)}
                 />
 
                 <div className="mb-4">
-                    <p className="text-sm font-medium mb-2 text-gray-700">Update Image</p>
+                    <p className="mb-2 text-sm font-medium text-slate-700">Update image</p>
                     <div className="flex gap-4 flex-col sm:flex-row">
                         <input
                             type="text"
                             placeholder="Paste Image URL"
-                            className="p-3 border w-full rounded-md"
+                            className="soft-input w-full px-4 outline-none"
                             onBlur={(e) => handleImageURL(e.target.value)}
                         />
                         <input
@@ -288,7 +289,7 @@ export default function EditPostPage() {
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300"
+                            className="secondary-button"
                         >
                             Upload
                         </button>
@@ -296,19 +297,19 @@ export default function EditPostPage() {
                 </div>
 
                 {imagePreview && (
-                    <div className="relative w-full h-52 mb-6 border rounded-md overflow-hidden">
+                    <div className="relative mb-6 h-56 w-full overflow-hidden rounded-2xl bg-slate-100">
                         <Image
                             src={imagePreview}
                             alt="Preview"
                             fill
-                            className="object-cover rounded-md"
+                            className="object-cover"
                             sizes="(max-width: 768px) 100vw, 600px"
                         />
                     </div>
                 )}
 
                 <select
-                    className="mb-6 p-3 w-full border rounded-md"
+                    className="soft-input mb-6 w-full px-4 outline-none"
                     value={form.visibility}
                     onChange={(e) => handleChange("visibility", e.target.value)}
                 >
@@ -321,24 +322,24 @@ export default function EditPostPage() {
 
                 <button
                     onClick={handleSubmit}
-                    className="w-full bg-primary text-white py-3 rounded-md hover:bg-opacity-90 mb-6"
+                    className="primary-button mb-8 w-full"
                 >
                     Update Post
                 </button>
 
                 <div className="mt-8">
-                    <h2 className="text-2xl font-bold text-primary mb-4">Comments</h2>
+                    <h2 className="mb-5 text-2xl font-bold tracking-tight text-slate-900">Comments</h2>
 
                     <div className="flex items-start gap-4 mb-6">
                         <textarea
                             placeholder="Write a comment..."
-                            className="p-3 w-full border rounded-md min-h-[80px]"
+                            className="soft-input min-h-[80px] w-full p-3 outline-none"
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                         />
                         <button
                             onClick={handleAddComment}
-                            className="bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90"
+                            className="primary-button"
                         >
                             Post
                         </button>
@@ -348,7 +349,7 @@ export default function EditPostPage() {
                     {comments.length > 0 ? (
                         <ul className="space-y-4">
                             {comments.map((comment) => (
-                                <li key={comment._id} className="p-4 border rounded-md">
+                                <li key={comment._id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
                                     <div className="flex items-center gap-4 mb-2">
                                         <Image
                                             src={comment.user.profilePic}

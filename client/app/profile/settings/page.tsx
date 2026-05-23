@@ -85,10 +85,10 @@ export default function SettingsPage() {
         if (!modal) return null;
 
         return (
-            <div className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/25 p-4 backdrop-blur-sm">
 
-                <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-                    <h2 className="text-xl font-semibold text-primary mb-4 capitalize">
+                <div className="surface relative w-full max-w-md p-6">
+                    <h2 className="mb-5 text-xl font-semibold capitalize text-slate-900">
                         {modal === "delete" ? "Delete Account" : modal + " Password"}
                     </h2>
 
@@ -99,21 +99,21 @@ export default function SettingsPage() {
                             <input
                                 type="password"
                                 placeholder="Current Password"
-                                className="mb-3 p-2 border w-full rounded"
+                                className="soft-input mb-3 w-full px-4 outline-none"
                                 value={form.currentPassword}
                                 onChange={(e) => setForm((f) => ({ ...f, currentPassword: e.target.value }))}
                             />
                             <input
                                 type="password"
                                 placeholder="New Password"
-                                className="mb-3 p-2 border w-full rounded"
+                                className="soft-input mb-3 w-full px-4 outline-none"
                                 value={form.newPassword}
                                 onChange={(e) => setForm((f) => ({ ...f, newPassword: e.target.value }))}
                             />
                             <input
                                 type="password"
                                 placeholder="Confirm Password"
-                                className="mb-3 p-2 border w-full rounded"
+                                className="soft-input mb-3 w-full px-4 outline-none"
                                 value={form.confirmPassword}
                                 onChange={(e) => setForm((f) => ({ ...f, confirmPassword: e.target.value }))}
                             />
@@ -124,7 +124,7 @@ export default function SettingsPage() {
                         <input
                             type="email"
                             placeholder="Email"
-                            className="mb-3 p-2 border w-full rounded"
+                            className="soft-input mb-3 w-full px-4 outline-none"
                             value={form.email}
                             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                         />
@@ -135,14 +135,14 @@ export default function SettingsPage() {
                             <input
                                 type="text"
                                 placeholder="Reset Token"
-                                className="mb-3 p-2 border w-full rounded"
+                                className="soft-input mb-3 w-full px-4 outline-none"
                                 value={form.resetToken}
                                 onChange={(e) => setForm((f) => ({ ...f, resetToken: e.target.value }))}
                             />
                             <input
                                 type="password"
                                 placeholder="New Password"
-                                className="mb-3 p-2 border w-full rounded"
+                                className="soft-input mb-3 w-full px-4 outline-none"
                                 value={form.newPassword}
                                 onChange={(e) => setForm((f) => ({ ...f, newPassword: e.target.value }))}
                             />
@@ -158,14 +158,14 @@ export default function SettingsPage() {
                     <div className="flex justify-end gap-2">
                         <button
                             onClick={closeModal}
-                            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                            className="secondary-button"
                             disabled={loading}
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleSubmit}
-                            className={`px-4 py-2 rounded text-white ${modal === "delete" ? "bg-red-600 hover:bg-red-700" : "bg-primary hover:bg-opacity-90"
+                            className={`rounded-xl px-5 py-3 text-sm font-semibold text-white transition ${modal === "delete" ? "bg-rose-600 hover:bg-rose-700" : "bg-indigo-600 hover:bg-indigo-700"
                                 }`}
                             disabled={loading}
                         >
@@ -178,26 +178,27 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background p-8 flex justify-center items-start">
-            <div className="w-full max-w-lg bg-white p-6 rounded-lg shadow">
-                <h1 className="text-2xl font-semibold text-primary mb-6">Settings</h1>
+        <div className="shell-container flex justify-center">
+            <div className="surface w-full max-w-xl p-7 sm:p-8">
+                <span className="eyebrow">Account</span>
+                <h1 className="mb-7 mt-4 text-3xl font-bold tracking-tight text-slate-900">Settings</h1>
 
                 <div className="flex flex-col space-y-3">
                     <button
                         onClick={() => setModal("change")}
-                        className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 text-left"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
                     >
                         Change Password
                     </button>
                     <button
                         onClick={() => setModal("forgot")}
-                        className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 text-left"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
                     >
                         Forgot Password
                     </button>
                     <button
                         onClick={() => setModal("reset")}
-                        className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 text-left"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
                     >
                         Reset Password (with token)
                     </button>
@@ -206,7 +207,7 @@ export default function SettingsPage() {
 
                     <button
                         onClick={() => setModal("delete")}
-                        className="px-4 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200 text-left"
+                        className="rounded-xl bg-rose-50 px-5 py-4 text-left font-medium text-rose-600 transition hover:bg-rose-100"
                     >
                         Delete Account
                     </button>

@@ -73,10 +73,11 @@ export default function CreatePostPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background flex justify-center items-center px-4 py-10">
-            <div className="w-full max-w-2xl bg-white shadow-lg rounded-xl p-8">
-                <h1 className="text-3xl font-semibold text-primary mb-8 text-center">
-                    Create a New Post
+        <div className="shell-container flex justify-center">
+            <div className="surface w-full max-w-3xl p-6 sm:p-8">
+                <span className="eyebrow">New post</span>
+                <h1 className="mb-8 mt-4 text-3xl font-bold tracking-tight text-slate-900">
+                    Create a new post
                 </h1>
 
                 {error && (
@@ -88,7 +89,7 @@ export default function CreatePostPage() {
                 <input
                     type="text"
                     placeholder="Enter a catchy title"
-                    className="mb-5 p-3 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="soft-input mb-5 w-full px-4 outline-none"
                     value={form.title}
                     onChange={(e) => handleChange("title", e.target.value)}
                 />
@@ -97,7 +98,7 @@ export default function CreatePostPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
                 <textarea
                     placeholder="Write something interesting..."
-                    className="mb-5 p-3 w-full border rounded-md min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="soft-input mb-5 min-h-[120px] w-full resize-none p-4 outline-none"
                     value={form.content}
                     onChange={(e) => handleChange("content", e.target.value)}
                 />
@@ -105,7 +106,7 @@ export default function CreatePostPage() {
                 {/* Category */}
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                 <select
-                    className="mb-5 p-3 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="soft-input mb-5 w-full px-4 outline-none"
                     value={form.category}
                     onChange={(e) => handleChange("category", e.target.value)}
                 >
@@ -120,7 +121,7 @@ export default function CreatePostPage() {
                 <input
                     type="text"
                     placeholder="e.g. react, ui, tailwind"
-                    className="mb-5 p-3 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="soft-input mb-5 w-full px-4 outline-none"
                     value={form.tags}
                     onChange={(e) => handleChange("tags", e.target.value)}
                 />
@@ -134,7 +135,7 @@ export default function CreatePostPage() {
                         <input
                             type="text"
                             placeholder="Paste image URL"
-                            className="p-3 border w-full rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            className="soft-input w-full px-4 outline-none"
                             onBlur={(e) => handleImageURL(e.target.value)}
                         />
                         <input
@@ -150,7 +151,7 @@ export default function CreatePostPage() {
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="bg-gray-100 px-4 py-2 rounded-md border hover:bg-gray-200 transition text-sm"
+                            className="secondary-button"
                         >
                             Upload
                         </button>
@@ -159,12 +160,12 @@ export default function CreatePostPage() {
 
                 {/* Preview */}
                 {imagePreview && (
-                    <div className="relative w-full h-52 mb-6 border rounded-md overflow-hidden">
+                    <div className="relative mb-6 h-56 w-full overflow-hidden rounded-2xl bg-slate-100">
                         <Image
                             src={imagePreview}
                             alt="Preview"
                             fill
-                            className="object-cover rounded-md"
+                            className="object-cover"
                             sizes="(max-width: 768px) 100vw, 600px"
                         />
                     </div>
@@ -174,7 +175,7 @@ export default function CreatePostPage() {
                 {/* Visibility */}
                 <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
                 <select
-                    className="mb-8 p-3 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="soft-input mb-8 w-full px-4 outline-none"
                     value={form.visibility}
                     onChange={(e) => handleChange("visibility", e.target.value)}
                 >
@@ -187,7 +188,7 @@ export default function CreatePostPage() {
 
                 <button
                     onClick={handleSubmit}
-                    className="w-full bg-primary text-white py-3 rounded-md hover:bg-opacity-90 transition text-base font-medium"
+                    className="primary-button w-full"
                 >
                     Publish Post
                 </button>

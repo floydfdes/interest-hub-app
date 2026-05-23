@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { getErrorMessage, loginUser } from '@/app/api/api';
 import { notifyAuthChanged } from '@/app/hooks/useCurrentUser';
 import { LoginInput } from '@/app/types/user';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 const { Title, Text } = Typography;
 
@@ -32,11 +33,21 @@ const Login = () => {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-[80vh]">
-            <Card className="w-full max-w-md shadow-lg rounded-xl">
-                <div className="text-center mb-8">
-                    <Title level={2} className="!mb-2">Welcome Back</Title>
-                    <Text type="secondary">Login to continue to InterestHub</Text>
+        <div className="shell-container grid min-h-[calc(100vh-14rem)] items-center gap-10 lg:grid-cols-[1fr_29rem]">
+            <section className="hidden max-w-lg lg:block">
+                <span className="eyebrow"><Sparkles size={12} /> Welcome back</span>
+                <h1 className="gradient-heading mt-5 text-5xl font-bold leading-[1.08]">
+                    Pick up your favorite conversations.
+                </h1>
+                <p className="mt-5 text-lg leading-8 text-slate-500">
+                    Sign in to discover new interests, keep up with creators, and share your latest idea.
+                </p>
+            </section>
+            <Card className="!rounded-[1.75rem] !border-slate-100 !shadow-[0_26px_60px_-34px_rgba(30,41,59,0.3)]">
+                <div className="mb-8">
+                    <span className="eyebrow lg:hidden">Welcome back</span>
+                    <Title level={2} className="!mb-2 !mt-4 !tracking-tight !text-slate-900">Log in</Title>
+                    <Text className="!text-slate-500">Continue your InterestHub journey.</Text>
                 </div>
                 <Form
                     name="login"
@@ -51,24 +62,24 @@ const Login = () => {
                             { type: 'email', message: 'Please enter a valid email!' },
                         ]}
                     >
-                        <Input prefix={<MailOutlined />} placeholder="Email" />
+                        <Input className="soft-input" prefix={<MailOutlined className="text-slate-400" />} placeholder="Email address" />
                     </Form.Item>
                     <Form.Item
                         name="password"
                         rules={[{ required: true, message: 'Please input your Password!' }]}
                     >
-                        <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+                        <Input.Password className="soft-input" prefix={<LockOutlined className="text-slate-400" />} placeholder="Password" />
                     </Form.Item>
 
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" block loading={loading}>
-                            Login
+                        <Button type="primary" htmlType="submit" block loading={loading} className="!h-12 !rounded-xl !font-semibold">
+                            Log in <ArrowRight size={15} />
                         </Button>
                     </Form.Item>
                     <div className="text-center">
                         <Text>Don&apos;t have an account? </Text>
-                        <Link href="/register" className="text-blue-600 hover:underline">
-                            Register
+                        <Link href="/register" className="font-semibold text-indigo-600 hover:text-indigo-700">
+                            Create an account
                         </Link>
                     </div>
                 </Form>

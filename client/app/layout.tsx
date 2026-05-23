@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import StyledComponentsRegistry from "@/lib/AntdRegistry";
 import Navbar from "@/components/Navbar";
+import Footer from "@/app/components/Footer";
+import GlobalLoader from "@/app/components/GlobalLoader";
 
 export const metadata: Metadata = {
   title: "InterestHub",
@@ -17,10 +19,12 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <StyledComponentsRegistry>
+          <GlobalLoader />
           <Navbar />
-          <main className="min-h-screen bg-gray-50 pt-4 pb-12 px-4 sm:px-6 lg:px-8">
+          <main className="app-shell">
             {children}
           </main>
+          <Footer />
         </StyledComponentsRegistry>
       </body>
     </html>

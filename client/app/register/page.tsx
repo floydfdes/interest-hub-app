@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { getErrorMessage, registerUser } from '@/app/api/api';
 import { notifyAuthChanged } from '@/app/hooks/useCurrentUser';
 import { RegisterInput } from '@/app/types/user';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 const { Title, Text } = Typography;
 
@@ -32,11 +33,21 @@ const Register = () => {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-[80vh]">
-            <Card className="w-full max-w-md shadow-lg rounded-xl">
-                <div className="text-center mb-8">
-                    <Title level={2} className="!mb-2">Join InterestHub</Title>
-                    <Text type="secondary">Create an account to start sharing</Text>
+        <div className="shell-container grid min-h-[calc(100vh-14rem)] items-center gap-10 lg:grid-cols-[1fr_29rem]">
+            <section className="hidden max-w-lg lg:block">
+                <span className="eyebrow"><Sparkles size={12} /> Start sharing</span>
+                <h1 className="gradient-heading mt-5 text-5xl font-bold leading-[1.08]">
+                    Your interests deserve a place to grow.
+                </h1>
+                <p className="mt-5 text-lg leading-8 text-slate-500">
+                    Create a profile, find your people, and turn passing inspiration into conversation.
+                </p>
+            </section>
+            <Card className="!rounded-[1.75rem] !border-slate-100 !shadow-[0_26px_60px_-34px_rgba(30,41,59,0.3)]">
+                <div className="mb-8">
+                    <span className="eyebrow lg:hidden">Start sharing</span>
+                    <Title level={2} className="!mb-2 !mt-4 !tracking-tight !text-slate-900">Create account</Title>
+                    <Text className="!text-slate-500">Join InterestHub in seconds.</Text>
                 </div>
                 <Form
                     name="register"
@@ -48,7 +59,7 @@ const Register = () => {
                         name="name"
                         rules={[{ required: true, message: 'Please input your name!' }]}
                     >
-                        <Input prefix={<UserOutlined />} placeholder="Name" />
+                        <Input className="soft-input" prefix={<UserOutlined className="text-slate-400" />} placeholder="Your name" />
                     </Form.Item>
                     <Form.Item
                         name="email"
@@ -57,24 +68,24 @@ const Register = () => {
                             { type: 'email', message: 'Please enter a valid email!' },
                         ]}
                     >
-                        <Input prefix={<MailOutlined />} placeholder="Email" />
+                        <Input className="soft-input" prefix={<MailOutlined className="text-slate-400" />} placeholder="Email address" />
                     </Form.Item>
                     <Form.Item
                         name="password"
                         rules={[{ required: true, message: 'Please input your Password!' }]}
                     >
-                        <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+                        <Input.Password className="soft-input" prefix={<LockOutlined className="text-slate-400" />} placeholder="Create a password" />
                     </Form.Item>
 
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" block loading={loading}>
-                            Register
+                        <Button type="primary" htmlType="submit" block loading={loading} className="!h-12 !rounded-xl !font-semibold">
+                            Create account <ArrowRight size={15} />
                         </Button>
                     </Form.Item>
                     <div className="text-center">
                         <Text>Already have an account? </Text>
-                        <Link href="/login" className="text-blue-600 hover:underline">
-                            Login
+                        <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-700">
+                            Log in
                         </Link>
                     </div>
                 </Form>

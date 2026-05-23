@@ -1,18 +1,22 @@
+import Link from "next/link";
+
 export default function Footer() {
     return (
-        <footer className="w-full py-4 bg-gray-800 text-white text-center">
-            <div className="container mx-auto flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-                <div className="flex space-x-4">
-                    <a href="#" className="hover:underline">About</a>
-                    <a href="#" className="hover:underline">Contact</a>
-                    <a href="#" className="hover:underline">Privacy Policy</a>
-                    <a href="#" className="hover:underline">Terms of Service</a>
-                    {/* Optional Social Media Section */}
-                    {/* <a href="#" className="hover:underline">Social Media</a> */}
+        <footer className="border-t border-slate-200/80 bg-white/60 px-4 py-8">
+            <div className="shell-container flex flex-col items-center justify-between gap-5 text-sm text-slate-500 sm:flex-row">
+                <div className="flex items-center gap-3 font-semibold text-slate-700">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white">
+                        IH
+                    </span>
+                    InterestHub
                 </div>
-            </div>
-            <div className="mt-4">
-                <p>&copy; 2025 InterestHub. All rights reserved.</p>
+                <div className="flex flex-wrap justify-center gap-5">
+                    <Link href="/about" className="transition hover:text-indigo-600">About</Link>
+                    <Link href="/contact" className="transition hover:text-indigo-600">Contact</Link>
+                    <Link href="/privacy-policy" className="transition hover:text-indigo-600">Privacy</Link>
+                    <Link href="/terms-of-service" className="transition hover:text-indigo-600">Terms</Link>
+                </div>
+                <p>&copy; {new Date().getFullYear()} InterestHub</p>
             </div>
         </footer>
     );

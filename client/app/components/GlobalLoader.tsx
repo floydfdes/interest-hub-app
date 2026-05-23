@@ -18,5 +18,9 @@ export default function GlobalLoader() {
 
     if (!loading) return null;
 
-    return <div className="fixed top-0 left-0 w-full h-1 bg-primary animate-pulse z-50" />;
+    return (
+        <div className="fixed left-0 top-0 z-[100] h-1 w-full overflow-hidden bg-indigo-100">
+            <div className="h-full w-1/2 animate-pulse rounded-r-full bg-gradient-to-r from-indigo-500 to-cyan-400" />
+        </div>
+    );
 }

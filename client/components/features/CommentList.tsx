@@ -56,14 +56,14 @@ const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
         <div className="mb-4">
             <div className="flex gap-3">
                 <Avatar src={comment.user?.profilePic} icon={<UserOutlined />} size="small" />
-                <div className="flex-1 bg-gray-50 p-3 rounded-lg">
+                <div className="flex-1 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                     <div className="flex justify-between items-center mb-1">
                         <Text strong className="text-sm">{comment.user?.name || 'Unknown'}</Text>
                         <Text type="secondary" className="text-xs">
                             {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true }) : ''}
                         </Text>
                     </div>
-                    <Text>{comment.content}</Text>
+                        <Text className="!text-slate-600">{comment.content}</Text>
                     <div className="flex gap-4 mt-2">
                         <Button
                             type="text"
@@ -146,10 +146,10 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
     };
 
     return (
-        <div className="mt-6">
-            <Typography.Title level={5}>Comments</Typography.Title>
+        <section className="surface mt-6 p-5 sm:p-6">
+            <Typography.Title level={4} className="!mb-5 !text-slate-900">Conversation</Typography.Title>
             {currentUser ? (
-                <div className="mb-6 flex gap-3">
+                <div className="mb-7 flex gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
                     <Avatar src={currentUser.profilePic} icon={<UserOutlined />} />
                     <div className="flex-1">
                         <TextArea
@@ -157,7 +157,7 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
                             value={newComment}
                             onChange={(event) => setNewComment(event.target.value)}
                             placeholder="Write a comment..."
-                            className="mb-2"
+                            className="soft-input mb-3"
                         />
                         <Button type="primary" onClick={() => void handleAddComment()} loading={submitting}>
                             Comment
@@ -165,7 +165,7 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
                     </div>
                 </div>
             ) : (
-                <div className="mb-6 p-4 bg-gray-50 rounded text-center">
+                <div className="mb-6 rounded-2xl bg-slate-50 p-5 text-center">
                     <Text>Please login to comment</Text>
                 </div>
             )}
@@ -179,7 +179,7 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
                     />
                 ))}
             </div>
-        </div>
+        </section>
     );
 };
 

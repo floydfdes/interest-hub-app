@@ -31,9 +31,10 @@ function ResetPasswordForm() {
     };
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-6">
-            <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-                <h1 className="text-2xl font-bold text-primary mb-6 text-center">Reset Your Password</h1>
+        <div className="shell-container flex min-h-[calc(100vh-14rem)] items-center justify-center">
+            <div className="surface w-full max-w-md p-8">
+                <span className="eyebrow">Security</span>
+                <h1 className="mb-7 mt-4 text-3xl font-bold tracking-tight text-slate-900">Reset password</h1>
 
                 {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
                 {success && <p className="text-green-600 mb-4 text-center">{success}</p>}
@@ -41,21 +42,21 @@ function ResetPasswordForm() {
                 <input
                     type="password"
                     placeholder="New Password"
-                    className="w-full mb-4 p-3 border rounded-md"
+                    className="soft-input mb-4 w-full px-4 outline-none"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
                 <input
                     type="password"
                     placeholder="Confirm New Password"
-                    className="w-full mb-6 p-3 border rounded-md"
+                    className="soft-input mb-6 w-full px-4 outline-none"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                 />
 
                 <button
                     onClick={handleReset}
-                    className="w-full bg-primary text-white py-3 rounded-md hover:bg-opacity-90"
+                    className="primary-button w-full"
                 >
                     Reset Password
                 </button>

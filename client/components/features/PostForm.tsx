@@ -2,6 +2,7 @@
 
 import { Button, Card, Form, Input, message, Select, Typography, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
+import { ImagePlus, Sparkles } from 'lucide-react';
 import type { UploadChangeParam, UploadFile } from 'antd/es/upload/interface';
 import imageCompression from 'browser-image-compression';
 import { useRouter } from 'next/navigation';
@@ -63,8 +64,12 @@ const PostForm = () => {
     };
 
     return (
-        <Card className="w-full max-w-2xl mx-auto shadow-md">
-            <Title level={3} className="text-center mb-6">Create New Post</Title>
+        <Card className="mx-auto w-full max-w-3xl !rounded-[1.75rem] !border-slate-100 !p-1 !shadow-[0_24px_60px_-34px_rgba(30,41,59,0.25)]">
+            <div className="mb-8">
+                <span className="eyebrow"><Sparkles size={12} /> New post</span>
+                <Title level={2} className="!mb-2 !mt-4 !tracking-tight !text-slate-900">Share an interest</Title>
+                <p className="text-slate-500">Tell your community what you have been exploring lately.</p>
+            </div>
             <Form<PostFormValues>
                 layout="vertical"
                 onFinish={onFinish}
@@ -75,24 +80,25 @@ const PostForm = () => {
                     name="title"
                     rules={[{ required: true, message: 'Please add a title.' }]}
                 >
-                    <Input placeholder="What is this interest about?" />
+                    <Input className="soft-input" placeholder="What is this interest about?" />
                 </Form.Item>
                 <Form.Item
                     label="Content"
                     name="content"
                     rules={[{ required: true, message: 'Please write something!' }]}
                 >
-                    <TextArea rows={4} placeholder="What's on your mind?" showCount maxLength={500} />
+                    <TextArea className="soft-input !min-h-36 !p-4" rows={5} placeholder="What's on your mind?" showCount maxLength={500} />
                 </Form.Item>
                 <Form.Item
                     label="Category"
                     name="category"
                     rules={[{ required: true, message: 'Please add a category.' }]}
                 >
-                    <Input placeholder="For example: Photography" />
+                    <Input className="soft-input" placeholder="For example: Photography" />
                 </Form.Item>
                 <Form.Item label="Visibility" name="visibility">
                     <Select
+                        className="!h-12"
                         options={[
                             { value: 'public', label: 'Public' },
                             { value: 'followersOnly', label: 'Followers only' },
@@ -100,7 +106,7 @@ const PostForm = () => {
                         ]}
                     />
                 </Form.Item>
-                <Form.Item label="Image" required>
+                <Form.Item label="Cover image" required>
                     <Upload
                         listType="picture"
                         fileList={fileList}
@@ -109,8 +115,14 @@ const PostForm = () => {
                         maxCount={1}
                         accept="image/*"
                     >
-                        <Button icon={<UploadOutlined />}>Select Image</Button>
+                        <Button icon={<UploadOutlined />} className="!h-12 !rounded-xl">Select image</Button>
                     </Upload>
+                    {fileList.length === 0 && (
+                        <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                            <ImagePlus size={16} />
+                            Images are compressed automatically before posting.
+                        </div>
+                    )}
                 </Form.Item>
                 <Form.Item>
                     <Button
@@ -120,8 +132,9 @@ const PostForm = () => {
                         disabled={fileList.length === 0}
                         block
                         size="large"
+                        className="!h-12 !rounded-xl !font-semibold"
                     >
-                        Post
+                        Publish post
                     </Button>
                 </Form.Item>
             </Form>

@@ -111,7 +111,7 @@ export const getFollowing = (id: string) => request<IUser[]>("GET", `/users/${id
 export const blockUser = (id: string) => request<void>("POST", `/users/block/${id}`);
 export const unblockUser = (id: string) => request<void>("POST", `/users/unblock/${id}`);
 export const searchUsers = (query: string) =>
-    request<IUser[]>("GET", "/users/search", { queryParams: { q: query } });
+    request<IUser[]>("GET", "/users/search", { queryParams: { query } });
 
 // Comments
 export const createComment = (postId: string, content: string) =>

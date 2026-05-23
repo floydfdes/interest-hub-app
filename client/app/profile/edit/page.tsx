@@ -89,22 +89,22 @@ export default function EditProfilePage() {
         }
     };
 
-    if (!user) return <div className="text-center mt-10 text-gray-500">Loading...</div>;
+    if (!user) return <div className="surface shell-container max-w-2xl p-12 text-center text-slate-500">Loading profile...</div>;
 
     return (
-        <div className="min-h-screen bg-background px-4 py-10 flex justify-center items-start">
-            <div className="w-full max-w-2xl bg-white shadow-lg rounded-lg p-6">
+        <div className="shell-container flex justify-center">
+            <div className="surface w-full max-w-2xl p-6 sm:p-8">
 
                 {/* Back link */}
                 <button
                     onClick={() => router.push("/profile")}
-                    className="mb-6 text-sm text-primary hover:underline flex items-center gap-1"
+                    className="mb-6 flex items-center gap-1 text-sm font-medium text-indigo-600"
                 >
                     <FiArrowLeft /> Back to Profile
                 </button>
 
                 {/* Title */}
-                <h1 className="text-2xl font-bold text-primary mb-4 text-center">Edit Profile</h1>
+                <h1 className="mb-6 text-center text-3xl font-bold tracking-tight text-slate-900">Edit profile</h1>
                 {error && <p className="text-center text-red-500 mb-4">{error}</p>}
 
                 {/* Avatar + Remove */}
@@ -119,7 +119,7 @@ export default function EditProfilePage() {
                     {preview && (
                         <button
                             onClick={handleRemovePicture}
-                            className="mt-2 flex items-center text-sm text-red-500 hover:underline"
+                            className="mt-2 flex items-center text-sm font-medium text-rose-500 hover:text-rose-600"
                         >
                             <FiTrash className="mr-1" size={14} /> Remove Picture
                         </button>
@@ -140,7 +140,7 @@ export default function EditProfilePage() {
                     />
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 px-4 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 transition text-sm"
+                        className="secondary-button"
                     >
                         <FiUpload size={16} /> Upload New Profile Picture
                     </button>
@@ -154,7 +154,7 @@ export default function EditProfilePage() {
                             type="text"
                             value={form.name}
                             onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                            className="w-full px-4 py-2 border rounded-md focus:outline-primary text-sm"
+                            className="soft-input w-full px-4 text-sm outline-none"
                             placeholder="Your Name"
                         />
                     </div>
@@ -170,7 +170,7 @@ export default function EditProfilePage() {
                                 setBioCharCount(trimmed.length);
                             }}
 
-                            className="w-full px-4 py-2 border rounded-md min-h-[80px] focus:outline-primary text-sm"
+                            className="soft-input min-h-[100px] w-full px-4 py-3 text-sm outline-none"
                             placeholder="Write a short bio"
                         />
                         <p
@@ -186,7 +186,7 @@ export default function EditProfilePage() {
                             type="text"
                             value={form.interests}
                             onChange={(e) => setForm((prev) => ({ ...prev, interests: e.target.value }))}
-                            className="w-full px-4 py-2 border rounded-md focus:outline-primary text-sm"
+                            className="soft-input w-full px-4 text-sm outline-none"
                             placeholder="e.g., tech, travel"
                         />
                     </div>
@@ -195,7 +195,7 @@ export default function EditProfilePage() {
                 {/* Submit */}
                 <button
                     onClick={handleSubmit}
-                    className="w-full mt-6 py-3 rounded-md bg-primary text-white font-medium hover:bg-opacity-90 transition"
+                    className="primary-button mt-7 w-full"
                 >
                     Save Changes
                 </button>

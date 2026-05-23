@@ -9,21 +9,21 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     const post = await getPostById(id) as IPost;
 
     if (!post) {
-        return <div className="text-center text-red-500 text-lg">Post not found</div>;
+        return <div className="surface shell-container max-w-xl p-10 text-center text-slate-500">Post not found</div>;
     }
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-background px-4 py-10">
-            <div className="w-full max-w-4xl bg-white border border-gray-200 rounded-md p-6">
+        <div className="shell-container flex flex-col items-center">
+            <article className="surface w-full max-w-4xl overflow-hidden p-5 sm:p-7">
                 <Image
                     src={post.image || "/Placeholder.png"}
                     alt={post.title}
                     width={800}
                     height={400}
-                    className="w-full h-64 object-cover rounded-md border"
+                    className="h-72 w-full rounded-2xl object-cover sm:h-96"
                 />
 
-                <div className="mt-4 flex items-center gap-3">
+                <div className="mt-6 flex items-center gap-3">
                     <Image
                         src={post.author.profilePic || "/DefaultAvatar.png"}
                         alt={post.author.name}
@@ -32,27 +32,26 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                         className="rounded-full"
                     />
                     <div>
-                        <h2 className="text-base font-semibold text-primary">{post.author.name}</h2>
+                        <h2 className="text-base font-semibold text-slate-900">{post.author.name}</h2>
                         <p className="text-xs text-gray-500">
                             {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                         </p>
                     </div>
                 </div>
 
-                <span className="mt-4 text-sm text-secondary font-medium block">{post.category}</span>
-                <h1 className="text-2xl font-bold text-primary mt-1">{post.title}</h1>
-                <p className="mt-2 text-sm text-gray-700">{post.content}</p>
+                <span className="tag-pill mt-6">{post.category}</span>
+                <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900">{post.title}</h1>
+                <p className="mt-3 text-base leading-7 text-slate-600">{post.content}</p>
 
-                <div className="mt-4 text-sm text-gray-600">
+                <div className="mt-5 text-sm font-medium text-slate-500">
                     <span className="font-medium">Likes:</span> {post.likes?.length || 0}
                 </div>
 
-                {/* Comments */}
-                <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-primary mb-4">Comments</h3>
+                <div className="mt-8 border-t border-slate-100 pt-7">
+                    <h3 className="mb-5 text-xl font-semibold text-slate-900">Comments</h3>
 
                     {post.comments.map((comment) => (
-                        <div key={comment._id} className="border border-gray-200 rounded-md p-4 bg-gray-50">
+                        <div key={comment._id} className="mb-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
                             <div className="flex items-center gap-3 mb-2">
                                 <Image
                                     src={comment.user.profilePic || "/DefaultAvatar.png"}
@@ -63,7 +62,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                                 />
                                 <div>
                                     <h4 className="text-sm font-semibold">{comment.user.name}</h4>
-                                    <p className="text-sm text-gray-700">{comment.content}</p>
+                                    <p className="text-sm text-slate-600">{comment.content}</p>
                                 </div>
                             </div>
 
@@ -73,9 +72,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                             </div>
 
                             {comment.replies?.length > 0 && (
-                                <div className="mt-3 pl-6 border-l border-gray-300 space-y-3">
+                                <div className="mt-3 space-y-3 border-l border-indigo-100 pl-6">
                                     {comment.replies.map((reply) => (
-                                        <div key={reply._id} className="p-3 bg-white border rounded-md">
+                                        <div key={reply._id} className="rounded-xl border border-slate-100 bg-white p-3">
                                             <div className="flex items-center gap-3">
                                                 <Image
                                                     src={reply.user.profilePic || "/DefaultAvatar.png"}
@@ -86,7 +85,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                                                 />
                                                 <div>
                                                     <h4 className="text-sm font-semibold">{reply.user.name}</h4>
-                                                    <p className="text-sm text-gray-700">{reply.content}</p>
+                                                    <p className="text-sm text-slate-600">{reply.content}</p>
                                                 </div>
                                             </div>
                                             <div className="mt-1 text-xs text-gray-500">
@@ -99,11 +98,11 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                         </div>
                     ))}
                 </div>
-            </div>
+            </article>
 
             <Link
                 href="/explore"
-                className="mt-6 inline-block bg-primary text-white px-5 py-2 rounded-md hover:bg-opacity-90 text-sm"
+                className="secondary-button mt-6"
             >
                 ← Back to Explore
             </Link>

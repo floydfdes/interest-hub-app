@@ -49,23 +49,23 @@ export default function PostDetailPage() {
 
     if (loading) {
         return (
-            <div className="max-w-2xl mx-auto py-8">
+            <div className="shell-container max-w-3xl py-8">
                 <Skeleton active avatar paragraph={{ rows: 4 }} />
             </div>
         );
     }
 
     if (!post) {
-        return <div className="text-center py-10">Post not found</div>;
+        return <div className="surface shell-container max-w-3xl py-14 text-center text-slate-500">Post not found</div>;
     }
 
     return (
-        <div className="max-w-2xl mx-auto py-8">
+        <div className="shell-container max-w-3xl">
             <Button
                 type="text"
                 icon={<ArrowLeftOutlined />}
                 onClick={() => router.back()}
-                className="mb-4"
+                className="!mb-5 !rounded-xl !text-slate-500"
             >
                 Back
             </Button>

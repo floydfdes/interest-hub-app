@@ -1,8 +1,11 @@
 export default function About() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <h1 className="text-4xl font-bold text-primary">About InterestHub</h1>
-      <p className="mt-4 text-lg text-text">Info about Interest Hub</p>
+    <div className="surface shell-container max-w-3xl px-7 py-16 text-center sm:px-14">
+      <span className="eyebrow">About</span>
+      <h1 className="gradient-heading mt-5 text-4xl font-bold sm:text-5xl">Interests bring people together.</h1>
+      <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-slate-500">
+        InterestHub is a place to share ideas, discover creators, and build meaningful conversations around what you love.
+      </p>
     </div>
   );
 }

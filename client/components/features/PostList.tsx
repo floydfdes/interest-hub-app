@@ -37,15 +37,23 @@ const PostList = () => {
     };
 
     if (loading) {
-        return <Skeleton active avatar paragraph={{ rows: 4 }} />;
+        return (
+            <div className="surface p-6">
+                <Skeleton active avatar paragraph={{ rows: 4 }} />
+            </div>
+        );
     }
 
     if (posts.length === 0) {
-        return <Empty description="No posts found. Be the first to share!" />;
+        return (
+            <div className="surface px-6 py-14">
+                <Empty description={<span className="text-slate-500">No posts yet. Be the first to share an interest.</span>} />
+            </div>
+        );
     }
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="space-y-5">
             {posts.map((post) => (
                 <PostCard
                     key={post._id}

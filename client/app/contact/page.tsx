@@ -1,8 +1,11 @@
 export default function Contact() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <h1 className="text-4xl font-bold text-primary">Contact Us</h1>
-      <p className="mt-4 text-lg text-text">Support & inquiries</p>
+    <div className="surface shell-container max-w-3xl px-7 py-16 text-center sm:px-14">
+      <span className="eyebrow">Contact</span>
+      <h1 className="gradient-heading mt-5 text-4xl font-bold">We would love to hear from you.</h1>
+      <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-slate-500">
+        For support, feedback, or partnership inquiries, connect with the InterestHub team.
+      </p>
     </div>
   );
 }

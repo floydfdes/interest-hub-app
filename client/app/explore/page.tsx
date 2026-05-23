@@ -1,16 +1,9 @@
 "use client";
 
-import {
-  Edit,
-  MessageCircle,
-  Plus,
-  ThumbsUp,
-  Trash2,
-} from "lucide-react";
+import { Edit, MessageCircle, PenLine, Sparkles, ThumbsUp, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { deletePost, getAllPosts, getErrorMessage } from "../api/api";
 import { IPost } from "../types/user";
-
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,154 +13,120 @@ import { useCurrentUser } from "../hooks/useCurrentUser";
 export default function Explore() {
   const [posts, setPosts] = useState<IPost[]>([]);
   const [error, setError] = useState("");
-
   const currentUser = useCurrentUser();
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
+        if (!localStorage.getItem("token")) {
           throw new Error("You must be logged in to view posts.");
         }
-        const data = await getAllPosts();
-        setPosts(data);
+        setPosts(await getAllPosts());
       } catch (err: unknown) {
         setError(getErrorMessage(err, "Failed to fetch posts."));
       }
     };
 
-    fetchPosts();
+    void fetchPosts();
   }, []);
 
   const handleDelete = async (postId: string) => {
     const result = await Swal.fire({
       title: "Delete this post?",
-      text: "This action cannot be undone!",
+      text: "This action cannot be undone.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
+      confirmButtonText: "Delete post",
       cancelButtonText: "Cancel",
-      confirmButtonColor: "#e53935",
-      cancelButtonColor: "#3085d6",
+      confirmButtonColor: "#4f46e5",
     });
 
     if (result.isConfirmed) {
       try {
         await deletePost(postId);
-        setPosts((prev) => prev.filter((p) => p._id !== postId));
-        Swal.fire("Deleted!", "Your post has been removed.", "success");
+        setPosts((previous) => previous.filter((post) => post._id !== postId));
+        void Swal.fire("Deleted", "Your post has been removed.", "success");
       } catch (err: unknown) {
-        Swal.fire("Error", getErrorMessage(err, "Failed to delete post"), "error");
+        void Swal.fire("Error", getErrorMessage(err, "Failed to delete post"), "error");
       }
     }
   };
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-6">
-        <h1 className="text-2xl text-red-600 font-semibold mb-4">Error</h1>
-        <p className="text-gray-700">{error}</p>
-        <Link href="/login" className="mt-4 text-primary underline">
-          Go to Login
-        </Link>
+      <div className="surface shell-container max-w-lg p-10 text-center">
+        <h1 className="text-2xl font-semibold text-slate-900">Ready to explore?</h1>
+        <p className="mt-3 text-slate-500">{error}</p>
+        <Link href="/login" className="primary-button mt-7">Log in to continue</Link>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-background p-8">
-      <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+    <div className="shell-container">
+      <header className="mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-4xl font-semibold text-primary">Explore</h1>
-          <p className="mt-2 text-base text-gray-600">
-            Discover new topics and interests
-          </p>
+          <span className="eyebrow"><Sparkles size={12} /> Discover</span>
+          <h1 className="gradient-heading mt-4 text-4xl font-bold">Explore interests</h1>
+          <p className="mt-2 text-base text-slate-500">Find posts, ideas, and people worth following.</p>
         </div>
-
-        <Link
-          href="/create"
-          className="mt-4 md:mt-0 flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90 text-sm"
-        >
-          <Plus size={16} />
-          Create Post
+        <Link href="/create-post" className="primary-button">
+          <PenLine size={16} />
+          Create post
         </Link>
-      </div>
+      </header>
 
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl w-full">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {posts.map((post) => (
-          <Link
+          <article
             key={post._id}
-            href={`/explore/post/${post._id}`}
-            className="border border-gray-200 rounded-md bg-white hover:shadow-sm transition duration-200"
+            className="surface overflow-hidden transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_48px_-27px_rgba(15,23,42,0.32)]"
           >
-            <Image
-              src={post.image || "/Placeholder.png"}
-              alt={post.title}
-              width={400}
-              height={250}
-              className="w-full h-48 object-cover border-b"
-            />
-            <div className="p-4">
-              <span className="text-xs text-secondary font-medium uppercase tracking-wide">
-                {post.category}
-              </span>
-              <h2 className="text-lg font-semibold text-primary mt-1">{post.title}</h2>
-              <p className="mt-2 text-sm text-gray-600 line-clamp-3">{post.content}</p>
-
-              <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
-                <Image
-                  src={post.author?.profilePic || "/DefaultAvatar.png"}
-                  alt={post.author?.name || "User"}
-                  width={28}
-                  height={28}
-                  className="rounded-full"
-                />
-                <span>{post.author?.name || "Unknown"}</span>
-                <span className="ml-auto text-xs">
-                  {formatDistanceToNow(new Date(post.createdAt), {
-                    addSuffix: true,
-                  })}
-                </span>
-              </div>
-
-              <div className="mt-3 flex justify-between text-gray-500 text-sm">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1">
-                    <ThumbsUp className="text-primary" size={14} />
-                    <span>{post.likes?.length || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageCircle className="text-primary" size={14} />
-                    <span>{post.comments?.length || 0}</span>
-                  </div>
+            <Link href={`/explore/post/${post._id}`} className="block">
+              <Image
+                src={post.image || "/Placeholder.png"}
+                alt={post.title}
+                width={480}
+                height={300}
+                unoptimized={post.image?.startsWith("data:")}
+                className="h-52 w-full object-cover"
+              />
+              <div className="p-5">
+                <span className="tag-pill">{post.category}</span>
+                <h2 className="mt-4 text-xl font-semibold tracking-tight text-slate-900">{post.title}</h2>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{post.content}</p>
+                <div className="mt-5 flex items-center gap-2 text-sm text-slate-500">
+                  <Image
+                    src={post.author?.profilePic || "/DefaultAvatar.png"}
+                    alt={post.author?.name || "User"}
+                    width={30}
+                    height={30}
+                    className="rounded-full"
+                  />
+                  <span className="font-medium text-slate-700">{post.author?.name || "Unknown"}</span>
+                  <span className="ml-auto text-xs">
+                    {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                  </span>
                 </div>
-                {post.author?._id === currentUser?._id && (
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/explore/post/${post._id}/edit`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-primary hover:underline text-xs flex items-center gap-1"
-                    >
-                      <Edit size={14} />
-                      <span className="hidden sm:inline">Edit</span>
-                    </Link>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDelete(post._id);
-                      }}
-                      className="text-red-500 hover:underline text-xs flex items-center gap-1"
-                    >
-                      <Trash2 size={14} />
-                      <span className="hidden sm:inline">Delete</span>
-                    </button>
-                  </div>
-                )}
               </div>
+            </Link>
+            <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm text-slate-500">
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1.5"><ThumbsUp size={14} />{post.likes?.length || 0}</span>
+                <span className="flex items-center gap-1.5"><MessageCircle size={14} />{post.comments?.length || 0}</span>
+              </div>
+              {post.author?._id === currentUser?._id && (
+                <div className="flex items-center gap-3">
+                  <Link href={`/explore/post/${post._id}/edit`} className="text-indigo-600 transition hover:text-indigo-800">
+                    <Edit size={15} />
+                  </Link>
+                  <button onClick={() => void handleDelete(post._id)} className="text-rose-500 transition hover:text-rose-700">
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              )}
             </div>
-          </Link>
+          </article>
         ))}
       </div>
     </div>

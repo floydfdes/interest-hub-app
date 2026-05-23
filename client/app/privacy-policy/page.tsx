@@ -1,8 +1,9 @@
 export default function PrivacyPolicy() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <h1 className="text-4xl font-bold text-primary">Privacy Policy</h1>
-      <p className="mt-4 text-lg text-text">Data protection details</p>
+    <div className="surface shell-container max-w-3xl px-7 py-16 text-center sm:px-14">
+      <span className="eyebrow">Privacy</span>
+      <h1 className="gradient-heading mt-5 text-4xl font-bold">Privacy policy</h1>
+      <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-slate-500">Your data protection details and privacy choices live here.</p>
     </div>
   );
 }

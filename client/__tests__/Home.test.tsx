@@ -17,11 +17,11 @@ describe('Home Page', () => {
         render(<Home />);
         const heading = screen.getByRole('heading', { name: /Latest Interests/i });
         expect(heading).toBeInTheDocument();
-        expect(await screen.findByText(/No posts found/i)).toBeInTheDocument();
+        expect(await screen.findByText(/No posts yet/i)).toBeInTheDocument();
     });
 
     it('renders post list', async () => {
         render(<Home />);
-        expect(await screen.findByText(/No posts found/i)).toBeInTheDocument();
+        expect(await screen.findByText(/No posts yet/i)).toBeInTheDocument();
     });
 });
