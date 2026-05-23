@@ -1,39 +1,45 @@
 'use client';
 
-import { Card, Avatar, Button, Typography } from 'antd';
-import { LikeOutlined, LikeFilled, CommentOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Avatar, Button, Card, Typography } from 'antd';
+import {
+    CommentOutlined,
+    DeleteOutlined,
+    LikeFilled,
+    LikeOutlined,
+    UserOutlined,
+} from '@ant-design/icons';
+import { formatDistanceToNow } from 'date-fns';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import api from '@/services/api';
-import { formatDistanceToNow } from 'date-fns';
+import { likePost, unlikePost } from '@/app/api/api';
+import { IPost, IUser, Like } from '@/app/types/user';
 
 const { Text, Paragraph } = Typography;
 
 interface PostCardProps {
-    post: any;
+    post: IPost;
     onDelete?: (id: string) => void;
-    currentUser: any;
+    currentUser: IUser | null;
+}
+
+function belongsToUser(like: Like, userId: string) {
+    return (typeof like === 'string' ? like : like._id) === userId;
 }
 
 const PostCard = ({ post, onDelete, currentUser }: PostCardProps) => {
-    const [likes, setLikes] = useState(post.likes || []);
-    const isLiked = currentUser && likes.some((like: any) =>
-        (typeof like === 'string' ? like : like._id) === currentUser._id
-    );
+    const [likes, setLikes] = useState<Like[]>(post.likes || []);
+    const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
 
     const handleLike = async () => {
         if (!currentUser) return;
-        try {
-            const endpoint = isLiked ? 'unlike' : 'like';
-            const res = await api.post(`/posts/${post._id}/${endpoint}`);
-            setLikes(res.data.likes || []);
-        } catch (error) {
-            console.error('Error liking post:', error);
-        }
-    };
 
-    const handleDelete = () => {
-        if (onDelete) onDelete(post._id);
+        try {
+            const response = await (isLiked ? unlikePost(post._id) : likePost(post._id));
+            setLikes(response.likes || []);
+        } catch {
+            // A failed engagement should leave the currently displayed server state untouched.
+        }
     };
 
     return (
@@ -54,9 +60,12 @@ const PostCard = ({ post, onDelete, currentUser }: PostCardProps) => {
                             {post.content}
                         </Paragraph>
                         {post.image && (
-                            <img
+                            <Image
                                 src={post.image}
-                                alt="Post content"
+                                alt={post.title || 'Post content'}
+                                width={800}
+                                height={500}
+                                unoptimized={post.image.startsWith('data:')}
                                 className="w-full h-auto rounded-lg mt-2 max-h-96 object-cover"
                             />
                         )}
@@ -78,7 +87,7 @@ const PostCard = ({ post, onDelete, currentUser }: PostCardProps) => {
                     </Button>
                 </Link>
                 {currentUser && post.author?._id === currentUser._id && (
-                    <Button type="text" danger icon={<DeleteOutlined />} onClick={handleDelete}>
+                    <Button type="text" danger icon={<DeleteOutlined />} onClick={() => onDelete?.(post._id)}>
                         Delete
                     </Button>
                 )}
@@ -86,7 +95,5 @@ const PostCard = ({ post, onDelete, currentUser }: PostCardProps) => {
         </Card>
     );
 };
-
-import { UserOutlined } from '@ant-design/icons';
 
 export default PostCard;

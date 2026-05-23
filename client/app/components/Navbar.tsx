@@ -1,28 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
 import Avatar from "react-avatar";
-import { getUserFromLocalStorage } from "../api/auth";
+import { notifyAuthChanged, useCurrentUser } from "../hooks/useCurrentUser";
 
 export default function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [user, setUser] = useState<any>(null);
+    const user = useCurrentUser();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
-    const pathname = usePathname();
-
-    // Sync user state with localStorage on route change
-    useEffect(() => {
-        const storedUser = getUserFromLocalStorage();
-        console.log(storedUser);
-        setUser(storedUser);
-    }, [pathname]);
-
     // Close dropdown if clicked outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -37,7 +27,7 @@ export default function Navbar() {
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        setUser(null);
+        notifyAuthChanged();
         setDropdownOpen(false);
         setIsMobileMenuOpen(false);
         router.push("/login");

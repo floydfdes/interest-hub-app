@@ -4,26 +4,19 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Layout, Menu, Button, Avatar, Dropdown } from 'antd';
 import { UserOutlined, LogoutOutlined, LoginOutlined, UserAddOutlined } from '@ant-design/icons';
-import { useEffect, useState } from 'react';
+import { notifyAuthChanged, useCurrentUser } from '@/app/hooks/useCurrentUser';
 
 const { Header } = Layout;
 
 const Navbar = () => {
     const pathname = usePathname();
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
-
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-    }, []);
+    const user = useCurrentUser();
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        setUser(null);
+        notifyAuthChanged();
         router.push('/login');
     };
 

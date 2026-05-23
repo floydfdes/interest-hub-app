@@ -5,7 +5,9 @@ import { Form, Input, Button, Card, message, Typography } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { getErrorMessage, loginUser } from '@/app/api/api';
+import { notifyAuthChanged } from '@/app/hooks/useCurrentUser';
+import { LoginInput } from '@/app/types/user';
 
 const { Title, Text } = Typography;
 
@@ -13,16 +15,17 @@ const Login = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
-    const onFinish = async (values: any) => {
+    const onFinish = async (values: LoginInput) => {
         setLoading(true);
         try {
-            const res = await api.post('/auth/login', values);
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
+            const response = await loginUser(values);
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            notifyAuthChanged();
             message.success('Login successful!');
             router.push('/');
-        } catch (error: any) {
-            message.error(error.response?.data?.message || 'Login failed');
+        } catch (error: unknown) {
+            message.error(getErrorMessage(error, 'Login failed'));
         } finally {
             setLoading(false);
         }
@@ -63,7 +66,7 @@ const Login = () => {
                         </Button>
                     </Form.Item>
                     <div className="text-center">
-                        <Text>Don't have an account? </Text>
+                        <Text>Don&apos;t have an account? </Text>
                         <Link href="/register" className="text-blue-600 hover:underline">
                             Register
                         </Link>

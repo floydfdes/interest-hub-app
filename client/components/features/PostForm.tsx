@@ -1,60 +1,71 @@
 'use client';
 
-import { useState } from 'react';
-import { Form, Input, Button, Card, message, Select, Typography, Upload } from 'antd';
+import { Button, Card, Form, Input, message, Select, Typography, Upload } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import type { UploadChangeParam, UploadFile } from 'antd/es/upload/interface';
 import imageCompression from 'browser-image-compression';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { createPost, getErrorMessage } from '@/app/api/api';
+import { IPost } from '@/app/types/user';
 
 const { Title } = Typography;
 const { TextArea } = Input;
 
+interface PostFormValues {
+    title: string;
+    content: string;
+    category: string;
+    visibility: IPost['visibility'];
+}
+
 const PostForm = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [fileList, setFileList] = useState<any[]>([]);
+    const [fileList, setFileList] = useState<UploadFile[]>([]);
 
     const getBase64 = (file: File): Promise<string> =>
         new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () => resolve(reader.result as string);
-            reader.onerror = (error) => reject(error);
+            reader.onerror = reject;
         });
 
-    const onFinish = async (values: any) => {
+    const onFinish = async (values: PostFormValues) => {
+        const originalImage = fileList[0]?.originFileObj as File | undefined;
+        if (!originalImage) {
+            message.error('Please select an image.');
+            return;
+        }
+
         setLoading(true);
         try {
-            const compressedImage = await imageCompression(fileList[0].originFileObj, {
+            const compressedImage = await imageCompression(originalImage, {
                 maxSizeMB: 1,
                 maxWidthOrHeight: 1920,
                 useWebWorker: true,
             });
             const image = await getBase64(compressedImage);
 
-            await api.post('/posts', {
-                title: values.title,
-                content: values.content,
-                category: values.category,
-                visibility: values.visibility,
-                image,
-            });
+            await createPost({ ...values, image });
             message.success('Post created successfully!');
             router.push('/');
-        } catch (error: any) {
-            message.error(error.response?.data?.message || 'Failed to create post');
+        } catch (error: unknown) {
+            message.error(getErrorMessage(error, 'Failed to create post'));
         } finally {
             setLoading(false);
         }
     };
 
-    const handleChange = ({ fileList: newFileList }: any) => setFileList(newFileList);
+    const handleChange = ({ fileList: nextFileList }: UploadChangeParam<UploadFile>) => {
+        setFileList(nextFileList);
+    };
 
     return (
         <Card className="w-full max-w-2xl mx-auto shadow-md">
             <Title level={3} className="text-center mb-6">Create New Post</Title>
-            <Form
+            <Form<PostFormValues>
                 layout="vertical"
                 onFinish={onFinish}
                 initialValues={{ visibility: 'public' }}
@@ -89,23 +100,18 @@ const PostForm = () => {
                         ]}
                     />
                 </Form.Item>
-                <Form.Item
-                    label="Image"
-                    required
-                    validateStatus={fileList.length === 0 ? undefined : 'success'}
-                >
+                <Form.Item label="Image" required>
                     <Upload
                         listType="picture"
                         fileList={fileList}
                         onChange={handleChange}
-                        beforeUpload={() => false} // Manual upload
+                        beforeUpload={() => false}
                         maxCount={1}
                         accept="image/*"
                     >
                         <Button icon={<UploadOutlined />}>Select Image</Button>
                     </Upload>
                 </Form.Item>
-
                 <Form.Item>
                     <Button
                         type="primary"

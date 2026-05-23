@@ -1,42 +1,53 @@
 'use client';
 
 import { Avatar, Button, Input, message, Typography } from 'antd';
-import { UserOutlined, LikeOutlined, LikeFilled } from '@ant-design/icons';
-import { useEffect, useState } from 'react';
-import api from '@/services/api';
+import { LikeFilled, LikeOutlined, UserOutlined } from '@ant-design/icons';
 import { formatDistanceToNow } from 'date-fns';
+import { useState } from 'react';
+import {
+    createComment,
+    likeComment,
+    replyToComment,
+    unlikeComment,
+} from '@/app/api/api';
+import { IComment, IReply, IUser, Like } from '@/app/types/user';
+import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 
 const { Text } = Typography;
 const { TextArea } = Input;
 
+type DiscussionItem = IComment | IReply;
+
 interface CommentProps {
-    comment: any;
-    onReply: (commentId: string, content: string) => void;
-    currentUser: any;
+    comment: DiscussionItem;
+    onReply: (commentId: string, content: string) => Promise<void>;
+    currentUser: IUser | null;
+}
+
+function belongsToUser(like: Like, userId: string) {
+    return (typeof like === 'string' ? like : like._id) === userId;
 }
 
 const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
     const [showReply, setShowReply] = useState(false);
     const [replyContent, setReplyContent] = useState('');
-    const [likes, setLikes] = useState(comment.likes || []);
-    const isLiked = currentUser && likes.some((like: any) =>
-        (typeof like === 'string' ? like : like._id) === currentUser._id
-    );
+    const [likes, setLikes] = useState<Like[]>(comment.likes || []);
+    const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
 
     const handleLike = async () => {
         if (!currentUser) return;
+
         try {
-            const endpoint = isLiked ? 'unlike' : 'like';
-            const res = await api.post(`/comments/${comment._id}/${endpoint}`);
-            setLikes(res.data.likes || []);
-        } catch (error) {
-            console.error('Error liking comment:', error);
+            const response = await (isLiked ? unlikeComment(comment._id) : likeComment(comment._id));
+            setLikes(response.likes || []);
+        } catch {
+            message.error('Failed to update like');
         }
     };
 
-    const handleSubmitReply = () => {
+    const handleSubmitReply = async () => {
         if (!replyContent.trim()) return;
-        onReply(comment._id, replyContent);
+        await onReply(comment._id, replyContent);
         setReplyContent('');
         setShowReply(false);
     };
@@ -71,23 +82,20 @@ const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
             </div>
 
             {showReply && (
-                <div className="ml-10 mt-2">
-                    <Input.Group compact>
-                        <Input
-                            style={{ width: 'calc(100% - 80px)' }}
-                            value={replyContent}
-                            onChange={(e) => setReplyContent(e.target.value)}
-                            placeholder="Write a reply..."
-                            onPressEnter={handleSubmitReply}
-                        />
-                        <Button type="primary" onClick={handleSubmitReply}>Reply</Button>
-                    </Input.Group>
+                <div className="ml-10 mt-2 flex gap-2">
+                    <Input
+                        value={replyContent}
+                        onChange={(event) => setReplyContent(event.target.value)}
+                        placeholder="Write a reply..."
+                        onPressEnter={() => void handleSubmitReply()}
+                    />
+                    <Button type="primary" onClick={() => void handleSubmitReply()}>Reply</Button>
                 </div>
             )}
 
             {comment.replies && comment.replies.length > 0 && (
                 <div className="ml-10 mt-2 border-l-2 pl-4 border-gray-100">
-                    {comment.replies.map((reply: any) => (
+                    {comment.replies.map((reply) => (
                         <CommentItem
                             key={reply._id}
                             comment={reply}
@@ -102,32 +110,25 @@ const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
 };
 
 interface CommentListProps {
-    comments: any[];
+    comments: IComment[];
     postId: string;
-    onCommentAdded: () => void;
+    onCommentAdded: () => Promise<void>;
 }
 
 const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => {
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    const currentUser = useCurrentUser();
     const [newComment, setNewComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
-
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setCurrentUser(JSON.parse(storedUser));
-        }
-    }, []);
 
     const handleAddComment = async () => {
         if (!newComment.trim()) return;
         setSubmitting(true);
         try {
-            await api.post('/comments', { postId, content: newComment });
+            await createComment(postId, newComment);
             setNewComment('');
-            onCommentAdded();
+            await onCommentAdded();
             message.success('Comment added');
-        } catch (error) {
+        } catch {
             message.error('Failed to add comment');
         } finally {
             setSubmitting(false);
@@ -136,10 +137,10 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
 
     const handleReply = async (commentId: string, content: string) => {
         try {
-            await api.post(`/comments/${commentId}/reply`, { content });
-            onCommentAdded();
+            await replyToComment(commentId, content);
+            await onCommentAdded();
             message.success('Reply added');
-        } catch (error) {
+        } catch {
             message.error('Failed to reply');
         }
     };
@@ -147,7 +148,6 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
     return (
         <div className="mt-6">
             <Typography.Title level={5}>Comments</Typography.Title>
-
             {currentUser ? (
                 <div className="mb-6 flex gap-3">
                     <Avatar src={currentUser.profilePic} icon={<UserOutlined />} />
@@ -155,11 +155,11 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
                         <TextArea
                             rows={2}
                             value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
+                            onChange={(event) => setNewComment(event.target.value)}
                             placeholder="Write a comment..."
                             className="mb-2"
                         />
-                        <Button type="primary" onClick={handleAddComment} loading={submitting}>
+                        <Button type="primary" onClick={() => void handleAddComment()} loading={submitting}>
                             Comment
                         </Button>
                     </div>
@@ -169,7 +169,6 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
                     <Text>Please login to comment</Text>
                 </div>
             )}
-
             <div className="space-y-4">
                 {comments.map((comment) => (
                     <CommentItem

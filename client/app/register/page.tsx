@@ -5,7 +5,9 @@ import { Form, Input, Button, Card, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import api from '@/services/api';
+import { getErrorMessage, registerUser } from '@/app/api/api';
+import { notifyAuthChanged } from '@/app/hooks/useCurrentUser';
+import { RegisterInput } from '@/app/types/user';
 
 const { Title, Text } = Typography;
 
@@ -13,16 +15,17 @@ const Register = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
-    const onFinish = async (values: any) => {
+    const onFinish = async (values: RegisterInput) => {
         setLoading(true);
         try {
-            const res = await api.post('/auth/register', values);
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
+            const response = await registerUser(values);
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            notifyAuthChanged();
             message.success('Registration successful!');
             router.push('/');
-        } catch (error: any) {
-            message.error(error.response?.data?.message || 'Registration failed');
+        } catch (error: unknown) {
+            message.error(getErrorMessage(error, 'Registration failed'));
         } finally {
             setLoading(false);
         }

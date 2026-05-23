@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import {
@@ -9,19 +8,20 @@ import {
   Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { deletePost, getAllPosts } from "../api/api";
+import { deletePost, getAllPosts, getErrorMessage } from "../api/api";
+import { IPost } from "../types/user";
 
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import Swal from "sweetalert2";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 export default function Explore() {
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<IPost[]>([]);
   const [error, setError] = useState("");
 
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  console.log(currentUser);
+  const currentUser = useCurrentUser();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -30,12 +30,10 @@ export default function Explore() {
         if (!token) {
           throw new Error("You must be logged in to view posts.");
         }
-        const data: any = await getAllPosts();
-        console.log(data);
+        const data = await getAllPosts();
         setPosts(data);
-      } catch (err: any) {
-        console.log(err);
-        setError(err.message || "Failed to fetch posts.");
+      } catch (err: unknown) {
+        setError(getErrorMessage(err, "Failed to fetch posts."));
       }
     };
 
@@ -59,8 +57,8 @@ export default function Explore() {
         await deletePost(postId);
         setPosts((prev) => prev.filter((p) => p._id !== postId));
         Swal.fire("Deleted!", "Your post has been removed.", "success");
-      } catch (err: any) {
-        Swal.fire("Error", err.message || "Failed to delete post", "error");
+      } catch (err: unknown) {
+        Swal.fire("Error", getErrorMessage(err, "Failed to delete post"), "error");
       }
     }
   };
@@ -97,7 +95,7 @@ export default function Explore() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl w-full">
-        {posts.map((post: any) => (
+        {posts.map((post) => (
           <Link
             key={post._id}
             href={`/explore/post/${post._id}`}

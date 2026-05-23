@@ -1,4 +1,3 @@
-// types/user.ts
 export interface IUser {
     _id: string;
     name: string;
@@ -30,12 +29,15 @@ export interface IUserPreview {
     profilePic: string;
 }
 
+export type Like = string | IUserPreview;
+
 export interface IReply {
-    _id?: string;
+    _id: string;
     user: IUserPreview;
     content: string;
-    likes: string[];
+    likes: Like[];
     createdAt: string;
+    replies?: IReply[];
 }
 
 export interface IComment {
@@ -43,7 +45,7 @@ export interface IComment {
     user: IUserPreview;
     post: string;
     content: string;
-    likes: string[];
+    likes: Like[];
     replies: IReply[];
     createdAt: string;
     updatedAt: string;
@@ -60,7 +62,7 @@ export interface IPost {
     category: string;
     tags: string[];
     author: IUserPreview;
-    likes: string[];
+    likes: Like[];
     comments: IComment[];
     visibility: "public" | "private" | "followersOnly";
     viewCount: number;
@@ -69,3 +71,34 @@ export interface IPost {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface AuthResponse {
+    token: string;
+    user: IUser;
+}
+
+export interface UserResponse {
+    user: IUser;
+}
+
+export interface LoginInput {
+    email: string;
+    password: string;
+}
+
+export interface RegisterInput extends LoginInput {
+    name: string;
+}
+
+export interface PostInput {
+    title: string;
+    content: string;
+    category: string;
+    visibility: IPost["visibility"];
+    image: string;
+    tags?: string[];
+}
+
+export type ProfileUpdateInput = Partial<
+    Pick<IUser, "name" | "bio" | "interests" | "profilePic">
+>;

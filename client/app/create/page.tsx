@@ -1,21 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useRef, useState } from "react";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { createPost } from "../api/api";
+import { createPost, getErrorMessage } from "../api/api";
 import { compressAndConvertToBase64 } from "../api/imageUtil";
+import { PostInput } from "../types/user";
 
 const categories = ["Tech", "Health", "Travel", "Design", "Education"];
 const visibilities = ["public", "private", "followersOnly"];
+type EditablePost = Omit<PostInput, "tags"> & { tags: string };
 
 export default function CreatePostPage() {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const [form, setForm] = useState({
+    const [form, setForm] = useState<EditablePost>({
         title: "",
         content: "",
         category: "",
@@ -27,7 +28,7 @@ export default function CreatePostPage() {
     const [error, setError] = useState("");
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-    const handleChange = (field: string, value: string | string[]) => {
+    const handleChange = (field: keyof EditablePost, value: string) => {
         setForm((prev) => ({ ...prev, [field]: value }));
     };
 
@@ -40,8 +41,7 @@ export default function CreatePostPage() {
             } else {
                 setError("Failed to load image from URL");
             }
-        } catch (e: any) {
-            console.log(e);
+        } catch {
             setError("Invalid image URL");
         }
     };
@@ -67,8 +67,8 @@ export default function CreatePostPage() {
 
             await createPost(payload);
             router.push("/explore");
-        } catch (err: any) {
-            setError(err.message || "Failed to create post");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to create post"));
         }
     };
 

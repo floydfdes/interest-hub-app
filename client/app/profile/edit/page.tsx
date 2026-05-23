@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { FiArrowLeft, FiTrash, FiUpload } from "react-icons/fi";
-import { getMe, updateUser } from "@/app/api/api";
+import { getErrorMessage, getMe, updateUser } from "@/app/api/api";
 import { useEffect, useRef, useState } from "react";
 
 import Avatar from "react-avatar";
@@ -42,8 +41,8 @@ export default function EditProfilePage() {
                 });
                 setPreview(data.user.profilePic || "");
                 setBioCharCount(data.user.bio?.length || 0);
-            } catch (err: any) {
-                setError(err.message || "Failed to fetch user");
+            } catch (err: unknown) {
+                setError(getErrorMessage(err, "Failed to fetch user"));
             }
         };
 
@@ -85,8 +84,8 @@ export default function EditProfilePage() {
 
             await updateUser(payload);
             router.push("/profile");
-        } catch (err: any) {
-            setError(err.message || "Failed to update profile");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to update profile"));
         }
     };
 

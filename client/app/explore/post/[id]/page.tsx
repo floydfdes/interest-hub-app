@@ -4,8 +4,9 @@ import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 
-export default async function PostPage({ params }: { params: { id: string } }) {
-    const post = await getPostById(params.id) as IPost;
+export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const post = await getPostById(id) as IPost;
 
     if (!post) {
         return <div className="text-center text-red-500 text-lg">Post not found</div>;

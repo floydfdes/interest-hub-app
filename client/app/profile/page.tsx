@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Avatar from "react-avatar";
 import { getMe } from "../api/api";
 import { IUser } from "../types/user";
+import { notifyAuthChanged } from "../hooks/useCurrentUser";
 
 export default function ProfilePage() {
     const [user, setUser] = useState<IUser | null>(null);
@@ -22,6 +23,7 @@ export default function ProfilePage() {
                 const userData = await getMe() as { user: IUser };
                 setUser(userData.user);
                 localStorage.setItem("user", JSON.stringify(userData.user));
+                notifyAuthChanged();
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : "Failed to fetch user");
             }
@@ -33,6 +35,7 @@ export default function ProfilePage() {
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        notifyAuthChanged();
         setUser(null);
         router.push("/login");
     };

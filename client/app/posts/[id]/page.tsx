@@ -1,39 +1,51 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import api from '@/services/api';
-import PostCard from '@/components/features/PostCard';
-import CommentList from '@/components/features/CommentList';
-import { Button, Skeleton, message } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Button, message, Skeleton } from 'antd';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { getPostById } from '@/app/api/api';
+import { useCurrentUser } from '@/app/hooks/useCurrentUser';
+import { IPost } from '@/app/types/user';
+import CommentList from '@/components/features/CommentList';
+import PostCard from '@/components/features/PostCard';
 
 export default function PostDetailPage() {
-    const params = useParams();
+    const { id } = useParams<{ id: string }>();
     const router = useRouter();
-    const [post, setPost] = useState<any>(null);
+    const [post, setPost] = useState<IPost | null>(null);
     const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState<any>(null);
-
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setCurrentUser(JSON.parse(storedUser));
-        }
-        fetchPost();
-    }, [params.id]);
+    const currentUser = useCurrentUser();
 
     const fetchPost = async () => {
         try {
-            const res = await api.get(`/posts/${params.id}`);
-            setPost(res.data);
-        } catch (error) {
-            console.error('Error fetching post:', error);
+            setPost(await getPostById(id));
+        } catch {
             message.error('Failed to load post');
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadPost = async () => {
+            try {
+                const nextPost = await getPostById(id);
+                if (!cancelled) setPost(nextPost);
+            } catch {
+                if (!cancelled) message.error('Failed to load post');
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+
+        void loadPost();
+        return () => {
+            cancelled = true;
+        };
+    }, [id]);
 
     if (loading) {
         return (
@@ -57,9 +69,7 @@ export default function PostDetailPage() {
             >
                 Back
             </Button>
-
             <PostCard post={post} currentUser={currentUser} />
-
             <CommentList
                 comments={post.comments || []}
                 postId={post._id}

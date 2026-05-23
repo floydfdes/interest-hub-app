@@ -1,5 +1,24 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+    AuthResponse,
+    IComment,
+    IPost,
+    IUser,
+    LoginInput,
+    PostInput,
+    ProfileUpdateInput,
+    RegisterInput,
+    UserResponse,
+} from "@/app/types/user";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4300/api";
+
+type QueryValue = string | number | boolean;
+type RequestBody = Record<string, unknown>;
+
+interface RequestOptions {
+    body?: RequestBody;
+    queryParams?: Record<string, QueryValue>;
+}
 
 function startLoader() {
     if (typeof window !== "undefined") {
@@ -13,111 +32,107 @@ function stopLoader() {
     }
 }
 
+export function getErrorMessage(error: unknown, fallback: string) {
+    return error instanceof Error && error.message ? error.message : fallback;
+}
+
 const request = async <T>(
     method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
     endpoint: string,
-    options: {
-        body?: any;
-        queryParams?: Record<string, any>;
-    } = {}
+    options: RequestOptions = {}
 ): Promise<T> => {
     startLoader();
     try {
-        const { body, queryParams } = options;
         const url = new URL(`${API_BASE}${endpoint}`);
-
-        if (queryParams) {
-            Object.entries(queryParams).forEach(([key, value]) =>
-                url.searchParams.append(key, String(value))
-            );
-        }
+        Object.entries(options.queryParams || {}).forEach(([key, value]) => {
+            url.searchParams.append(key, String(value));
+        });
 
         const headers: Record<string, string> = {
             "Content-Type": "application/json",
+            "x-requested-with": "InterestHubFrontend",
         };
-        headers["x-requested-with"] = "InterestHubFrontend";
-
-
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        if (token) headers["Authorization"] = `Bearer ${token}`;
+        if (token) headers.Authorization = `Bearer ${token}`;
 
-        const res = await fetch(url.toString(), {
+        const response = await fetch(url.toString(), {
             method,
             headers,
-            body: body ? JSON.stringify(body) : undefined,
+            body: options.body ? JSON.stringify(options.body) : undefined,
         });
 
-        if (!res.ok) throw new Error((await res.json()).message || "Request failed");
-        return await res.json();
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({})) as { message?: string };
+            throw new Error(data.message || "Request failed");
+        }
+
+        if (response.status === 204) return undefined as T;
+        return await response.json() as T;
     } finally {
         stopLoader();
     }
 };
 
 // Auth
-export const registerUser = (data: any) => request("POST", "/auth/register", { body: data });
-export const loginUser = (data: any) => request("POST", "/auth/login", { body: data });
-export const refreshToken = () => request("POST", "/auth/refresh");
-export const logoutUser = () => request("POST", "/auth/logout");
-export const changePassword = (data: any) =>
-    request("PATCH", "/auth/change-password", { body: data });
+export const registerUser = (data: RegisterInput) =>
+    request<AuthResponse>("POST", "/auth/register", { body: { ...data } });
+export const loginUser = (data: LoginInput) =>
+    request<AuthResponse>("POST", "/auth/login", { body: { ...data } });
+export const refreshToken = () => request<AuthResponse>("POST", "/auth/refresh");
+export const logoutUser = () => request<void>("POST", "/auth/logout");
+export const changePassword = (data: { currentPassword: string; newPassword: string }) =>
+    request<void>("PATCH", "/auth/change-password", { body: { ...data } });
 export const forgotPassword = (email: string) =>
-    request("POST", "/auth/forgot-password", { body: { email } });
-export const resetPassword = (data: any) =>
-    request("POST", "/auth/reset-password", { body: data });
+    request<void>("POST", "/auth/forgot-password", { body: { email } });
+export const resetPassword = (data: { token: string; newPassword: string }) =>
+    request<void>("POST", "/auth/reset-password", { body: { ...data } });
 
 // Posts
-export const getAllPosts = () => request("GET", "/posts");
-export const getPostById = (id: string) => request("GET", `/posts/${id}`);
-export const createPost = (data: any) => request("POST", "/posts", { body: data });
-export const updatePost = (id: string, data: any) =>
-    request("PUT", `/posts/${id}`, { body: data });
-export const deletePost = (id: string) => request("DELETE", `/posts/${id}`);
+export const getAllPosts = () => request<IPost[]>("GET", "/posts");
+export const getPostById = (id: string) => request<IPost>("GET", `/posts/${id}`);
+export const createPost = (data: PostInput) =>
+    request<IPost>("POST", "/posts", { body: { ...data } });
+export const updatePost = (id: string, data: PostInput) =>
+    request<IPost>("PUT", `/posts/${id}`, { body: { ...data } });
+export const deletePost = (id: string) => request<void>("DELETE", `/posts/${id}`);
+export const likePost = (id: string) => request<Pick<IPost, "likes">>("POST", `/posts/${id}/like`);
+export const unlikePost = (id: string) => request<Pick<IPost, "likes">>("POST", `/posts/${id}/unlike`);
 
 // Users
-export const getMe = () => request("GET", "/users/me");
-export const getUserProfile = (id: string) => request("GET", `/users/${id}`);
-export const updateUser = (data: any) => request("PATCH", "/users/update", { body: data });
-export const deleteUser = () => request("DELETE", "/users/delete");
-export const followUser = (id: string) => request("POST", `/users/follow/${id}`);
-export const unfollowUser = (id: string) => request("POST", `/users/unfollow/${id}`);
-export const getFollowers = (id: string) => request("GET", `/users/${id}/followers`);
-export const getFollowing = (id: string) => request("GET", `/users/${id}/following`);
-export const blockUser = (id: string) => request("POST", `/users/block/${id}`);
-export const unblockUser = (id: string) => request("POST", `/users/unblock/${id}`);
+export const getMe = () => request<UserResponse>("GET", "/users/me");
+export const getUserProfile = (id: string) => request<IUser>("GET", `/users/${id}`);
+export const updateUser = (data: ProfileUpdateInput) =>
+    request<UserResponse>("PATCH", "/users/update", { body: { ...data } });
+export const deleteUser = () => request<void>("DELETE", "/users/delete");
+export const followUser = (id: string) => request<void>("POST", `/users/follow/${id}`);
+export const unfollowUser = (id: string) => request<void>("POST", `/users/unfollow/${id}`);
+export const getFollowers = (id: string) => request<IUser[]>("GET", `/users/${id}/followers`);
+export const getFollowing = (id: string) => request<IUser[]>("GET", `/users/${id}/following`);
+export const blockUser = (id: string) => request<void>("POST", `/users/block/${id}`);
+export const unblockUser = (id: string) => request<void>("POST", `/users/unblock/${id}`);
 export const searchUsers = (query: string) =>
-    request("GET", `/users/search`, { queryParams: { q: query } });
+    request<IUser[]>("GET", "/users/search", { queryParams: { q: query } });
 
 // Comments
 export const createComment = (postId: string, content: string) =>
-    request("POST", "/comments", { body: { postId, content } });
-
+    request<void>("POST", "/comments", { body: { postId, content } });
 export const editComment = (commentId: string, content: string) =>
-    request("PATCH", `/comments/${commentId}`, { body: { content } });
-
+    request<void>("PATCH", `/comments/${commentId}`, { body: { content } });
 export const deleteComment = (commentId: string) =>
-    request("DELETE", `/comments/${commentId}`);
-
+    request<void>("DELETE", `/comments/${commentId}`);
 export const likeComment = (commentId: string) =>
-    request("POST", `/comments/${commentId}/like`);
-
+    request<Pick<IComment, "likes">>("POST", `/comments/${commentId}/like`);
 export const unlikeComment = (commentId: string) =>
-    request("POST", `/comments/${commentId}/unlike`);
-
+    request<Pick<IComment, "likes">>("POST", `/comments/${commentId}/unlike`);
 export const replyToComment = (commentId: string, content: string) =>
-    request("POST", `/comments/${commentId}/reply`, { body: { content } });
-
+    request<void>("POST", `/comments/${commentId}/reply`, { body: { content } });
 export const editReply = (commentId: string, replyIndex: number, content: string) =>
-    request("PATCH", `/comments/${commentId}/reply/${replyIndex}`, { body: { content } });
-
+    request<void>("PATCH", `/comments/${commentId}/reply/${replyIndex}`, { body: { content } });
 export const deleteReply = (commentId: string, replyIndex: number) =>
-    request("DELETE", `/comments/${commentId}/reply/${replyIndex}`);
-
+    request<void>("DELETE", `/comments/${commentId}/reply/${replyIndex}`);
 export const likeReply = (commentId: string, replyIndex: number) =>
-    request("POST", `/comments/${commentId}/reply/${replyIndex}/like`);
-
+    request<void>("POST", `/comments/${commentId}/reply/${replyIndex}/like`);
 export const unlikeReply = (commentId: string, replyIndex: number) =>
-    request("POST", `/comments/${commentId}/reply/${replyIndex}/unlike`);
-
+    request<void>("POST", `/comments/${commentId}/reply/${replyIndex}/unlike`);
 export const replyToReply = (commentId: string, parentReplyIndex: number, content: string) =>
-    request("POST", `/comments/${commentId}/reply/${parentReplyIndex}/reply`, { body: { content } });
+    request<void>("POST", `/comments/${commentId}/reply/${parentReplyIndex}/reply`, { body: { content } });

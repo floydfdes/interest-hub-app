@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { createComment, deleteComment, deleteReply, editComment, editReply, getPostById, likeComment, likeReply, replyToComment, replyToReply, unlikeComment, unlikeReply, updatePost } from "@/app/api/api";
+import { createComment, deleteComment, deleteReply, editComment, editReply, getErrorMessage, getPostById, likeComment, likeReply, replyToComment, unlikeComment, updatePost } from "@/app/api/api";
 import { compressAndConvertToBase64, resizeImageToBase64 } from "@/app/api/imageUtil";
-import { IComment, IPost } from "@/app/types/user";
+import { IComment, IPost, PostInput } from "@/app/types/user";
+import { useCurrentUser } from "@/app/hooks/useCurrentUser";
 import { Edit, ThumbsUp, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +12,7 @@ import Image from "next/image";
 
 const categories = ["Tech", "Health", "Travel", "Design", "Education"];
 const visibilities = ["public", "private", "followersOnly"];
+type EditablePost = Omit<PostInput, "tags"> & { tags: string };
 
 export default function EditPostPage() {
     const router = useRouter();
@@ -20,7 +20,7 @@ export default function EditPostPage() {
     const postId = params?.id as string;
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const [form, setForm] = useState({
+    const [form, setForm] = useState<EditablePost>({
         title: "",
         content: "",
         category: "",
@@ -36,14 +36,8 @@ export default function EditPostPage() {
     const [comments, setComments] = useState<IComment[]>([]);
     const [newComment, setNewComment] = useState("");
     const [commentError, setCommentError] = useState("");
-    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-    const currentUserId = currentUser._id;
-
-    useEffect(() => {
-        if (postId) {
-            fetchPost();
-        }
-    }, [postId]);
+    const currentUser = useCurrentUser();
+    const currentUserId = currentUser?._id || "";
 
     const fetchPost = async () => {
         try {
@@ -58,14 +52,45 @@ export default function EditPostPage() {
             });
             setImagePreview(data.image || null);
             setComments(data.comments);
-        } catch (err: any) {
+        } catch {
             setError("Failed to fetch post");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleChange = (field: string, value: string | string[]) => {
+    useEffect(() => {
+        if (!postId) return;
+        let cancelled = false;
+
+        const loadPost = async () => {
+            try {
+                const data = await getPostById(postId) as IPost;
+                if (cancelled) return;
+                setForm({
+                    title: data.title,
+                    content: data.content,
+                    category: data.category,
+                    tags: data.tags.join(", "),
+                    image: data.image,
+                    visibility: data.visibility,
+                });
+                setImagePreview(data.image || null);
+                setComments(data.comments);
+            } catch {
+                if (!cancelled) setError("Failed to fetch post");
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+
+        void loadPost();
+        return () => {
+            cancelled = true;
+        };
+    }, [postId]);
+
+    const handleChange = (field: keyof EditablePost, value: string) => {
         setForm((prev) => ({ ...prev, [field]: value }));
     };
 
@@ -102,8 +127,8 @@ export default function EditPostPage() {
 
             await updatePost(postId, payload);
             router.push("/explore");
-        } catch (err: any) {
-            setError(err.message || "Update failed");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Update failed"));
         }
     };
 
@@ -121,8 +146,8 @@ export default function EditPostPage() {
             await createComment(postId, newComment);
             await fetchPost();
             setNewComment("");
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to add comment");
+        } catch (err: unknown) {
+            setCommentError(getErrorMessage(err, "Failed to add comment"));
         }
     };
 
@@ -130,8 +155,8 @@ export default function EditPostPage() {
         try {
             await editComment(commentId, updatedContent);
             await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to edit comment");
+        } catch (err: unknown) {
+            setCommentError(getErrorMessage(err, "Failed to edit comment"));
         }
     };
 
@@ -139,8 +164,8 @@ export default function EditPostPage() {
         try {
             await deleteComment(commentId);
             await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to delete comment");
+        } catch (err: unknown) {
+            setCommentError(getErrorMessage(err, "Failed to delete comment"));
         }
     };
 
@@ -148,8 +173,8 @@ export default function EditPostPage() {
         try {
             await likeComment(commentId);
             await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to like comment");
+        } catch (err: unknown) {
+            setCommentError(getErrorMessage(err, "Failed to like comment"));
         }
     };
 
@@ -157,8 +182,8 @@ export default function EditPostPage() {
         try {
             await unlikeComment(commentId);
             await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to unlike comment");
+        } catch (err: unknown) {
+            setCommentError(getErrorMessage(err, "Failed to unlike comment"));
         }
     };
 
@@ -166,8 +191,8 @@ export default function EditPostPage() {
         try {
             await replyToComment(commentId, replyContent);
             await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to reply to comment");
+        } catch (err: unknown) {
+            setCommentError(getErrorMessage(err, "Failed to reply to comment"));
         }
     };
 
@@ -175,8 +200,8 @@ export default function EditPostPage() {
         try {
             await editReply(commentId, replyIndex, updatedContent);
             await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to edit reply");
+        } catch (err: unknown) {
+            setCommentError(getErrorMessage(err, "Failed to edit reply"));
         }
     };
 
@@ -184,8 +209,8 @@ export default function EditPostPage() {
         try {
             await deleteReply(commentId, replyIndex);
             await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to delete reply");
+        } catch (err: unknown) {
+            setCommentError(getErrorMessage(err, "Failed to delete reply"));
         }
     };
 
@@ -193,30 +218,8 @@ export default function EditPostPage() {
         try {
             await likeReply(commentId, replyIndex);
             await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to like reply");
-        }
-    };
-
-    const handleUnlikeReply = async (commentId: string, replyIndex: number) => {
-        try {
-            await unlikeReply(commentId, replyIndex);
-            await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to unlike reply");
-        }
-    };
-
-    const handleReplyToReply = async (
-        commentId: string,
-        parentReplyIndex: number,
-        replyContent: string
-    ) => {
-        try {
-            await replyToReply(commentId, parentReplyIndex, replyContent);
-            await fetchPost();
-        } catch (err: any) {
-            setCommentError(err.message || "Failed to reply to reply");
+        } catch (err: unknown) {
+            setCommentError(getErrorMessage(err, "Failed to like reply"));
         }
     };
 
@@ -545,5 +548,3 @@ export default function EditPostPage() {
         </div>
     );
 }
-
-

@@ -1,41 +1,37 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import api from '@/services/api';
+import { Empty, message, Skeleton } from 'antd';
+import { deletePost, getAllPosts } from '@/app/api/api';
+import { useCurrentUser } from '@/app/hooks/useCurrentUser';
+import { IPost } from '@/app/types/user';
 import PostCard from './PostCard';
-import { List, Skeleton, Empty, message } from 'antd';
 
 const PostList = () => {
-    const [posts, setPosts] = useState<any[]>([]);
+    const [posts, setPosts] = useState<IPost[]>([]);
     const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    const currentUser = useCurrentUser();
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            setCurrentUser(JSON.parse(storedUser));
-        }
-        fetchPosts();
-    }, []);
+        const fetchPosts = async () => {
+            try {
+                setPosts(await getAllPosts());
+            } catch {
+                message.error('Failed to load posts');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const fetchPosts = async () => {
-        try {
-            const res = await api.get('/posts');
-            setPosts(res.data);
-        } catch (error) {
-            console.error('Error fetching posts:', error);
-            message.error('Failed to load posts');
-        } finally {
-            setLoading(false);
-        }
-    };
+        void fetchPosts();
+    }, []);
 
     const handleDelete = async (id: string) => {
         try {
-            await api.delete(`/posts/${id}`);
-            setPosts(posts.filter((post) => post._id !== id));
+            await deletePost(id);
+            setPosts((currentPosts) => currentPosts.filter((post) => post._id !== id));
             message.success('Post deleted');
-        } catch (error) {
+        } catch {
             message.error('Failed to delete post');
         }
     };

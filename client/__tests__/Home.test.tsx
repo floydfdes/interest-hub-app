@@ -2,12 +2,10 @@ import { render, screen } from '@testing-library/react';
 import Home from '../app/page';
 import '@testing-library/jest-dom';
 
-// Mock the API service
-jest.mock('@/services/api', () => ({
-    get: jest.fn(() => Promise.resolve({ data: [] })),
+jest.mock('@/app/api/api', () => ({
+    getAllPosts: jest.fn(() => Promise.resolve([])),
 }));
 
-// Mock useRouter
 jest.mock('next/navigation', () => ({
     useRouter: () => ({
         push: jest.fn(),
@@ -15,17 +13,15 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('Home Page', () => {
-    it('renders the heading', () => {
+    it('renders the heading', async () => {
         render(<Home />);
         const heading = screen.getByRole('heading', { name: /Latest Interests/i });
         expect(heading).toBeInTheDocument();
+        expect(await screen.findByText(/No posts found/i)).toBeInTheDocument();
     });
 
-    it('renders post list', () => {
+    it('renders post list', async () => {
         render(<Home />);
-        // Since we mocked empty posts, it might show empty state or skeleton
-        // We just check if it renders without crashing
-        const mainDiv = screen.getByRole('heading', { name: /Latest Interests/i });
-        expect(mainDiv).toBeInTheDocument();
+        expect(await screen.findByText(/No posts found/i)).toBeInTheDocument();
     });
 });

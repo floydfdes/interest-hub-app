@@ -4,19 +4,12 @@ import PostList from '@/components/features/PostList';
 import { Button, Typography } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 
 const { Title } = Typography;
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+  const user = useCurrentUser();
 
   return (
     <div className="max-w-4xl mx-auto">

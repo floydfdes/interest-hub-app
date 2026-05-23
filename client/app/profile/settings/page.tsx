@@ -1,15 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import {
     changePassword,
     deleteUser,
     forgotPassword,
+    getErrorMessage,
     resetPassword
 } from "@/app/api/api";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { notifyAuthChanged } from "@/app/hooks/useCurrentUser";
 
 export default function SettingsPage() {
     const [modal, setModal] = useState<null | "change" | "forgot" | "reset" | "delete">(null);
@@ -69,12 +70,13 @@ export default function SettingsPage() {
             if (modal === "delete") {
                 await deleteUser();
                 localStorage.clear();
+                notifyAuthChanged();
                 router.push("/login");
             }
 
             closeModal();
-        } catch (err: any) {
-            setError(err.message || "Something went wrong");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Something went wrong"));
             setLoading(false);
         }
     };

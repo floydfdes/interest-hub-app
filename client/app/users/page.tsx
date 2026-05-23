@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { followUser, getMe, searchUsers, unfollowUser } from "@/app/api/api";
@@ -11,7 +10,6 @@ import { formatDistanceToNow } from "date-fns";
 export default function UserSearchPage() {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<IUser[]>([]);
-    const [filteredResults, setFilteredResults] = useState<IUser[]>([]);
     const [followingIds, setFollowingIds] = useState<string[]>([]);
     const [error, setError] = useState("");
     const [selectedInterest, setSelectedInterest] = useState("All");
@@ -24,8 +22,7 @@ export default function UserSearchPage() {
                 setFollowingIds(me.user.following || []);
                 const initialUsers = await searchUsers("") as IUser[];
                 setResults(initialUsers);
-            } catch (e: any) {
-                console.log(e);
+            } catch {
                 setError("Failed to load user data");
             }
         };
@@ -36,8 +33,7 @@ export default function UserSearchPage() {
         try {
             const users = await searchUsers(query) as IUser[];
             setResults(users);
-        } catch (e: any) {
-            console.log(e);
+        } catch {
             setError("Search failed");
         }
     };
@@ -61,7 +57,7 @@ export default function UserSearchPage() {
         return ["All", ...Array.from(new Set(all))];
     }, [results]);
 
-    useEffect(() => {
+    const filteredResults = useMemo(() => {
         let filtered = [...results];
 
         if (selectedInterest !== "All") {
@@ -76,7 +72,7 @@ export default function UserSearchPage() {
             filtered.sort((a, b) => (b.followers?.length || 0) - (a.followers?.length || 0));
         }
 
-        setFilteredResults(filtered);
+        return filtered;
     }, [results, selectedInterest, sortBy]);
 
     return (

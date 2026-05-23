@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { resetPassword } from "../api/api";
-import { useState } from "react";
+import { getErrorMessage, resetPassword } from "../api/api";
+import { Suspense, useState } from "react";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
@@ -26,8 +25,8 @@ export default function ResetPasswordPage() {
             await resetPassword({ token, newPassword: password });
             setSuccess("Password reset successfully. Redirecting to login...");
             setTimeout(() => router.push("/login"), 2000);
-        } catch (err: any) {
-            setError(err.message || "Failed to reset password.");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to reset password."));
         }
     };
 
@@ -62,5 +61,13 @@ export default function ResetPasswordPage() {
                 </button>
             </div>
         </div>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-background" />}>
+            <ResetPasswordForm />
+        </Suspense>
     );
 }
