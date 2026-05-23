@@ -24,16 +24,12 @@ export interface IUser {
     updatedAt: string;
 }
 
-
-
-// Reusable preview type for users
 export interface IUserPreview {
     _id: string;
     name: string;
     profilePic: string;
 }
 
-// Reply interface (used inside Comment)
 export interface IReply {
     _id?: string;
     user: IUserPreview;
@@ -42,7 +38,6 @@ export interface IReply {
     createdAt: string;
 }
 
-// Comment interface (used inside Post)
 export interface IComment {
     _id: string;
     user: IUserPreview;
@@ -52,9 +47,11 @@ export interface IComment {
     replies: IReply[];
     createdAt: string;
     updatedAt: string;
+    isEditing?: boolean;
+    editContent?: string;
+    newReply?: string;
 }
 
-// Full Post interface
 export interface IPost {
     _id: string;
     title: string;
@@ -72,4 +69,3 @@ export interface IPost {
     createdAt: string;
     updatedAt: string;
 }
-

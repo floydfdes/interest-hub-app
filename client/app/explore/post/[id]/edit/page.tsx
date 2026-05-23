@@ -361,7 +361,26 @@ export default function EditPostPage() {
                                             </p>
                                         </div>
                                     </div>
-                                    <p className="text-gray-800">{comment.content}</p>
+
+                                    {/* Editable Comment Content */}
+                                    {comment.isEditing ? (
+                                        <textarea
+                                            className="w-full border rounded-md p-2 mb-2"
+                                            value={comment.editContent || comment.content}
+                                            onChange={(e) =>
+                                                setComments((prev) =>
+                                                    prev.map((c) =>
+                                                        c._id === comment._id
+                                                            ? { ...c, editContent: e.target.value }
+                                                            : c
+                                                    )
+                                                )
+                                            }
+                                        />
+                                    ) : (
+                                        <p className="text-gray-800">{comment.content}</p>
+                                    )}
+
                                     <div className="flex gap-4 mt-2 items-center">
                                         <button
                                             onClick={() =>
@@ -377,24 +396,143 @@ export default function EditPostPage() {
                                             />
                                             <span>{comment.likes.length}</span>
                                         </button>
+
                                         {comment.user._id === currentUserId && (
                                             <>
-                                                <button
-                                                    onClick={() => handleEditComment(comment._id, "Updated content")}
-                                                    className="flex items-center gap-1 text-primary hover:underline"
-                                                >
-                                                    <Edit className="w-5 h-5 stroke-primary" />
-                                                    <span>Edit</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteComment(comment._id)}
-                                                    className="flex items-center gap-1 text-red-500 hover:underline"
-                                                >
-                                                    <Trash2 className="w-5 h-5 stroke-red-500" />
-                                                    <span>Delete</span>
-                                                </button>
+                                                {comment.isEditing ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleEditComment(comment._id, comment.editContent || comment.content)
+                                                            }
+                                                            className="flex items-center gap-1 text-primary hover:underline"
+                                                        >
+                                                            <Edit className="w-5 h-5 stroke-primary" />
+                                                            <span>Save</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                setComments((prev) =>
+                                                                    prev.map((c) =>
+                                                                        c._id === comment._id
+                                                                            ? { ...c, isEditing: false, editContent: undefined }
+                                                                            : c
+                                                                    )
+                                                                )
+                                                            }
+                                                            className="flex items-center gap-1 text-red-500 hover:underline"
+                                                        >
+                                                            <Trash2 className="w-5 h-5 stroke-red-500" />
+                                                            <span>Cancel</span>
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button
+                                                            onClick={() =>
+                                                                setComments((prev) =>
+                                                                    prev.map((c) =>
+                                                                        c._id === comment._id ? { ...c, isEditing: true } : c
+                                                                    )
+                                                                )
+                                                            }
+                                                            className="flex items-center gap-1 text-primary hover:underline"
+                                                        >
+                                                            <Edit className="w-5 h-5 stroke-primary" />
+                                                            <span>Edit</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteComment(comment._id)}
+                                                            className="flex items-center gap-1 text-red-500 hover:underline"
+                                                        >
+                                                            <Trash2 className="w-5 h-5 stroke-red-500" />
+                                                            <span>Delete</span>
+                                                        </button>
+                                                    </>
+                                                )}
                                             </>
                                         )}
+                                    </div>
+
+                                    {/* Replies Section */}
+                                    <div className="mt-4 pl-6 border-l">
+                                        <h3 className="text-sm font-bold text-gray-700 mb-2">Replies</h3>
+                                        <ul className="space-y-2">
+                                            {comment.replies.map((reply, index) => (
+                                                <li key={index} className="p-2 border rounded-md">
+                                                    <div className="flex items-center gap-4 mb-2">
+                                                        <Image
+                                                            src={reply.user.profilePic}
+                                                            alt={reply.user.name}
+                                                            width={30}
+                                                            height={30}
+                                                            className="rounded-full"
+                                                        />
+                                                        <div>
+                                                            <p className="font-bold">{reply.user.name}</p>
+                                                            <p className="text-sm text-gray-500">
+                                                                {new Date(reply.createdAt).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-gray-800">{reply.content}</p>
+                                                    <div className="flex gap-4 mt-2 items-center">
+                                                        <button
+                                                            onClick={() => handleLikeReply(comment._id, index)}
+                                                            className="flex items-center gap-1 text-primary hover:underline"
+                                                        >
+                                                            <ThumbsUp
+                                                                className={`w-4 h-4 ${reply.likes.includes(currentUserId)
+                                                                    ? "fill-primary"
+                                                                    : "stroke-primary"
+                                                                    }`}
+                                                            />
+                                                            <span>{reply.likes.length}</span>
+                                                        </button>
+                                                        {reply.user._id === currentUserId && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleEditReply(comment._id, index, "Updated reply content")
+                                                                    }
+                                                                    className="flex items-center gap-1 text-primary hover:underline"
+                                                                >
+                                                                    <Edit className="w-4 h-4 stroke-primary" />
+                                                                    <span>Edit</span>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteReply(comment._id, index)}
+                                                                    className="flex items-center gap-1 text-red-500 hover:underline"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4 stroke-red-500" />
+                                                                    <span>Delete</span>
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <div className="mt-4">
+                                            <textarea
+                                                placeholder="Write a reply..."
+                                                className="p-2 w-full border rounded-md min-h-[60px]"
+                                                value={comment.newReply || ""}
+                                                onChange={(e) =>
+                                                    setComments((prev) =>
+                                                        prev.map((c) =>
+                                                            c._id === comment._id ? { ...c, newReply: e.target.value } : c
+                                                        )
+                                                    )
+                                                }
+                                            />
+                                            <button
+                                                onClick={() => handleReplyToComment(comment._id, comment.newReply || "")}
+                                                className="bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90 mt-2"
+                                            >
+                                                Reply
+                                            </button>
+                                        </div>
                                     </div>
                                 </li>
                             ))}
