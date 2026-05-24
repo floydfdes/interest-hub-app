@@ -121,7 +121,11 @@ export default function EditPostPage() {
             if (!token) throw new Error("Unauthorized");
 
             const payload = {
-                ...form,
+                title: form.title,
+                content: form.content,
+                category: form.category,
+                visibility: form.visibility,
+                ...(form.image.startsWith("data:") && { image: form.image }),
                 tags: form.tags.split(",").map((t) => t.trim()),
             };
 

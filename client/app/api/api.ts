@@ -5,6 +5,7 @@ import {
     IUser,
     LoginInput,
     PostInput,
+    PostUpdateInput,
     ProfileUpdateInput,
     RegisterInput,
     UserResponse,
@@ -18,6 +19,20 @@ type RequestBody = Record<string, unknown>;
 interface RequestOptions {
     body?: RequestBody;
     queryParams?: Record<string, QueryValue>;
+}
+
+type RawAuthResponse = Omit<AuthResponse, "user"> & {
+    user: IUser & { id?: string };
+};
+
+function normalizeAuthResponse(response: RawAuthResponse): AuthResponse {
+    return {
+        ...response,
+        user: {
+            ...response.user,
+            _id: response.user._id || response.user.id || "",
+        },
+    };
 }
 
 function startLoader() {
@@ -74,10 +89,10 @@ const request = async <T>(
 };
 
 // Auth
-export const registerUser = (data: RegisterInput) =>
-    request<AuthResponse>("POST", "/auth/register", { body: { ...data } });
-export const loginUser = (data: LoginInput) =>
-    request<AuthResponse>("POST", "/auth/login", { body: { ...data } });
+export const registerUser = async (data: RegisterInput) =>
+    normalizeAuthResponse(await request<RawAuthResponse>("POST", "/auth/register", { body: { ...data } }));
+export const loginUser = async (data: LoginInput) =>
+    normalizeAuthResponse(await request<RawAuthResponse>("POST", "/auth/login", { body: { ...data } }));
 export const refreshToken = () => request<AuthResponse>("POST", "/auth/refresh");
 export const logoutUser = () => request<void>("POST", "/auth/logout");
 export const changePassword = (data: { currentPassword: string; newPassword: string }) =>
@@ -92,7 +107,7 @@ export const getAllPosts = () => request<IPost[]>("GET", "/posts");
 export const getPostById = (id: string) => request<IPost>("GET", `/posts/${id}`);
 export const createPost = (data: PostInput) =>
     request<IPost>("POST", "/posts", { body: { ...data } });
-export const updatePost = (id: string, data: PostInput) =>
+export const updatePost = (id: string, data: PostUpdateInput) =>
     request<IPost>("PUT", `/posts/${id}`, { body: { ...data } });
 export const deletePost = (id: string) => request<void>("DELETE", `/posts/${id}`);
 export const likePost = (id: string) => request<Pick<IPost, "likes">>("POST", `/posts/${id}/like`);

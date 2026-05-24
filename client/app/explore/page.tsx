@@ -117,10 +117,10 @@ export default function Explore() {
               </div>
               {post.author?._id === currentUser?._id && (
                 <div className="flex items-center gap-3">
-                  <Link href={`/explore/post/${post._id}/edit`} className="text-indigo-600 transition hover:text-indigo-800">
+                  <Link data-testid="post-edit-link" href={`/explore/post/${post._id}/edit`} className="text-indigo-600 transition hover:text-indigo-800">
                     <Edit size={15} />
                   </Link>
-                  <button onClick={() => void handleDelete(post._id)} className="text-rose-500 transition hover:text-rose-700">
+                  <button data-testid="post-delete-button" onClick={() => void handleDelete(post._id)} className="text-rose-500 transition hover:text-rose-700">
                     <Trash2 size={15} />
                   </button>
                 </div>

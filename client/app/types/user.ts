@@ -99,6 +99,10 @@ export interface PostInput {
     tags?: string[];
 }
 
+export type PostUpdateInput = Omit<PostInput, "image"> & {
+    image?: string;
+};
+
 export type ProfileUpdateInput = Partial<
     Pick<IUser, "name" | "bio" | "interests" | "profilePic">
 >;

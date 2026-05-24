@@ -73,27 +73,71 @@ async function findUserToFollow(page: Page, userName: string) {
 
 async function editPost(page: Page, currentTitle: string, nextTitle: string) {
     await page.goto('/explore');
-    const article = page.locator('article').filter({ hasText: currentTitle }).first();
+    const article = page.locator('article').filter({ hasText: currentTitle });
+    await expect(article).toHaveCount(1);
     await expect(article).toBeVisible();
-    await article.locator('a[href*="/edit"]').click();
+    await article.getByTestId('post-edit-link').click();
     await page.waitForURL(/\/explore\/post\/.+\/edit$/);
     await page.getByTestId('edit-post-title').fill(nextTitle);
-    await page.getByTestId('edit-post-submit').click();
+    const [response] = await Promise.all([
+        page.waitForResponse(
+            (candidate) => candidate.url().includes('/api/posts/') && candidate.request().method() === 'PUT',
+            { timeout: 15_000 }
+        ),
+        page.getByTestId('edit-post-submit').click(),
+    ]);
+    expect(
+        response.ok(),
+        `Post update failed with ${response.status()}: ${await response.text()}`
+    ).toBeTruthy();
     await page.waitForURL(/\/explore$/);
-    await expect(page.locator('article')).toContainText(nextTitle);
+    await expect(page.locator('article').filter({ hasText: nextTitle })).toHaveCount(1);
 }
 
 async function deletePost(page: Page, title: string) {
     await page.goto('/explore');
-    const article = page.locator('article').filter({ hasText: title }).first();
+    const article = page.locator('article').filter({ hasText: title });
+    await expect(article).toHaveCount(1);
     await expect(article).toBeVisible();
-    await article.locator('button').last().click();
+    await article.getByTestId('post-delete-button').click();
     await page.getByRole('button', { name: /^delete post$/i }).click();
-    await expect(page.locator('article')).not.toContainText(title);
+    await expect(page.locator('article').filter({ hasText: title })).toHaveCount(0);
+}
+
+async function editComment(page: Page, currentText: string, nextText: string) {
+    const comment = page.getByTestId('comment-item').filter({ hasText: currentText });
+    await expect(comment).toHaveCount(1);
+    await comment.getByTestId('comment-edit-toggle').click();
+    await comment.getByTestId('comment-edit-input').fill(nextText);
+    await comment.getByTestId('comment-edit-submit').click();
+    await expect(page.getByTestId('comment-item').filter({ hasText: nextText })).toHaveCount(1);
+}
+
+async function deleteComment(page: Page, text: string) {
+    const comment = page.getByTestId('comment-item').filter({ hasText: text });
+    await expect(comment).toHaveCount(1);
+    await comment.getByTestId('comment-delete').click();
+    await expect(page.getByTestId('comment-item').filter({ hasText: text })).toHaveCount(0);
+}
+
+async function editReply(page: Page, currentText: string, nextText: string) {
+    const reply = page.getByTestId('reply-item').filter({ hasText: currentText });
+    await expect(reply).toHaveCount(1);
+    await reply.getByTestId('reply-edit-toggle').click();
+    await reply.getByTestId('reply-edit-input').fill(nextText);
+    await reply.getByTestId('reply-edit-submit').click();
+    await expect(page.getByTestId('reply-item').filter({ hasText: nextText })).toHaveCount(1);
+}
+
+async function deleteReply(page: Page, text: string) {
+    const reply = page.getByTestId('reply-item').filter({ hasText: text });
+    await expect(reply).toHaveCount(1);
+    await reply.getByTestId('reply-delete').click();
+    await expect(page.getByTestId('reply-item').filter({ hasText: text })).toHaveCount(0);
 }
 
 test.describe.serial('full app journey', () => {
-    test('registers, logs in, follows/unfollows, creates posts, comments, edits, and deletes', async ({ page }) => {
+    test('registers, logs in, follows/unfollows, creates posts, comments and replies, edits, and deletes', async ({ page }) => {
         const suffix = uniqueSuffix();
         const firstUser = {
             name: `Playwright User ${suffix}`,
@@ -114,6 +158,8 @@ test.describe.serial('full app journey', () => {
         const editedPostTitle = `Playwright Post One Updated ${suffix}`;
         const commentText = `Playwright comment ${suffix}`;
         const replyText = `Playwright reply ${suffix}`;
+        const editedCommentText = `Playwright edited comment ${suffix}`;
+        const editedReplyText = `Playwright edited reply ${suffix}`;
 
         await test.step('register the primary user', async () => {
             await registerUser(page, firstUser.name, firstUser.email, firstUser.password);
@@ -147,6 +193,13 @@ test.describe.serial('full app journey', () => {
             await page.getByTestId('reply-input').first().fill(replyText);
             await page.getByTestId('reply-submit').first().click();
             await expect(page.getByText(replyText)).toBeVisible();
+        });
+
+        await test.step('edit and delete a reply and comment', async () => {
+            await editReply(page, replyText, editedReplyText);
+            await deleteReply(page, editedReplyText);
+            await editComment(page, commentText, editedCommentText);
+            await deleteComment(page, editedCommentText);
         });
 
         await test.step('edit one created post and delete the other', async () => {
