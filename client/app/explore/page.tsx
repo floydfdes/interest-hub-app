@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit, MessageCircle, PenLine, Sparkles, ThumbsUp, Trash2 } from "lucide-react";
+import { Edit, LayoutGrid, List, MessageCircle, PenLine, Sparkles, ThumbsUp, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { deletePost, getAllPosts, getErrorMessage } from "../api/api";
 import { IPost } from "../types/user";
@@ -10,9 +10,12 @@ import Link from "next/link";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 
+type ViewMode = "cards" | "list";
+
 export default function Explore() {
   const [posts, setPosts] = useState<IPost[]>([]);
   const [error, setError] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const currentUser = useCurrentUser();
 
   useEffect(() => {
@@ -76,26 +79,64 @@ export default function Explore() {
         </Link>
       </header>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <p className="text-sm font-medium text-slate-500">
+          {posts.length} {posts.length === 1 ? "post" : "posts"}
+        </p>
+        <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm" aria-label="Post view">
+          <button
+            type="button"
+            data-testid="cards-view-toggle"
+            aria-pressed={viewMode === "cards"}
+            onClick={() => setViewMode("cards")}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+              viewMode === "cards"
+                ? "bg-indigo-50 text-indigo-700"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <LayoutGrid size={16} />
+            Cards
+          </button>
+          <button
+            type="button"
+            data-testid="list-view-toggle"
+            aria-pressed={viewMode === "list"}
+            onClick={() => setViewMode("list")}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+              viewMode === "list"
+                ? "bg-indigo-50 text-indigo-700"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <List size={16} />
+            List
+          </button>
+        </div>
+      </div>
+
+      <div className={viewMode === "cards" ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" : "space-y-4"}>
         {posts.map((post) => (
           <article
             key={post._id}
-            className="surface overflow-hidden transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_48px_-27px_rgba(15,23,42,0.32)]"
+            className={`surface overflow-hidden transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_48px_-27px_rgba(15,23,42,0.32)] ${
+              viewMode === "list" ? "p-4 sm:p-5" : ""
+            }`}
           >
-            <Link href={`/posts/${post._id}`} className="block">
+            <Link href={`/posts/${post._id}`} className={viewMode === "cards" ? "block" : "flex flex-col gap-4 sm:flex-row"}>
               <Image
                 src={post.image || "/default_image.png"}
                 alt={post.title}
                 width={480}
                 height={300}
                 unoptimized={post.image?.startsWith("data:")}
-                className="h-52 w-full object-cover"
+                className={viewMode === "cards" ? "h-52 w-full object-cover" : "h-40 w-full shrink-0 rounded-2xl object-cover sm:w-56"}
               />
-              <div className="p-5">
+              <div className={viewMode === "cards" ? "p-5" : "min-w-0 flex-1 py-1"}>
                 <span className="tag-pill">{post.category}</span>
-                <h2 className="mt-4 text-xl font-semibold tracking-tight text-slate-900">{post.title}</h2>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{post.content}</p>
-                <div className="mt-5 flex items-center gap-2 text-sm text-slate-500">
+                <h2 className={`${viewMode === "cards" ? "mt-4" : "mt-3"} text-xl font-semibold tracking-tight text-slate-900`}>{post.title}</h2>
+                <p className={`mt-2 text-sm leading-6 text-slate-500 ${viewMode === "cards" ? "line-clamp-2" : "line-clamp-3"}`}>{post.content}</p>
+                <div className={`${viewMode === "cards" ? "mt-5" : "mt-4"} flex items-center gap-2 text-sm text-slate-500`}>
                   <Image
                     src={post.author?.profilePic || "/DefaultAvatar.png"}
                     alt={post.author?.name || "User"}
@@ -110,7 +151,7 @@ export default function Explore() {
                 </div>
               </div>
             </Link>
-            <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm text-slate-500">
+            <div className={`flex items-center justify-between border-t border-slate-100 text-sm text-slate-500 ${viewMode === "cards" ? "px-5 py-3" : "mt-4 pt-4"}`}>
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1.5"><ThumbsUp size={14} />{post.likes?.length || 0}</span>
                 <span className="flex items-center gap-1.5"><MessageCircle size={14} />{post.comments?.length || 0}</span>
