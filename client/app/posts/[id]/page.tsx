@@ -46,7 +46,7 @@ export default function PostDetailPage() {
         return () => {
             cancelled = true;
         };
-    }, [id]);
+    }, [id, message]);
 
     if (loading) {
         return (

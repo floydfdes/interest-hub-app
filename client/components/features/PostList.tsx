@@ -25,7 +25,7 @@ const PostList = () => {
         };
 
         void fetchPosts();
-    }, []);
+    }, [message]);
 
     const handleDelete = async (id: string) => {
         try {

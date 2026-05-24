@@ -29,6 +29,7 @@ function belongsToUser(like: Like, userId: string) {
 const PostCard = ({ post, onDelete, currentUser }: PostCardProps) => {
     const [likes, setLikes] = useState<Like[]>(post.likes || []);
     const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
+    const postImage = post.image || '/default_image.png';
 
     const handleLike = async () => {
         if (!currentUser) return;
@@ -66,18 +67,16 @@ const PostCard = ({ post, onDelete, currentUser }: PostCardProps) => {
             <Link href={`/posts/${post._id}`} className="block">
                 {post.title && <h3 className="mt-5 text-xl font-semibold tracking-tight text-slate-900">{post.title}</h3>}
                 <p className="mt-2 whitespace-pre-line text-[0.96rem] leading-7 text-slate-600">{post.content}</p>
-                {post.image && (
-                    <div className="mt-5 overflow-hidden rounded-2xl bg-slate-100">
-                        <Image
-                            src={post.image}
-                            alt={post.title || 'Post content'}
-                            width={900}
-                            height={540}
-                            unoptimized={post.image.startsWith('data:')}
-                            className="max-h-[29rem] w-full object-cover transition duration-300 hover:scale-[1.01]"
-                        />
-                    </div>
-                )}
+                <div className="mt-5 overflow-hidden rounded-2xl bg-slate-100">
+                    <Image
+                        src={postImage}
+                        alt={post.title || 'Post content'}
+                        width={900}
+                        height={540}
+                        unoptimized={postImage.startsWith('data:')}
+                        className="max-h-[29rem] w-full object-cover transition duration-300 hover:scale-[1.01]"
+                    />
+                </div>
             </Link>
 
             <footer className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">

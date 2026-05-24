@@ -16,7 +16,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <div className="shell-container flex flex-col items-center">
             <article className="surface w-full max-w-4xl overflow-hidden p-5 sm:p-7">
                 <Image
-                    src={post.image || "/Placeholder.png"}
+                    src={post.image || "/default_image.png"}
                     alt={post.title}
                     width={800}
                     height={400}

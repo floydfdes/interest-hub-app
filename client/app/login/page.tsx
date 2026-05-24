@@ -63,17 +63,17 @@ const Login = () => {
                             { type: 'email', message: 'Please enter a valid email!' },
                         ]}
                     >
-                        <Input className="soft-input" prefix={<MailOutlined className="text-slate-400" />} placeholder="Email address" />
+                        <Input data-testid="login-email" className="soft-input" prefix={<MailOutlined className="text-slate-400" />} placeholder="Email address" />
                     </Form.Item>
                     <Form.Item
                         name="password"
                         rules={[{ required: true, message: 'Please input your Password!' }]}
                     >
-                        <Input.Password className="soft-input" prefix={<LockOutlined className="text-slate-400" />} placeholder="Password" />
+                        <Input.Password data-testid="login-password" className="soft-input" prefix={<LockOutlined className="text-slate-400" />} placeholder="Password" />
                     </Form.Item>
 
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" block loading={loading} className="!h-12 !rounded-xl !font-semibold">
+                        <Button data-testid="login-submit" type="primary" htmlType="submit" block loading={loading} className="!h-12 !rounded-xl !font-semibold">
                             Log in <ArrowRight size={15} />
                         </Button>
                     </Form.Item>

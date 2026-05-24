@@ -82,9 +82,9 @@ export default function Explore() {
             key={post._id}
             className="surface overflow-hidden transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_48px_-27px_rgba(15,23,42,0.32)]"
           >
-            <Link href={`/explore/post/${post._id}`} className="block">
+            <Link href={`/posts/${post._id}`} className="block">
               <Image
-                src={post.image || "/Placeholder.png"}
+                src={post.image || "/default_image.png"}
                 alt={post.title}
                 width={480}
                 height={300}

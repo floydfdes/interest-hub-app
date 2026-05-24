@@ -1,17 +1,18 @@
 'use client';
 
 import { createPost, getErrorMessage } from '@/app/api/api';
+import { compressAndConvertToBase64 } from '@/app/api/imageUtil';
 import { IPost } from '@/app/types/user';
 import { UploadOutlined } from '@ant-design/icons';
 import { App, Button, Card, Form, Input, Select, Typography, Upload } from 'antd';
 import type { UploadChangeParam, UploadFile } from 'antd/es/upload/interface';
-import imageCompression from 'browser-image-compression';
 import { ImagePlus, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 const { Title } = Typography;
 const { TextArea } = Input;
+const DEFAULT_POST_IMAGE = '/default_image.png';
 
 interface PostFormValues {
     title: string;
@@ -26,31 +27,23 @@ const PostForm = () => {
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const { message } = App.useApp();
 
-    const getBase64 = (file: File): Promise<string> =>
-        new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-        });
-
     const onFinish = async (values: PostFormValues) => {
         const originalImage = fileList[0]?.originFileObj as File | undefined;
-        if (!originalImage) {
-            message.error('Please select an image.');
-            return;
-        }
 
         setLoading(true);
         try {
-            const compressedImage = await imageCompression(originalImage, {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
-                useWebWorker: true,
-            });
-            const image = await getBase64(compressedImage);
+            const image = originalImage
+                ? await compressAndConvertToBase64(originalImage)
+                : await compressAndConvertToBase64(DEFAULT_POST_IMAGE);
+            if (!image) {
+                message.error('Failed to process image.');
+                return;
+            }
 
-            await createPost({ ...values, image });
+            await createPost({
+                ...values,
+                image,
+            });
             message.success('Post created successfully!');
             router.push('/');
         } catch (error: unknown) {
@@ -81,24 +74,25 @@ const PostForm = () => {
                     name="title"
                     rules={[{ required: true, message: 'Please add a title.' }]}
                 >
-                    <Input className="soft-input" placeholder="What is this interest about?" />
+                    <Input data-testid="post-title" className="soft-input" placeholder="What is this interest about?" />
                 </Form.Item>
                 <Form.Item
                     label="Content"
                     name="content"
                     rules={[{ required: true, message: 'Please write something!' }]}
                 >
-                    <TextArea className="soft-input !min-h-36 !p-4" rows={5} placeholder="What's on your mind?" showCount maxLength={500} />
+                    <TextArea data-testid="post-content" className="soft-input !min-h-36 !p-4" rows={5} placeholder="What's on your mind?" showCount maxLength={500} />
                 </Form.Item>
                 <Form.Item
                     label="Category"
                     name="category"
                     rules={[{ required: true, message: 'Please add a category.' }]}
                 >
-                    <Input className="soft-input" placeholder="For example: Photography" />
+                    <Input data-testid="post-category" className="soft-input" placeholder="For example: Photography" />
                 </Form.Item>
                 <Form.Item label="Visibility" name="visibility">
                     <Select
+                        data-testid="post-visibility"
                         className="!h-12"
                         options={[
                             { value: 'public', label: 'Public' },
@@ -107,8 +101,9 @@ const PostForm = () => {
                         ]}
                     />
                 </Form.Item>
-                <Form.Item label="Cover image" required>
+                <Form.Item label="Cover image">
                     <Upload
+                        data-testid="post-image-upload"
                         listType="picture"
                         fileList={fileList}
                         onChange={handleChange}
@@ -116,21 +111,21 @@ const PostForm = () => {
                         maxCount={1}
                         accept="image/*"
                     >
-                        <Button icon={<UploadOutlined />} className="!h-12 !rounded-xl">Select image</Button>
+                        <Button data-testid="post-image-select" icon={<UploadOutlined />} className="!h-12 !rounded-xl">Select image</Button>
                     </Upload>
                     {fileList.length === 0 && (
                         <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
                             <ImagePlus size={16} />
-                            Images are compressed automatically before posting.
+                            No image selected. The default cover image will be used.
                         </div>
                     )}
                 </Form.Item>
                 <Form.Item>
                     <Button
+                        data-testid="post-submit"
                         type="primary"
                         htmlType="submit"
                         loading={loading}
-                        disabled={fileList.length === 0}
                         block
                         size="large"
                         className="!h-12 !rounded-xl !font-semibold"

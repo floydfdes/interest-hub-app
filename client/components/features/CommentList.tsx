@@ -75,7 +75,7 @@ const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
                         >
                             {likes.length}
                         </Button>
-                        <Button type="text" size="small" onClick={() => setShowReply(!showReply)}>
+                        <Button data-testid="reply-toggle" type="text" size="small" onClick={() => setShowReply(!showReply)}>
                             Reply
                         </Button>
                     </div>
@@ -85,12 +85,13 @@ const CommentItem = ({ comment, onReply, currentUser }: CommentProps) => {
             {showReply && (
                 <div className="ml-10 mt-2 flex gap-2">
                     <Input
+                        data-testid="reply-input"
                         value={replyContent}
                         onChange={(event) => setReplyContent(event.target.value)}
                         placeholder="Write a reply..."
                         onPressEnter={() => void handleSubmitReply()}
                     />
-                    <Button type="primary" onClick={() => void handleSubmitReply()}>Reply</Button>
+                    <Button data-testid="reply-submit" type="primary" onClick={() => void handleSubmitReply()}>Reply</Button>
                 </div>
             )}
 
@@ -155,13 +156,14 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
                     <Avatar src={currentUser.profilePic || null} icon={<UserOutlined />} />
                     <div className="flex-1">
                         <TextArea
+                            data-testid="comment-input"
                             rows={2}
                             value={newComment}
                             onChange={(event) => setNewComment(event.target.value)}
                             placeholder="Write a comment..."
                             className="soft-input mb-3"
                         />
-                        <Button type="primary" onClick={() => void handleAddComment()} loading={submitting}>
+                        <Button data-testid="comment-submit" type="primary" onClick={() => void handleAddComment()} loading={submitting}>
                             Comment
                         </Button>
                     </div>

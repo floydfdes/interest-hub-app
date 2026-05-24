@@ -86,6 +86,7 @@ export default function UserSearchPage() {
 
             <div className="surface mb-7 flex w-full flex-wrap gap-3 p-4">
                 <input
+                    data-testid="users-search-input"
                     type="text"
                     placeholder="Search by name or interest..."
                     className="soft-input min-w-[15rem] flex-grow px-4 text-sm outline-none"
@@ -93,6 +94,7 @@ export default function UserSearchPage() {
                     onChange={(e) => setQuery(e.target.value)}
                 />
                 <button
+                    data-testid="users-search-button"
                     onClick={handleSearch}
                     className="primary-button"
                 >

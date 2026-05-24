@@ -234,6 +234,7 @@ export default function EditPostPage() {
                 {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
                 <input
+                    data-testid="edit-post-title"
                     type="text"
                     placeholder="Post Title"
                     className="soft-input mb-4 w-full px-4 outline-none"
@@ -242,6 +243,7 @@ export default function EditPostPage() {
                 />
 
                 <textarea
+                    data-testid="edit-post-content"
                     placeholder="Content"
                     className="soft-input mb-4 min-h-[120px] w-full p-4 outline-none"
                     value={form.content}
@@ -249,6 +251,7 @@ export default function EditPostPage() {
                 />
 
                 <select
+                    data-testid="edit-post-category"
                     className="soft-input mb-4 w-full px-4 outline-none"
                     value={form.category}
                     onChange={(e) => handleChange("category", e.target.value)}
@@ -260,6 +263,7 @@ export default function EditPostPage() {
                 </select>
 
                 <input
+                    data-testid="edit-post-tags"
                     type="text"
                     placeholder="Tags (comma-separated)"
                     className="soft-input mb-4 w-full px-4 outline-none"
@@ -271,6 +275,7 @@ export default function EditPostPage() {
                     <p className="mb-2 text-sm font-medium text-slate-700">Update image</p>
                     <div className="flex gap-4 flex-col sm:flex-row">
                         <input
+                            data-testid="edit-post-image-url"
                             type="text"
                             placeholder="Paste Image URL"
                             className="soft-input w-full px-4 outline-none"
@@ -287,6 +292,7 @@ export default function EditPostPage() {
                             }}
                         />
                         <button
+                            data-testid="edit-post-image-upload"
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
                             className="secondary-button"
@@ -309,6 +315,7 @@ export default function EditPostPage() {
                 )}
 
                 <select
+                    data-testid="edit-post-visibility"
                     className="soft-input mb-6 w-full px-4 outline-none"
                     value={form.visibility}
                     onChange={(e) => handleChange("visibility", e.target.value)}
@@ -321,6 +328,7 @@ export default function EditPostPage() {
                 </select>
 
                 <button
+                    data-testid="edit-post-submit"
                     onClick={handleSubmit}
                     className="primary-button mb-8 w-full"
                 >
@@ -332,12 +340,14 @@ export default function EditPostPage() {
 
                     <div className="flex items-start gap-4 mb-6">
                         <textarea
+                            data-testid="edit-comment-input"
                             placeholder="Write a comment..."
                             className="soft-input min-h-[80px] w-full p-3 outline-none"
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                         />
                         <button
+                            data-testid="edit-comment-submit"
                             onClick={handleAddComment}
                             className="primary-button"
                         >
@@ -519,6 +529,7 @@ export default function EditPostPage() {
                                         </ul>
                                         <div className="mt-4">
                                             <textarea
+                                                data-testid="edit-reply-input"
                                                 placeholder="Write a reply..."
                                                 className="p-2 w-full border rounded-md min-h-[60px]"
                                                 value={comment.newReply || ""}
@@ -531,6 +542,7 @@ export default function EditPostPage() {
                                                 }
                                             />
                                             <button
+                                                data-testid="edit-reply-submit"
                                                 onClick={() => handleReplyToComment(comment._id, comment.newReply || "")}
                                                 className="bg-primary text-white px-4 py-2 rounded-md hover:bg-opacity-90 mt-2"
                                             >

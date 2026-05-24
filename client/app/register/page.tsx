@@ -60,7 +60,7 @@ const Register = () => {
                         name="name"
                         rules={[{ required: true, message: 'Please input your name!' }]}
                     >
-                        <Input className="soft-input" prefix={<UserOutlined className="text-slate-400" />} placeholder="Your name" />
+                        <Input data-testid="register-name" className="soft-input" prefix={<UserOutlined className="text-slate-400" />} placeholder="Your name" />
                     </Form.Item>
                     <Form.Item
                         name="email"
@@ -69,17 +69,17 @@ const Register = () => {
                             { type: 'email', message: 'Please enter a valid email!' },
                         ]}
                     >
-                        <Input className="soft-input" prefix={<MailOutlined className="text-slate-400" />} placeholder="Email address" />
+                        <Input data-testid="register-email" className="soft-input" prefix={<MailOutlined className="text-slate-400" />} placeholder="Email address" />
                     </Form.Item>
                     <Form.Item
                         name="password"
                         rules={[{ required: true, message: 'Please input your Password!' }]}
                     >
-                        <Input.Password className="soft-input" prefix={<LockOutlined className="text-slate-400" />} placeholder="Create a password" />
+                        <Input.Password data-testid="register-password" className="soft-input" prefix={<LockOutlined className="text-slate-400" />} placeholder="Create a password" />
                     </Form.Item>
 
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" block loading={loading} className="!h-12 !rounded-xl !font-semibold">
+                        <Button data-testid="register-submit" type="primary" htmlType="submit" block loading={loading} className="!h-12 !rounded-xl !font-semibold">
                             Create account <ArrowRight size={15} />
                         </Button>
                     </Form.Item>
