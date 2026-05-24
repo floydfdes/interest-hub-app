@@ -3,10 +3,10 @@
 import { followUser, getMe, searchUsers, unfollowUser } from "@/app/api/api";
 import { useEffect, useMemo, useState } from "react";
 
-import Avatar from "react-avatar";
 import { IUser } from "@/app/types/user";
 import { formatDistanceToNow } from "date-fns";
 import { Search, UsersRound } from "lucide-react";
+import Avatar from "react-avatar";
 
 export default function UserSearchPage() {
     const [query, setQuery] = useState("");

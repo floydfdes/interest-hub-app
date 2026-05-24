@@ -2,8 +2,8 @@
 
 import { createComment, deleteComment, deleteReply, editComment, editReply, getErrorMessage, getPostById, likeComment, likeReply, replyToComment, unlikeComment, updatePost } from "@/app/api/api";
 import { compressAndConvertToBase64, resizeImageToBase64 } from "@/app/api/imageUtil";
-import { IComment, IPost, PostInput } from "@/app/types/user";
 import { useCurrentUser } from "@/app/hooks/useCurrentUser";
+import { IComment, IPost, PostInput } from "@/app/types/user";
 import { Edit, ThumbsUp, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
