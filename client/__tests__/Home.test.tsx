@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 
 jest.mock('@/app/api/api', () => ({
     getAllPosts: jest.fn(() => Promise.resolve([])),
+    getBookmarkedPosts: jest.fn(() => Promise.resolve([])),
 }));
 
 jest.mock('next/navigation', () => ({

@@ -1,6 +1,6 @@
 'use client';
 
-import { getPostById } from '@/app/api/api';
+import { getBookmarkedPosts, getPostById } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { IPost } from '@/app/types/user';
 import CommentList from '@/components/features/CommentList';
@@ -20,7 +20,12 @@ export default function PostDetailPage() {
 
     const fetchPost = async () => {
         try {
-            setPost(await getPostById(id));
+            const nextPost = await getPostById(id);
+            if (localStorage.getItem('token')) {
+                const bookmarks = await getBookmarkedPosts().catch(() => []);
+                nextPost.isBookmarked = bookmarks.some((bookmark) => bookmark._id === id) || nextPost.isBookmarked;
+            }
+            setPost(nextPost);
         } catch {
             message.error('Failed to load post');
         } finally {
@@ -34,6 +39,10 @@ export default function PostDetailPage() {
         const loadPost = async () => {
             try {
                 const nextPost = await getPostById(id);
+                if (localStorage.getItem('token')) {
+                    const bookmarks = await getBookmarkedPosts().catch(() => []);
+                    nextPost.isBookmarked = bookmarks.some((bookmark) => bookmark._id === id) || nextPost.isBookmarked;
+                }
                 if (!cancelled) setPost(nextPost);
             } catch {
                 if (!cancelled) message.error('Failed to load post');

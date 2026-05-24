@@ -68,6 +68,7 @@ export interface IPost {
     viewCount: number;
     sharedFrom: string | null;
     isEdited: boolean;
+    isBookmarked?: boolean;
     createdAt: string;
     updatedAt: string;
 }

@@ -28,6 +28,12 @@ export interface PostAdvancedSearchFilters {
     tags?: string;
 }
 
+export type TrendingPeriod = "day" | "week" | "month" | "all";
+
+export interface MessageResponse {
+    message: string;
+}
+
 type RawAuthResponse = Omit<AuthResponse, "user"> & {
     user: IUser & { id?: string };
 };
@@ -128,6 +134,15 @@ export const updatePost = (id: string, data: PostUpdateInput) =>
 export const deletePost = (id: string) => request<void>("DELETE", `/posts/${id}`);
 export const likePost = (id: string) => request<Pick<IPost, "likes">>("POST", `/posts/${id}/like`);
 export const unlikePost = (id: string) => request<Pick<IPost, "likes">>("POST", `/posts/${id}/unlike`);
+export const getFollowingPosts = (limit = 20) =>
+    request<IPost[]>("GET", "/posts/following", { queryParams: { limit } });
+export const getTrendingPosts = (period: TrendingPeriod = "week", limit = 20) =>
+    request<IPost[]>("GET", "/posts/trending", { queryParams: { period, limit } });
+export const getRecommendedPosts = (limit = 20) =>
+    request<IPost[]>("GET", "/posts/recommended", { queryParams: { limit } });
+export const getBookmarkedPosts = () => request<IPost[]>("GET", "/posts/bookmarks");
+export const bookmarkPost = (id: string) => request<MessageResponse>("POST", `/posts/${id}/bookmark`);
+export const removeBookmark = (id: string) => request<MessageResponse>("DELETE", `/posts/${id}/bookmark`);
 
 // Users
 export const getMe = () => request<UserResponse>("GET", "/users/me");
@@ -143,6 +158,8 @@ export const blockUser = (id: string) => request<void>("POST", `/users/block/${i
 export const unblockUser = (id: string) => request<void>("POST", `/users/unblock/${id}`);
 export const searchUsers = (query: string) =>
     request<IUser[]>("GET", "/users/search", { queryParams: { query } });
+export const getSuggestedUsers = (limit = 10) =>
+    request<IUser[]>("GET", "/users/suggested", { queryParams: { limit } });
 
 // Comments
 export const createComment = (postId: string, content: string) =>

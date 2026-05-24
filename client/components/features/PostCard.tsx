@@ -15,18 +15,21 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { likePost, unlikePost } from '@/app/api/api';
 import { IPost, IUser, Like } from '@/app/types/user';
+import BookmarkButton from './BookmarkButton';
 
 interface PostCardProps {
     post: IPost;
     onDelete?: (id: string) => void;
     currentUser: IUser | null;
+    isBookmarked?: boolean;
+    onBookmarkChange?: (postId: string, bookmarked: boolean) => void;
 }
 
 function belongsToUser(like: Like, userId: string) {
     return (typeof like === 'string' ? like : like._id) === userId;
 }
 
-const PostCard = ({ post, onDelete, currentUser }: PostCardProps) => {
+const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange }: PostCardProps) => {
     const [likes, setLikes] = useState<Like[]>(post.likes || []);
     const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
     const postImage = post.image || '/default_image.png';
@@ -94,6 +97,12 @@ const PostCard = ({ post, onDelete, currentUser }: PostCardProps) => {
                             {post.comments?.length || 0}
                         </Button>
                     </Link>
+                    <BookmarkButton
+                        postId={post._id}
+                        currentUser={currentUser}
+                        initialBookmarked={isBookmarked ?? post.isBookmarked}
+                        onBookmarkChange={onBookmarkChange}
+                    />
                 </div>
                 {currentUser && post.author?._id === currentUser._id && (
                     <Button

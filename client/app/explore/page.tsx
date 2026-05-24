@@ -1,26 +1,37 @@
 "use client";
 
-import { Edit, LayoutGrid, List, MessageCircle, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2 } from "lucide-react";
+import { Edit, Flame, LayoutGrid, List, MessageCircle, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
-import { advancedSearchPosts, deletePost, getAllPosts, getErrorMessage, PostAdvancedSearchFilters, searchPosts } from "../api/api";
+import { advancedSearchPosts, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTrendingPosts, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
 import { IPost } from "../types/user";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import Swal from "sweetalert2";
 import { useCurrentUser } from "../hooks/useCurrentUser";
+import BookmarkButton from "@/components/features/BookmarkButton";
+import SuggestedUsers from "@/components/features/SuggestedUsers";
 
 type ViewMode = "cards" | "list";
 type SearchMode = "quick" | "advanced";
+type DiscoveryFeed = "recommended" | "following" | "trending";
+
+async function fetchDiscoveryPosts(feed: DiscoveryFeed, period: TrendingPeriod) {
+  if (feed === "recommended") return getRecommendedPosts();
+  if (feed === "following") return getFollowingPosts();
+  return getTrendingPosts(period);
+}
 
 export default function Explore() {
   const [posts, setPosts] = useState<IPost[]>([]);
-  const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchMode, setSearchMode] = useState<SearchMode>("quick");
+  const [feed, setFeed] = useState<DiscoveryFeed>("trending");
+  const [trendingPeriod, setTrendingPeriod] = useState<TrendingPeriod>("week");
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [quickQuery, setQuickQuery] = useState("");
   const [filters, setFilters] = useState<PostAdvancedSearchFilters>({});
-  const [searching, setSearching] = useState(false);
+  const [searching, setSearching] = useState(true);
   const [searchError, setSearchError] = useState("");
   const [resultLabel, setResultLabel] = useState("");
   const currentUser = useCurrentUser();
@@ -28,17 +39,63 @@ export default function Explore() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        if (!localStorage.getItem("token")) {
-          throw new Error("You must be logged in to view posts.");
-        }
-        setPosts(await getAllPosts());
+        const hasToken = Boolean(localStorage.getItem("token"));
+        const [nextPosts, bookmarks] = await Promise.all([
+          getTrendingPosts("week"),
+          hasToken ? getBookmarkedPosts().catch(() => []) : Promise.resolve([]),
+        ]);
+        const nextBookmarkedIds = new Set(bookmarks.map((post) => post._id));
+        setBookmarkedIds(nextBookmarkedIds);
+        setPosts(nextPosts.map((post) => ({ ...post, isBookmarked: nextBookmarkedIds.has(post._id) || post.isBookmarked })));
       } catch (err: unknown) {
-        setError(getErrorMessage(err, "Failed to fetch posts."));
+        setSearchError(getErrorMessage(err, "Failed to fetch posts."));
+      } finally {
+        setSearching(false);
       }
     };
 
     void fetchPosts();
   }, []);
+
+  const loadDiscoveryFeed = async (nextFeed: DiscoveryFeed, period: TrendingPeriod) => {
+    setFeed(nextFeed);
+    setTrendingPeriod(period);
+    setResultLabel("");
+    setSearching(true);
+    setSearchError("");
+
+    if (nextFeed !== "trending" && !localStorage.getItem("token")) {
+      setPosts([]);
+      setSearchError("Log in to view personalized discovery posts.");
+      setSearching(false);
+      return;
+    }
+
+    try {
+      const nextPosts = await fetchDiscoveryPosts(nextFeed, period);
+      setPosts(nextPosts.map((post) => ({
+        ...post,
+        isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
+      })));
+    } catch (err: unknown) {
+      setPosts([]);
+      setSearchError(getErrorMessage(err, "Failed to fetch posts."));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const setBookmarkState = (postId: string, bookmarked: boolean) => {
+    setBookmarkedIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+      if (bookmarked) nextIds.add(postId);
+      else nextIds.delete(postId);
+      return nextIds;
+    });
+    setPosts((currentPosts) => currentPosts.map((post) => (
+      post._id === postId ? { ...post, isBookmarked: bookmarked } : post
+    )));
+  };
 
   const handleQuickSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -51,7 +108,8 @@ export default function Explore() {
     setSearching(true);
     setSearchError("");
     try {
-      setPosts(await searchPosts(query));
+      const nextPosts = await searchPosts(query);
+      setPosts(nextPosts.map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked })));
       setResultLabel(`Results for "${query}"`);
     } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to search posts."));
@@ -65,7 +123,8 @@ export default function Explore() {
     setSearching(true);
     setSearchError("");
     try {
-      setPosts(await advancedSearchPosts(filters));
+      const nextPosts = await advancedSearchPosts(filters);
+      setPosts(nextPosts.map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked })));
       setResultLabel("Advanced search results");
     } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to search posts."));
@@ -78,15 +137,7 @@ export default function Explore() {
     setQuickQuery("");
     setFilters({});
     setSearchError("");
-    setSearching(true);
-    try {
-      setPosts(await getAllPosts());
-      setResultLabel("");
-    } catch (err: unknown) {
-      setSearchError(getErrorMessage(err, "Failed to fetch posts."));
-    } finally {
-      setSearching(false);
-    }
+    await loadDiscoveryFeed(feed, trendingPeriod);
   };
 
   const handleSearchModeChange = async (nextMode: SearchMode) => {
@@ -96,15 +147,7 @@ export default function Explore() {
     setQuickQuery("");
     setFilters({});
     setSearchError("");
-    setSearching(true);
-    try {
-      setPosts(await getAllPosts());
-      setResultLabel("");
-    } catch (err: unknown) {
-      setSearchError(getErrorMessage(err, "Failed to fetch posts."));
-    } finally {
-      setSearching(false);
-    }
+    await loadDiscoveryFeed(feed, trendingPeriod);
   };
 
   const updateFilter = (name: keyof PostAdvancedSearchFilters, value: string) => {
@@ -133,16 +176,6 @@ export default function Explore() {
     }
   };
 
-  if (error) {
-    return (
-      <div className="surface shell-container max-w-lg p-10 text-center">
-        <h1 className="text-2xl font-semibold text-slate-900">Ready to explore?</h1>
-        <p className="mt-3 text-slate-500">{error}</p>
-        <Link href="/login" className="primary-button mt-7">Log in to continue</Link>
-      </div>
-    );
-  }
-
   return (
     <div className="shell-container">
       <header className="mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -156,6 +189,52 @@ export default function Explore() {
           Create post
         </Link>
       </header>
+
+      <section className="surface mb-7 p-4 sm:p-5">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap gap-2" aria-label="Discovery feed">
+            <button
+              type="button"
+              onClick={() => void loadDiscoveryFeed("trending", trendingPeriod)}
+              aria-pressed={feed === "trending"}
+              className={`secondary-button !min-h-0 !py-2 ${feed === "trending" ? "!border-indigo-200 !bg-indigo-50 !text-indigo-700" : ""}`}
+            >
+              <Flame size={15} /> Trending
+            </button>
+            <button
+              type="button"
+              onClick={() => void loadDiscoveryFeed("recommended", trendingPeriod)}
+              aria-pressed={feed === "recommended"}
+              className={`secondary-button !min-h-0 !py-2 ${feed === "recommended" ? "!border-indigo-200 !bg-indigo-50 !text-indigo-700" : ""}`}
+            >
+              <Sparkles size={15} /> Recommended
+            </button>
+            <button
+              type="button"
+              onClick={() => void loadDiscoveryFeed("following", trendingPeriod)}
+              aria-pressed={feed === "following"}
+              className={`secondary-button !min-h-0 !py-2 ${feed === "following" ? "!border-indigo-200 !bg-indigo-50 !text-indigo-700" : ""}`}
+            >
+              <UsersRound size={15} /> Following
+            </button>
+          </div>
+          {feed === "trending" && (
+            <select
+              aria-label="Trending period"
+              value={trendingPeriod}
+              onChange={(event) => void loadDiscoveryFeed("trending", event.target.value as TrendingPeriod)}
+              className="soft-input px-4 text-sm text-slate-600 outline-none"
+            >
+              <option value="day">Today</option>
+              <option value="week">This week</option>
+              <option value="month">This month</option>
+              <option value="all">All time</option>
+            </select>
+          )}
+        </div>
+      </section>
+
+      <SuggestedUsers authenticated={Boolean(currentUser)} />
 
       <section className="surface mb-7 p-4 sm:p-5">
         <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -289,7 +368,8 @@ export default function Explore() {
 
       {!searching && posts.length === 0 && (
         <div className="surface px-6 py-14 text-center text-slate-500">
-          No posts matched your search.
+          {resultLabel ? "No posts matched your search." : "No posts available in this feed yet."}
+          {searchError.includes("Log in") && <div><Link href="/login" className="primary-button mt-5">Log in to continue</Link></div>}
         </div>
       )}
 
@@ -333,6 +413,12 @@ export default function Explore() {
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1.5"><ThumbsUp size={14} />{post.likes?.length || 0}</span>
                 <span className="flex items-center gap-1.5"><MessageCircle size={14} />{post.comments?.length || 0}</span>
+                <BookmarkButton
+                  postId={post._id}
+                  currentUser={currentUser}
+                  initialBookmarked={post.isBookmarked}
+                  onBookmarkChange={setBookmarkState}
+                />
               </div>
               {post.author?._id === currentUser?._id && (
                 <div className="flex items-center gap-3">

@@ -1,6 +1,6 @@
 'use client';
 
-import { deletePost, getAllPosts } from '@/app/api/api';
+import { deletePost, getAllPosts, getBookmarkedPosts } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { IPost } from '@/app/types/user';
 import { App, Empty, Skeleton } from 'antd';
@@ -16,7 +16,16 @@ const PostList = () => {
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                setPosts(await getAllPosts());
+                const hasToken = Boolean(localStorage.getItem('token'));
+                const [nextPosts, bookmarks] = await Promise.all([
+                    getAllPosts(),
+                    hasToken ? getBookmarkedPosts().catch(() => []) : Promise.resolve([]),
+                ]);
+                const bookmarkedIds = new Set(bookmarks.map((post) => post._id));
+                setPosts(nextPosts.map((post) => ({
+                    ...post,
+                    isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
+                })));
             } catch {
                 message.error('Failed to load posts');
             } finally {
@@ -35,6 +44,12 @@ const PostList = () => {
         } catch {
             message.error('Failed to delete post');
         }
+    };
+
+    const handleBookmarkChange = (postId: string, bookmarked: boolean) => {
+        setPosts((currentPosts) => currentPosts.map((post) => (
+            post._id === postId ? { ...post, isBookmarked: bookmarked } : post
+        )));
     };
 
     if (loading) {
@@ -61,6 +76,8 @@ const PostList = () => {
                     post={post}
                     onDelete={handleDelete}
                     currentUser={currentUser}
+                    isBookmarked={post.isBookmarked}
+                    onBookmarkChange={handleBookmarkChange}
                 />
             ))}
         </div>

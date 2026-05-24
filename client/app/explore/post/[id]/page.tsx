@@ -3,6 +3,7 @@ import { IPost } from "@/app/types/user";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
+import BookmarkButton from "@/components/features/BookmarkButton";
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -43,8 +44,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                 <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900">{post.title}</h1>
                 <p className="mt-3 text-base leading-7 text-slate-600">{post.content}</p>
 
-                <div className="mt-5 text-sm font-medium text-slate-500">
-                    <span className="font-medium">Likes:</span> {post.likes?.length || 0}
+                <div className="mt-5 flex items-center gap-4 text-sm font-medium text-slate-500">
+                    <span><span className="font-medium">Likes:</span> {post.likes?.length || 0}</span>
+                    <BookmarkButton postId={post._id} initialBookmarked={post.isBookmarked} showLabel />
                 </div>
 
                 <div className="mt-8 border-t border-slate-100 pt-7">

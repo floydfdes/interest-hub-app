@@ -2,14 +2,15 @@
 
 import { notifyAuthChanged, useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { Avatar, Dropdown } from 'antd';
-import { ChevronDown, Compass, LogIn, LogOut, PenLine, Search, UserRound } from 'lucide-react';
+import { Bookmark, ChevronDown, Compass, LogIn, LogOut, PenLine, Search, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 const navItems = [
-    { href: '/', label: 'Feed', icon: Compass },
-    { href: '/explore', label: 'Explore', icon: Search },
-    { href: '/users', label: 'People', icon: UserRound },
+    { href: '/', label: 'Feed', icon: Compass, authOnly: false },
+    { href: '/explore', label: 'Explore', icon: Search, authOnly: false },
+    { href: '/users', label: 'People', icon: UserRound, authOnly: false },
+    { href: '/saved', label: 'Saved', icon: Bookmark, authOnly: true },
 ];
 
 const Navbar = () => {
@@ -52,7 +53,7 @@ const Navbar = () => {
                 </Link>
 
                 <nav className="flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-slate-50/90 p-1">
-                    {navItems.map(({ href, label, icon: Icon }) => {
+                    {navItems.filter((item) => !item.authOnly || user).map(({ href, label, icon: Icon }) => {
                         const selected = pathname === href || (href !== '/' && pathname.startsWith(href));
                         return (
                             <Link
