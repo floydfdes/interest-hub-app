@@ -21,6 +21,13 @@ interface RequestOptions {
     queryParams?: Record<string, QueryValue>;
 }
 
+export interface PostAdvancedSearchFilters {
+    title?: string;
+    content?: string;
+    category?: string;
+    tags?: string;
+}
+
 type RawAuthResponse = Omit<AuthResponse, "user"> & {
     user: IUser & { id?: string };
 };
@@ -104,6 +111,15 @@ export const resetPassword = (data: { token: string; newPassword: string }) =>
 
 // Posts
 export const getAllPosts = () => request<IPost[]>("GET", "/posts");
+export const searchPosts = (query: string) =>
+    request<IPost[]>("GET", "/posts/search", { queryParams: { query } });
+export const advancedSearchPosts = (filters: PostAdvancedSearchFilters) => {
+    const queryParams = Object.fromEntries(
+        Object.entries(filters).filter(([, value]) => value?.trim())
+    ) as Record<string, QueryValue>;
+
+    return request<IPost[]>("GET", "/posts/advanced-search", { queryParams });
+};
 export const getPostById = (id: string) => request<IPost>("GET", `/posts/${id}`);
 export const createPost = (data: PostInput) =>
     request<IPost>("POST", "/posts", { body: { ...data } });

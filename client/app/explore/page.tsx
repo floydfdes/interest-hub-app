@@ -1,8 +1,8 @@
 "use client";
 
-import { Edit, LayoutGrid, List, MessageCircle, PenLine, Sparkles, ThumbsUp, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { deletePost, getAllPosts, getErrorMessage } from "../api/api";
+import { Edit, LayoutGrid, List, MessageCircle, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2 } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
+import { advancedSearchPosts, deletePost, getAllPosts, getErrorMessage, PostAdvancedSearchFilters, searchPosts } from "../api/api";
 import { IPost } from "../types/user";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
@@ -11,11 +11,18 @@ import Swal from "sweetalert2";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 
 type ViewMode = "cards" | "list";
+type SearchMode = "quick" | "advanced";
 
 export default function Explore() {
   const [posts, setPosts] = useState<IPost[]>([]);
   const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [searchMode, setSearchMode] = useState<SearchMode>("quick");
+  const [quickQuery, setQuickQuery] = useState("");
+  const [filters, setFilters] = useState<PostAdvancedSearchFilters>({});
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [resultLabel, setResultLabel] = useState("");
   const currentUser = useCurrentUser();
 
   useEffect(() => {
@@ -32,6 +39,77 @@ export default function Explore() {
 
     void fetchPosts();
   }, []);
+
+  const handleQuickSearch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = quickQuery.trim();
+    if (!query) {
+      setSearchError("Enter a keyword to search posts.");
+      return;
+    }
+
+    setSearching(true);
+    setSearchError("");
+    try {
+      setPosts(await searchPosts(query));
+      setResultLabel(`Results for "${query}"`);
+    } catch (err: unknown) {
+      setSearchError(getErrorMessage(err, "Failed to search posts."));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleAdvancedSearch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSearching(true);
+    setSearchError("");
+    try {
+      setPosts(await advancedSearchPosts(filters));
+      setResultLabel("Advanced search results");
+    } catch (err: unknown) {
+      setSearchError(getErrorMessage(err, "Failed to search posts."));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleClearSearch = async () => {
+    setQuickQuery("");
+    setFilters({});
+    setSearchError("");
+    setSearching(true);
+    try {
+      setPosts(await getAllPosts());
+      setResultLabel("");
+    } catch (err: unknown) {
+      setSearchError(getErrorMessage(err, "Failed to fetch posts."));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSearchModeChange = async (nextMode: SearchMode) => {
+    if (nextMode === searchMode) return;
+
+    setSearchMode(nextMode);
+    setQuickQuery("");
+    setFilters({});
+    setSearchError("");
+    setSearching(true);
+    try {
+      setPosts(await getAllPosts());
+      setResultLabel("");
+    } catch (err: unknown) {
+      setSearchError(getErrorMessage(err, "Failed to fetch posts."));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const updateFilter = (name: keyof PostAdvancedSearchFilters, value: string) => {
+    setFilters((previous) => ({ ...previous, [name]: value }));
+  };
 
   const handleDelete = async (postId: string) => {
     const result = await Swal.fire({
@@ -79,10 +157,104 @@ export default function Explore() {
         </Link>
       </header>
 
+      <section className="surface mb-7 p-4 sm:p-5">
+        <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="flex rounded-xl border border-slate-200 bg-slate-50 p-1" aria-label="Search type">
+            <button
+              type="button"
+              data-testid="quick-search-mode"
+              onClick={() => void handleSearchModeChange("quick")}
+              aria-pressed={searchMode === "quick"}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                searchMode === "quick" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500"
+              }`}
+            >
+              <Search size={16} />
+              Quick
+            </button>
+            <button
+              type="button"
+              data-testid="advanced-search-mode"
+              onClick={() => void handleSearchModeChange("advanced")}
+              aria-pressed={searchMode === "advanced"}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                searchMode === "advanced" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500"
+              }`}
+            >
+              <SlidersHorizontal size={16} />
+              Advanced
+            </button>
+          </div>
+          <button type="button" onClick={() => void handleClearSearch()} className="secondary-button" disabled={searching}>
+            <RotateCcw size={15} />
+            Clear results
+          </button>
+        </div>
+
+        {searchMode === "quick" ? (
+          <form onSubmit={handleQuickSearch} className="flex min-w-0 flex-col gap-3 sm:flex-row">
+            <input
+              data-testid="post-search-input"
+              value={quickQuery}
+              onChange={(event) => setQuickQuery(event.target.value)}
+              placeholder="Search title, content, category, or tags..."
+              className="soft-input min-w-0 flex-1 px-4 text-sm outline-none"
+            />
+            <button data-testid="post-search-submit" type="submit" className="primary-button" disabled={searching}>
+              <Search size={16} />
+              Search
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleAdvancedSearch}>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <input
+                data-testid="advanced-search-title"
+                value={filters.title || ""}
+                onChange={(event) => updateFilter("title", event.target.value)}
+                placeholder="Title contains"
+                className="soft-input px-4 text-sm outline-none"
+              />
+              <input
+                data-testid="advanced-search-content"
+                value={filters.content || ""}
+                onChange={(event) => updateFilter("content", event.target.value)}
+                placeholder="Content contains"
+                className="soft-input px-4 text-sm outline-none"
+              />
+              <input
+                data-testid="advanced-search-category"
+                value={filters.category || ""}
+                onChange={(event) => updateFilter("category", event.target.value)}
+                placeholder="Category"
+                className="soft-input px-4 text-sm outline-none"
+              />
+              <input
+                data-testid="advanced-search-tags"
+                value={filters.tags || ""}
+                onChange={(event) => updateFilter("tags", event.target.value)}
+                placeholder="Tags, comma separated"
+                className="soft-input px-4 text-sm outline-none"
+              />
+            </div>
+            <p className="mt-3 text-xs text-slate-400">When multiple tags are entered, posts must match all of them.</p>
+            <button data-testid="advanced-search-submit" type="submit" className="primary-button mt-4" disabled={searching}>
+              <Search size={16} />
+              Apply filters
+            </button>
+          </form>
+        )}
+
+        {searchError && <p className="mt-4 text-sm font-medium text-rose-600">{searchError}</p>}
+      </section>
+
       <div className="mb-6 flex items-center justify-between gap-4">
-        <p className="text-sm font-medium text-slate-500">
-          {posts.length} {posts.length === 1 ? "post" : "posts"}
-        </p>
+        <div>
+          {resultLabel && <p className="text-sm font-semibold text-slate-700">{resultLabel}</p>}
+          <p className="text-sm font-medium text-slate-500">
+            {searching ? "Searching..." : `${posts.length} ${posts.length === 1 ? "post" : "posts"}`}
+          </p>
+        </div>
         <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm" aria-label="Post view">
           <button
             type="button"
@@ -114,6 +286,12 @@ export default function Explore() {
           </button>
         </div>
       </div>
+
+      {!searching && posts.length === 0 && (
+        <div className="surface px-6 py-14 text-center text-slate-500">
+          No posts matched your search.
+        </div>
+      )}
 
       <div className={viewMode === "cards" ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" : "space-y-4"}>
         {posts.map((post) => (
