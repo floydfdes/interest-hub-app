@@ -96,6 +96,50 @@ export interface PaginatedResponse<T> {
     pagination: Pagination;
 }
 
+export type ActivityType =
+    | "login"
+    | "post_created"
+    | "user_followed"
+    | "post_liked"
+    | "report_submitted"
+    | "user_blocked"
+    | "user_unblocked";
+
+export interface BasicUserSummary {
+    _id: string;
+    name: string;
+    profilePic: string | null;
+}
+
+export interface AdminActivityUserSummary extends BasicUserSummary {
+    email: string;
+    role: IUser["role"];
+}
+
+export interface BasicPostSummary {
+    _id: string;
+    title: string;
+    image: string;
+}
+
+export interface UserActivity {
+    _id: string;
+    actor: BasicUserSummary;
+    type: ActivityType;
+    targetUser?: BasicUserSummary;
+    post?: BasicPostSummary;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface AdminUserActivity extends Omit<UserActivity, "actor" | "targetUser"> {
+    actor: AdminActivityUserSummary;
+    targetUser?: AdminActivityUserSummary;
+    ipAddress?: string;
+    userAgent?: string;
+    metadata: Record<string, unknown>;
+}
+
 export interface LoginInput {
     email: string;
     password: string;
@@ -149,6 +193,10 @@ export interface AdminUserDetailResponse {
 }
 
 export type AdminPostsResponse = PaginatedResponse<IPost>;
+
+export type AdminActivitiesResponse = PaginatedResponse<AdminUserActivity>;
+
+export type MyActivitiesResponse = PaginatedResponse<UserActivity>;
 
 export interface AdminUserInput {
     name: string;

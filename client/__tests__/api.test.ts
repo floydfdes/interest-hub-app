@@ -14,10 +14,12 @@ import {
     getFollowers,
     getFollowing,
     getFollowingPosts,
+    getMyActivities,
     getPostLikes,
     getRecommendedPosts,
     getSuggestedUsers,
     getTrendingPosts,
+    getAdminActivities,
     getAdminDashboard,
     getAdminPost,
     getAdminPosts,
@@ -68,6 +70,14 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[0][0]).toContain('/posts/post-7/likes?page=2&limit=10');
         expect(fetchMock.mock.calls[1][0]).toContain('/users/user-1/followers?page=1&limit=20');
         expect(fetchMock.mock.calls[2][0]).toContain('/users/user-1/following?page=3&limit=5');
+    });
+
+    it('requests only the current user activity with supported filters', async () => {
+        await getMyActivities({ page: 2, limit: 20, type: 'user_followed' });
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/users/activities?page=2&limit=20&type=user_followed');
+        expect(fetchMock.mock.calls[0][0]).not.toContain('actorId');
+        expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
     });
 
     it('uses bookmark list, create, and delete endpoints', async () => {
@@ -125,6 +135,13 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[13][0]).toContain('/admin/comments/bulk-delete');
         expect(fetchMock.mock.calls[13][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ ids: ['comment-2', 'comment-3'] }) });
         expect(fetchMock.mock.calls[14][0]).toContain('/admin/comments/comment-1/replies/2');
+        expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
+    });
+
+    it('requests filtered paginated admin activities', async () => {
+        await getAdminActivities({ page: 2, limit: 10, type: 'post_liked', actorId: 'user-7' });
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/admin/activities?page=2&limit=10&type=post_liked&actorId=user-7');
         expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
     });
 

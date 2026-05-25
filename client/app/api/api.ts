@@ -1,4 +1,6 @@
 import {
+    ActivityType,
+    AdminActivitiesResponse,
     AdminDashboardResponse,
     AdminPostsResponse,
     AdminUserDetailResponse,
@@ -10,6 +12,7 @@ import {
     IPost,
     IUser,
     LoginInput,
+    MyActivitiesResponse,
     PaginatedResponse,
     PostInput,
     PostUpdateInput,
@@ -44,6 +47,19 @@ export interface MessageResponse {
 export interface BulkDeleteResponse extends MessageResponse {
     requested: number;
     deleted: number;
+}
+
+export interface AdminActivityFilters {
+    page?: number;
+    limit?: number;
+    type?: ActivityType;
+    actorId?: string;
+}
+
+export interface MyActivityFilters {
+    page?: number;
+    limit?: number;
+    type?: ActivityType;
 }
 
 export class ApiError extends Error {
@@ -187,10 +203,32 @@ export const searchUsers = (query: string) =>
     request<IUser[]>("GET", "/users/search", { queryParams: { query } });
 export const getSuggestedUsers = (limit = 10) =>
     request<IUser[]>("GET", "/users/suggested", { queryParams: { limit } });
+export const getMyActivities = ({
+    page = 1,
+    limit = 20,
+    type,
+}: MyActivityFilters = {}) => {
+    const queryParams: Record<string, QueryValue> = { page, limit };
+    if (type) queryParams.type = type;
+
+    return request<MyActivitiesResponse>("GET", "/users/activities", { queryParams });
+};
 
 // Admin
 export const checkAdminAccess = () => request<{ isAdmin: true }>("GET", "/admin/access");
 export const getAdminDashboard = () => request<AdminDashboardResponse>("GET", "/admin/dashboard");
+export const getAdminActivities = ({
+    page = 1,
+    limit = 20,
+    type,
+    actorId,
+}: AdminActivityFilters = {}) => {
+    const queryParams: Record<string, QueryValue> = { page, limit };
+    if (type) queryParams.type = type;
+    if (actorId?.trim()) queryParams.actorId = actorId.trim();
+
+    return request<AdminActivitiesResponse>("GET", "/admin/activities", { queryParams });
+};
 export const getAdminUsers = (query = "", page = 1, limit = 20) =>
     request<AdminUsersResponse>("GET", "/admin/users", { queryParams: { query, page, limit } });
 export const getAdminUser = (id: string) =>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiEdit, FiLogOut, FiSettings } from "react-icons/fi";
+import { FiActivity, FiEdit, FiLogOut, FiSettings } from "react-icons/fi";
 
 import { useRouter } from "next/navigation";
 import Avatar from "react-avatar";
@@ -87,6 +87,13 @@ export default function ProfilePage() {
                     >
                         <FiSettings size={16} />
                         Settings
+                    </button>
+                    <button
+                        onClick={() => router.push("/profile/activities")}
+                        className="secondary-button w-full"
+                    >
+                        <FiActivity size={16} />
+                        Activity
                     </button>
                     <button
                         onClick={handleLogout}
