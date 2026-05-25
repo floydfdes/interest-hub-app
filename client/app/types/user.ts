@@ -107,3 +107,54 @@ export type PostUpdateInput = Omit<PostInput, "image"> & {
 export type ProfileUpdateInput = Partial<
     Pick<IUser, "name" | "bio" | "interests" | "profilePic">
 >;
+
+export type AdminUser = Omit<IUser, "profilePic"> & {
+    profilePic: string | null;
+};
+
+export interface AdminDashboardCounts {
+    totalUsers: number;
+    adminUsers: number;
+    blockedUsers: number;
+    totalPosts: number;
+    totalComments: number;
+    totalReplies: number;
+}
+
+export interface AdminDashboardResponse {
+    counts: AdminDashboardCounts;
+    recentUsers: AdminUser[];
+    recentPosts: IPost[];
+}
+
+export interface AdminUsersResponse {
+    users: AdminUser[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
+export interface AdminUserDetailResponse {
+    user: AdminUser;
+    posts: IPost[];
+}
+
+export interface AdminPostsResponse {
+    posts: IPost[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
+export interface AdminUserInput {
+    name: string;
+    email: string;
+    password?: string;
+    role: IUser["role"];
+    profilePic: string | null;
+    bio: string;
+    interests: string[];
+    isBlocked: boolean;
+}
+
+export type AdminUserUpdateInput = Partial<AdminUserInput>;

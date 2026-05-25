@@ -1,4 +1,10 @@
 import {
+    AdminDashboardResponse,
+    AdminPostsResponse,
+    AdminUserDetailResponse,
+    AdminUserInput,
+    AdminUserUpdateInput,
+    AdminUsersResponse,
     AuthResponse,
     IComment,
     IPost,
@@ -32,6 +38,21 @@ export type TrendingPeriod = "day" | "week" | "month" | "all";
 
 export interface MessageResponse {
     message: string;
+}
+
+export interface BulkDeleteResponse extends MessageResponse {
+    requested: number;
+    deleted: number;
+}
+
+export class ApiError extends Error {
+    status: number;
+
+    constructor(message: string, status: number) {
+        super(message);
+        this.name = "ApiError";
+        this.status = status;
+    }
 }
 
 type RawAuthResponse = Omit<AuthResponse, "user"> & {
@@ -91,7 +112,7 @@ const request = async <T>(
 
         if (!response.ok) {
             const data = await response.json().catch(() => ({})) as { message?: string };
-            throw new Error(data.message || "Request failed");
+            throw new ApiError(data.message || "Request failed", response.status);
         }
 
         if (response.status === 204) return undefined as T;
@@ -160,6 +181,42 @@ export const searchUsers = (query: string) =>
     request<IUser[]>("GET", "/users/search", { queryParams: { query } });
 export const getSuggestedUsers = (limit = 10) =>
     request<IUser[]>("GET", "/users/suggested", { queryParams: { limit } });
+
+// Admin
+export const checkAdminAccess = () => request<{ isAdmin: true }>("GET", "/admin/access");
+export const getAdminDashboard = () => request<AdminDashboardResponse>("GET", "/admin/dashboard");
+export const getAdminUsers = (query = "", page = 1, limit = 20) =>
+    request<AdminUsersResponse>("GET", "/admin/users", { queryParams: { query, page, limit } });
+export const getAdminUser = (id: string) =>
+    request<AdminUserDetailResponse>("GET", `/admin/users/${id}`);
+export const createAdminUser = (data: AdminUserInput & { password: string }) =>
+    request<AdminUserDetailResponse>("POST", "/admin/users", { body: { ...data } });
+export const updateAdminUser = (id: string, data: AdminUserUpdateInput) =>
+    request<AdminUserDetailResponse>("PATCH", `/admin/users/${id}`, { body: { ...data } });
+export const blockAdminUser = (id: string) => request<void>("PATCH", `/admin/users/${id}/block`);
+export const unblockAdminUser = (id: string) => request<void>("PATCH", `/admin/users/${id}/unblock`);
+export const deleteAdminUser = (id: string) => request<void>("DELETE", `/admin/users/${id}`);
+export const bulkDeleteAdminUsers = (ids: string[]) =>
+    request<BulkDeleteResponse>("POST", "/admin/users/bulk-delete", { body: { ids } });
+export const getAdminPosts = (
+    query = "",
+    authorId = "",
+    visibility = "",
+    page = 1,
+    limit = 20
+) => request<AdminPostsResponse>("GET", "/admin/posts", {
+    queryParams: { query, authorId, visibility, page, limit },
+});
+export const getAdminPost = (id: string) => request<IPost>("GET", `/admin/posts/${id}`);
+export const deleteAdminPost = (id: string) => request<void>("DELETE", `/admin/posts/${id}`);
+export const bulkDeleteAdminPosts = (ids: string[]) =>
+    request<BulkDeleteResponse>("POST", "/admin/posts/bulk-delete", { body: { ids } });
+export const deleteAdminComment = (commentId: string) =>
+    request<void>("DELETE", `/admin/comments/${commentId}`);
+export const bulkDeleteAdminComments = (ids: string[]) =>
+    request<BulkDeleteResponse>("POST", "/admin/comments/bulk-delete", { body: { ids } });
+export const deleteAdminReply = (commentId: string, replyIndex: number) =>
+    request<void>("DELETE", `/admin/comments/${commentId}/replies/${replyIndex}`);
 
 // Comments
 export const createComment = (postId: string, content: string) =>

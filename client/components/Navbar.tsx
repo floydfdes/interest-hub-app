@@ -1,8 +1,10 @@
 'use client';
 
 import { notifyAuthChanged, useCurrentUser } from '@/app/hooks/useCurrentUser';
+import { useAdminAccess } from '@/app/hooks/useAdminAccess';
+import { setTheme, useTheme } from '@/app/hooks/useTheme';
 import { Avatar, Dropdown } from 'antd';
-import { Bookmark, ChevronDown, Compass, LogIn, LogOut, PenLine, Search, UserRound } from 'lucide-react';
+import { Bookmark, ChevronDown, Compass, LogIn, LogOut, Moon, PenLine, Search, Shield, Sun, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -17,6 +19,8 @@ const Navbar = () => {
     const pathname = usePathname();
     const router = useRouter();
     const user = useCurrentUser();
+    const { isAdmin } = useAdminAccess();
+    const theme = useTheme();
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -26,6 +30,11 @@ const Navbar = () => {
     };
 
     const userMenu = [
+        ...(isAdmin ? [{
+            key: 'admin',
+            label: <Link href="/admin">Administration</Link>,
+            icon: <Shield size={15} />,
+        }] : []),
         {
             key: 'profile',
             label: <Link href="/profile">View profile</Link>,
@@ -72,6 +81,14 @@ const Navbar = () => {
                 </nav>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        className="theme-toggle"
+                    >
+                        {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+                    </button>
                     {user ? (
                         <>
                             <Link href="/create-post" className="primary-button hidden sm:inline-flex">
