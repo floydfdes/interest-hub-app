@@ -7,7 +7,10 @@ jest.mock('@/app/api/api', () => ({
     deletePost: jest.fn(),
     getBookmarkedPosts: jest.fn(() => Promise.resolve([])),
     getErrorMessage: (_error: unknown, fallback: string) => fallback,
-    getFollowingPosts: jest.fn(() => Promise.resolve([])),
+    getFollowingPosts: jest.fn(() => Promise.resolve({
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false },
+    })),
     getRecommendedPosts: jest.fn(() => Promise.resolve([])),
     getTrendingPosts: jest.fn(() => Promise.resolve([])),
     searchPosts: jest.fn(() => Promise.resolve([])),

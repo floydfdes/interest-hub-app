@@ -82,6 +82,20 @@ export interface UserResponse {
     user: IUser;
 }
 
+export interface Pagination {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    pagination: Pagination;
+}
+
 export interface LoginInput {
     email: string;
     password: string;
@@ -127,24 +141,14 @@ export interface AdminDashboardResponse {
     recentPosts: IPost[];
 }
 
-export interface AdminUsersResponse {
-    users: AdminUser[];
-    total: number;
-    page: number;
-    limit: number;
-}
+export type AdminUsersResponse = PaginatedResponse<AdminUser>;
 
 export interface AdminUserDetailResponse {
     user: AdminUser;
     posts: IPost[];
 }
 
-export interface AdminPostsResponse {
-    posts: IPost[];
-    total: number;
-    page: number;
-    limit: number;
-}
+export type AdminPostsResponse = PaginatedResponse<IPost>;
 
 export interface AdminUserInput {
     name: string;

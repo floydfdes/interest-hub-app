@@ -10,6 +10,7 @@ import {
     IPost,
     IUser,
     LoginInput,
+    PaginatedResponse,
     PostInput,
     PostUpdateInput,
     ProfileUpdateInput,
@@ -137,7 +138,8 @@ export const resetPassword = (data: { token: string; newPassword: string }) =>
     request<void>("POST", "/auth/reset-password", { body: { ...data } });
 
 // Posts
-export const getAllPosts = () => request<IPost[]>("GET", "/posts");
+export const getAllPosts = (page = 1, limit = 20) =>
+    request<PaginatedResponse<IPost>>("GET", "/posts", { queryParams: { page, limit } });
 export const searchPosts = (query: string) =>
     request<IPost[]>("GET", "/posts/search", { queryParams: { query } });
 export const advancedSearchPosts = (filters: PostAdvancedSearchFilters) => {
@@ -155,8 +157,10 @@ export const updatePost = (id: string, data: PostUpdateInput) =>
 export const deletePost = (id: string) => request<void>("DELETE", `/posts/${id}`);
 export const likePost = (id: string) => request<Pick<IPost, "likes">>("POST", `/posts/${id}/like`);
 export const unlikePost = (id: string) => request<Pick<IPost, "likes">>("POST", `/posts/${id}/unlike`);
-export const getFollowingPosts = (limit = 20) =>
-    request<IPost[]>("GET", "/posts/following", { queryParams: { limit } });
+export const getPostLikes = (id: string, page = 1, limit = 20) =>
+    request<PaginatedResponse<IUser>>("GET", `/posts/${id}/likes`, { queryParams: { page, limit } });
+export const getFollowingPosts = (page = 1, limit = 20) =>
+    request<PaginatedResponse<IPost>>("GET", "/posts/following", { queryParams: { page, limit } });
 export const getTrendingPosts = (period: TrendingPeriod = "week", limit = 20) =>
     request<IPost[]>("GET", "/posts/trending", { queryParams: { period, limit } });
 export const getRecommendedPosts = (limit = 20) =>
@@ -173,8 +177,10 @@ export const updateUser = (data: ProfileUpdateInput) =>
 export const deleteUser = () => request<void>("DELETE", "/users/delete");
 export const followUser = (id: string) => request<void>("POST", `/users/follow/${id}`);
 export const unfollowUser = (id: string) => request<void>("POST", `/users/unfollow/${id}`);
-export const getFollowers = (id: string) => request<IUser[]>("GET", `/users/${id}/followers`);
-export const getFollowing = (id: string) => request<IUser[]>("GET", `/users/${id}/following`);
+export const getFollowers = (id: string, page = 1, limit = 20) =>
+    request<PaginatedResponse<IUser>>("GET", `/users/${id}/followers`, { queryParams: { page, limit } });
+export const getFollowing = (id: string, page = 1, limit = 20) =>
+    request<PaginatedResponse<IUser>>("GET", `/users/${id}/following`, { queryParams: { page, limit } });
 export const blockUser = (id: string) => request<void>("POST", `/users/block/${id}`);
 export const unblockUser = (id: string) => request<void>("POST", `/users/unblock/${id}`);
 export const searchUsers = (query: string) =>

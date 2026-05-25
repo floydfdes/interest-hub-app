@@ -52,13 +52,18 @@ describe('admin bulk deletion controls', () => {
 
     it('prevents self-selection and bulk deletes selected users', async () => {
         mockedGetAdminUsers.mockResolvedValue({
-            users: [
+            items: [
                 { _id: 'admin-1', name: 'Current Admin', email: 'admin@example.com' } as AdminUser,
                 { _id: 'user-2', name: 'Jordan', email: 'jordan@example.com' } as AdminUser,
             ],
-            total: 2,
-            page: 1,
-            limit: 20,
+            pagination: {
+                total: 2,
+                page: 1,
+                limit: 20,
+                totalPages: 1,
+                hasNextPage: false,
+                hasPreviousPage: false,
+            },
         });
         mockedBulkDeleteAdminUsers.mockResolvedValue({ message: 'Users deleted', requested: 1, deleted: 1 });
 

@@ -3,7 +3,10 @@ import Home from '../app/page';
 import '@testing-library/jest-dom';
 
 jest.mock('@/app/api/api', () => ({
-    getAllPosts: jest.fn(() => Promise.resolve([])),
+    getAllPosts: jest.fn(() => Promise.resolve({
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false },
+    })),
     getBookmarkedPosts: jest.fn(() => Promise.resolve([])),
 }));
 

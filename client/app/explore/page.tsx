@@ -3,7 +3,7 @@
 import { Edit, Flame, LayoutGrid, List, MessageCircle, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { advancedSearchPosts, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTrendingPosts, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
-import { IPost } from "../types/user";
+import { IPost, Pagination } from "../types/user";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,14 +16,9 @@ type ViewMode = "cards" | "list";
 type SearchMode = "quick" | "advanced";
 type DiscoveryFeed = "recommended" | "following" | "trending";
 
-async function fetchDiscoveryPosts(feed: DiscoveryFeed, period: TrendingPeriod) {
-  if (feed === "recommended") return getRecommendedPosts();
-  if (feed === "following") return getFollowingPosts();
-  return getTrendingPosts(period);
-}
-
 export default function Explore() {
   const [posts, setPosts] = useState<IPost[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchMode, setSearchMode] = useState<SearchMode>("quick");
   const [feed, setFeed] = useState<DiscoveryFeed>("trending");
@@ -72,13 +67,41 @@ export default function Explore() {
     }
 
     try {
-      const nextPosts = await fetchDiscoveryPosts(nextFeed, period);
+      const followingResponse = nextFeed === "following" ? await getFollowingPosts() : null;
+      const nextPosts = followingResponse
+        ? followingResponse.items
+        : nextFeed === "recommended"
+          ? await getRecommendedPosts()
+          : await getTrendingPosts(period);
+      setPagination(followingResponse?.pagination || null);
       setPosts(nextPosts.map((post) => ({
         ...post,
         isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
       })));
     } catch (err: unknown) {
       setPosts([]);
+      setSearchError(getErrorMessage(err, "Failed to fetch posts."));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const loadMoreFollowingPosts = async () => {
+    if (!pagination?.hasNextPage) return;
+
+    setSearching(true);
+    setSearchError("");
+    try {
+      const response = await getFollowingPosts(pagination.page + 1, pagination.limit);
+      setPosts((currentPosts) => [
+        ...currentPosts,
+        ...response.items.map((post) => ({
+          ...post,
+          isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
+        })),
+      ]);
+      setPagination(response.pagination);
+    } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to fetch posts."));
     } finally {
       setSearching(false);
@@ -434,6 +457,11 @@ export default function Explore() {
           </article>
         ))}
       </div>
+      {feed === "following" && !resultLabel && pagination?.hasNextPage && (
+        <button type="button" onClick={() => void loadMoreFollowingPosts()} disabled={searching} className="secondary-button mx-auto mt-7 flex">
+          {searching ? "Loading..." : "Load more"}
+        </button>
+      )}
     </div>
   );
 }

@@ -69,7 +69,7 @@ export default function AdminPostsPage() {
         try {
             await deleteAdminPost(post._id);
             message.success('Post permanently deleted');
-            await loadPosts(response?.page || 1);
+            await loadPosts(response?.pagination.page || 1);
         } catch (err: unknown) {
             message.error(getErrorMessage(err, 'Failed to delete post.'));
         }
@@ -96,13 +96,13 @@ export default function AdminPostsPage() {
             if (deleted.requested > deleted.deleted) {
                 message.info('Some selected posts no longer existed.');
             }
-            await loadPosts(response?.page || 1);
+            await loadPosts(response?.pagination.page || 1);
         } catch (err: unknown) {
             message.error(getErrorMessage(err, 'Failed to delete selected posts.'));
         }
     };
 
-    const visibleIds = response?.posts.map((post) => post._id) || [];
+    const visibleIds = response?.items.map((post) => post._id) || [];
     const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
     const toggleSelection = (id: string, checked: boolean) => {
         setSelectedIds((current) => {
@@ -122,7 +122,7 @@ export default function AdminPostsPage() {
             return next;
         });
     };
-    const totalPages = response ? Math.max(1, Math.ceil(response.total / response.limit)) : 1;
+    const totalPages = response?.pagination.totalPages || 1;
 
     return (
         <div>
@@ -154,7 +154,7 @@ export default function AdminPostsPage() {
             {error && <p className="surface mb-5 p-4 text-sm font-medium text-rose-600">{error}</p>}
             {loading ? (
                 <div className="surface p-6"><Skeleton active paragraph={{ rows: 7 }} /></div>
-            ) : !response || response.posts.length === 0 ? (
+            ) : !response || response.items.length === 0 ? (
                 <div className="surface px-6 py-14"><Empty description="No posts found" /></div>
             ) : (
                 <>
@@ -179,7 +179,7 @@ export default function AdminPostsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {response.posts.map((post) => (
+                                {response.items.map((post) => (
                                     <tr key={post._id} className="border-b border-slate-100 last:border-0">
                                         <td className="px-5 py-4">
                                             <input
@@ -208,11 +208,11 @@ export default function AdminPostsPage() {
                         </table>
                     </div>
                     <div className="mt-5 flex items-center justify-between gap-3 text-sm text-slate-500">
-                        <span>{response.total} posts</span>
+                        <span>{response.pagination.total} posts</span>
                         <div className="flex items-center gap-3">
-                            <button type="button" onClick={() => void loadPosts(response.page - 1)} disabled={loading || response.page <= 1} className="secondary-button !min-h-0 !py-2 disabled:opacity-50">Previous</button>
-                            <span>Page {response.page} of {totalPages}</span>
-                            <button type="button" onClick={() => void loadPosts(response.page + 1)} disabled={loading || response.page >= totalPages} className="secondary-button !min-h-0 !py-2 disabled:opacity-50">Next</button>
+                            <button type="button" onClick={() => void loadPosts(response.pagination.page - 1)} disabled={loading || !response.pagination.hasPreviousPage} className="secondary-button !min-h-0 !py-2 disabled:opacity-50">Previous</button>
+                            <span>Page {response.pagination.page} of {totalPages}</span>
+                            <button type="button" onClick={() => void loadPosts(response.pagination.page + 1)} disabled={loading || !response.pagination.hasNextPage} className="secondary-button !min-h-0 !py-2 disabled:opacity-50">Next</button>
                         </div>
                     </div>
                 </>

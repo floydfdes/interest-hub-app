@@ -67,7 +67,7 @@ export default function AdminUsersPage() {
         try {
             await (user.isBlocked ? unblockAdminUser(user._id) : blockAdminUser(user._id));
             message.success(user.isBlocked ? 'User unblocked' : 'User blocked');
-            await loadUsers(response?.page || 1);
+            await loadUsers(response?.pagination.page || 1);
         } catch (err: unknown) {
             message.error(getErrorMessage(err, 'Failed to update user status.'));
         }
@@ -88,7 +88,7 @@ export default function AdminUsersPage() {
         try {
             await deleteAdminUser(user._id);
             message.success('User permanently deleted');
-            await loadUsers(response?.page || 1);
+            await loadUsers(response?.pagination.page || 1);
         } catch (err: unknown) {
             message.error(getErrorMessage(err, 'Failed to delete user.'));
         }
@@ -115,13 +115,13 @@ export default function AdminUsersPage() {
             if (deleted.requested > deleted.deleted) {
                 message.info('Some selected users no longer existed.');
             }
-            await loadUsers(response?.page || 1);
+            await loadUsers(response?.pagination.page || 1);
         } catch (err: unknown) {
             message.error(getErrorMessage(err, 'Failed to delete selected users.'));
         }
     };
 
-    const selectableIds = response?.users
+    const selectableIds = response?.items
         .filter((user) => user._id !== currentUser?._id)
         .map((user) => user._id) || [];
     const allVisibleSelected = selectableIds.length > 0 && selectableIds.every((id) => selectedIds.has(id));
@@ -143,7 +143,7 @@ export default function AdminUsersPage() {
             return next;
         });
     };
-    const totalPages = response ? Math.max(1, Math.ceil(response.total / response.limit)) : 1;
+    const totalPages = response?.pagination.totalPages || 1;
 
     return (
         <div>
@@ -180,7 +180,7 @@ export default function AdminUsersPage() {
 
             {loading ? (
                 <div className="surface p-6"><Skeleton active paragraph={{ rows: 7 }} /></div>
-            ) : !response || response.users.length === 0 ? (
+            ) : !response || response.items.length === 0 ? (
                 <div className="surface px-6 py-14"><Empty description="No users found" /></div>
             ) : (
                 <>
@@ -204,7 +204,7 @@ export default function AdminUsersPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {response.users.map((user) => (
+                                {response.items.map((user) => (
                                     <tr key={user._id} className="border-b border-slate-100 last:border-0">
                                         <td className="px-5 py-4">
                                             <input
@@ -241,11 +241,11 @@ export default function AdminUsersPage() {
                         </table>
                     </div>
                     <div className="mt-5 flex items-center justify-between gap-3 text-sm text-slate-500">
-                        <span>{response.total} users</span>
+                        <span>{response.pagination.total} users</span>
                         <div className="flex items-center gap-3">
-                            <button type="button" onClick={() => void loadUsers(response.page - 1)} disabled={loading || response.page <= 1} className="secondary-button !min-h-0 !py-2 disabled:opacity-50">Previous</button>
-                            <span>Page {response.page} of {totalPages}</span>
-                            <button type="button" onClick={() => void loadUsers(response.page + 1)} disabled={loading || response.page >= totalPages} className="secondary-button !min-h-0 !py-2 disabled:opacity-50">Next</button>
+                            <button type="button" onClick={() => void loadUsers(response.pagination.page - 1)} disabled={loading || !response.pagination.hasPreviousPage} className="secondary-button !min-h-0 !py-2 disabled:opacity-50">Previous</button>
+                            <span>Page {response.pagination.page} of {totalPages}</span>
+                            <button type="button" onClick={() => void loadUsers(response.pagination.page + 1)} disabled={loading || !response.pagination.hasNextPage} className="secondary-button !min-h-0 !py-2 disabled:opacity-50">Next</button>
                         </div>
                     </div>
                 </>
@@ -256,7 +256,7 @@ export default function AdminUsersPage() {
                     key={modalUser?._id || 'create'}
                     user={modalUser}
                     onClose={() => setModalUser(undefined)}
-                    onSaved={() => void loadUsers(response?.page || 1)}
+                    onSaved={() => void loadUsers(response?.pagination.page || 1)}
                 />
             )}
         </div>

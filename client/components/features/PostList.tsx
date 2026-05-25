@@ -2,14 +2,17 @@
 
 import { deletePost, getAllPosts, getBookmarkedPosts } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
-import { IPost } from '@/app/types/user';
+import { IPost, Pagination } from '@/app/types/user';
 import { App, Empty, Skeleton } from 'antd';
 import { useEffect, useState } from 'react';
 import PostCard from './PostCard';
 
 const PostList = () => {
     const [posts, setPosts] = useState<IPost[]>([]);
+    const [pagination, setPagination] = useState<Pagination | null>(null);
+    const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const currentUser = useCurrentUser();
     const { message } = App.useApp();
 
@@ -17,15 +20,17 @@ const PostList = () => {
         const fetchPosts = async () => {
             try {
                 const hasToken = Boolean(localStorage.getItem('token'));
-                const [nextPosts, bookmarks] = await Promise.all([
+                const [response, bookmarks] = await Promise.all([
                     getAllPosts(),
                     hasToken ? getBookmarkedPosts().catch(() => []) : Promise.resolve([]),
                 ]);
-                const bookmarkedIds = new Set(bookmarks.map((post) => post._id));
-                setPosts(nextPosts.map((post) => ({
+                const nextBookmarkedIds = new Set(bookmarks.map((post) => post._id));
+                setPosts(response.items.map((post) => ({
                     ...post,
-                    isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
+                    isBookmarked: nextBookmarkedIds.has(post._id) || post.isBookmarked,
                 })));
+                setBookmarkedIds(nextBookmarkedIds);
+                setPagination(response.pagination);
             } catch {
                 message.error('Failed to load posts');
             } finally {
@@ -35,6 +40,24 @@ const PostList = () => {
 
         void fetchPosts();
     }, [message]);
+
+    const loadMore = async () => {
+        if (!pagination?.hasNextPage) return;
+
+        setLoadingMore(true);
+        try {
+            const response = await getAllPosts(pagination.page + 1, pagination.limit);
+            setPosts((currentPosts) => [...currentPosts, ...response.items.map((post) => ({
+                ...post,
+                isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
+            }))]);
+            setPagination(response.pagination);
+        } catch {
+            message.error('Failed to load more posts');
+        } finally {
+            setLoadingMore(false);
+        }
+    };
 
     const handleDelete = async (id: string) => {
         try {
@@ -47,6 +70,12 @@ const PostList = () => {
     };
 
     const handleBookmarkChange = (postId: string, bookmarked: boolean) => {
+        setBookmarkedIds((currentIds) => {
+            const nextIds = new Set(currentIds);
+            if (bookmarked) nextIds.add(postId);
+            else nextIds.delete(postId);
+            return nextIds;
+        });
         setPosts((currentPosts) => currentPosts.map((post) => (
             post._id === postId ? { ...post, isBookmarked: bookmarked } : post
         )));
@@ -80,6 +109,11 @@ const PostList = () => {
                     onBookmarkChange={handleBookmarkChange}
                 />
             ))}
+            {pagination?.hasNextPage && (
+                <button type="button" onClick={() => void loadMore()} disabled={loadingMore} className="secondary-button mx-auto">
+                    {loadingMore ? 'Loading...' : 'Load more'}
+                </button>
+            )}
         </div>
     );
 };

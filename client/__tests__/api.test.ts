@@ -9,8 +9,12 @@ import {
     deleteAdminReply,
     deleteAdminUser,
     bookmarkPost,
+    getAllPosts,
     getBookmarkedPosts,
+    getFollowers,
+    getFollowing,
     getFollowingPosts,
+    getPostLikes,
     getRecommendedPosts,
     getSuggestedUsers,
     getTrendingPosts,
@@ -42,16 +46,28 @@ describe('discovery and bookmark API client', () => {
     });
 
     it('requests each discovery endpoint with typed query parameters and auth headers', async () => {
+        await getAllPosts();
         await getFollowingPosts();
         await getTrendingPosts('month', 8);
         await getRecommendedPosts(12);
         await getSuggestedUsers();
 
-        expect(fetchMock.mock.calls[0][0]).toContain('/posts/following?limit=20');
-        expect(fetchMock.mock.calls[1][0]).toContain('/posts/trending?period=month&limit=8');
-        expect(fetchMock.mock.calls[2][0]).toContain('/posts/recommended?limit=12');
-        expect(fetchMock.mock.calls[3][0]).toContain('/users/suggested?limit=10');
+        expect(fetchMock.mock.calls[0][0]).toContain('/posts?page=1&limit=20');
+        expect(fetchMock.mock.calls[1][0]).toContain('/posts/following?page=1&limit=20');
+        expect(fetchMock.mock.calls[2][0]).toContain('/posts/trending?period=month&limit=8');
+        expect(fetchMock.mock.calls[3][0]).toContain('/posts/recommended?limit=12');
+        expect(fetchMock.mock.calls[4][0]).toContain('/users/suggested?limit=10');
         expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
+    });
+
+    it('requests paginated likes and relationship lists', async () => {
+        await getPostLikes('post-7', 2, 10);
+        await getFollowers('user-1');
+        await getFollowing('user-1', 3, 5);
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/posts/post-7/likes?page=2&limit=10');
+        expect(fetchMock.mock.calls[1][0]).toContain('/users/user-1/followers?page=1&limit=20');
+        expect(fetchMock.mock.calls[2][0]).toContain('/users/user-1/following?page=3&limit=5');
     });
 
     it('uses bookmark list, create, and delete endpoints', async () => {
