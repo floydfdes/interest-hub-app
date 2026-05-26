@@ -4,7 +4,6 @@ import { ApiError, blockUser, followUser, getMe, muteUser, searchUsers, unblockU
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { IUser } from "@/app/types/user";
-import { formatDistanceToNow } from "date-fns";
 import { MoreHorizontal, Search, UsersRound } from "lucide-react";
 import Avatar from "react-avatar";
 import Swal from "sweetalert2";
@@ -240,8 +239,7 @@ export default function UserSearchPage() {
                                         </div>
                                     )}
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Followers: {user.followers?.length || 0} • Following: {user.following?.length || 0} • Joined{" "}
-                                        {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+                                        Followers: {user.followers?.length || 0} • Following: {user.following?.length || 0}
                                     </p>
 
                                 </div>

@@ -292,8 +292,6 @@ export default function Explore() {
         </div>
       </section>
 
-      <SuggestedUsers authenticated={Boolean(currentUser)} />
-
       <section className="surface mb-7 p-4 sm:p-5">
         <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div className="flex rounded-xl border border-slate-200 bg-slate-50 p-1" aria-label="Search type">
@@ -522,6 +520,10 @@ export default function Explore() {
           {searching ? "Loading..." : "Load more"}
         </button>
       )}
+
+      <div className="mt-7">
+        <SuggestedUsers authenticated={Boolean(currentUser)} />
+      </div>
     </div>
   );
 }
