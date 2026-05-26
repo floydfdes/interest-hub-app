@@ -1,8 +1,8 @@
 "use client";
 
-import { Edit, Flame, LayoutGrid, List, MessageCircle, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
-import { advancedSearchPosts, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTrendingPosts, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
+import { Edit, EyeOff, Flame, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { advancedSearchPosts, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTrendingPosts, hidePost, muteUser, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
 import { IPost, Pagination } from "../types/user";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
@@ -29,7 +29,9 @@ export default function Explore() {
   const [searching, setSearching] = useState(true);
   const [searchError, setSearchError] = useState("");
   const [resultLabel, setResultLabel] = useState("");
+  const [actionMenuPostId, setActionMenuPostId] = useState<string | null>(null);
   const currentUser = useCurrentUser();
+  const actionMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -51,6 +53,19 @@ export default function Explore() {
 
     void fetchPosts();
   }, []);
+
+  useEffect(() => {
+    if (!actionMenuPostId) return;
+
+    const closeActionsOnOutsideClick = (event: MouseEvent) => {
+      if (!actionMenuRef.current?.contains(event.target as Node)) {
+        setActionMenuPostId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", closeActionsOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeActionsOnOutsideClick);
+  }, [actionMenuPostId]);
 
   const loadDiscoveryFeed = async (nextFeed: DiscoveryFeed, period: TrendingPeriod) => {
     setFeed(nextFeed);
@@ -196,6 +211,26 @@ export default function Explore() {
       } catch (err: unknown) {
         void Swal.fire("Error", getErrorMessage(err, "Failed to delete post"), "error");
       }
+    }
+  };
+
+  const handleHide = async (postId: string) => {
+    setActionMenuPostId(null);
+    try {
+      await hidePost(postId);
+      setPosts((previous) => previous.filter((post) => post._id !== postId));
+    } catch (err: unknown) {
+      setSearchError(getErrorMessage(err, "Failed to hide post."));
+    }
+  };
+
+  const handleMuteAuthor = async (authorId: string) => {
+    setActionMenuPostId(null);
+    try {
+      await muteUser(authorId);
+      await loadDiscoveryFeed(feed, trendingPeriod);
+    } catch (err: unknown) {
+      setSearchError(getErrorMessage(err, "Failed to mute user."));
     }
   };
 
@@ -451,6 +486,31 @@ export default function Explore() {
                   <button data-testid="post-delete-button" onClick={() => void handleDelete(post._id)} className="text-rose-500 transition hover:text-rose-700">
                     <Trash2 size={15} />
                   </button>
+                </div>
+              )}
+              {currentUser && post.author?._id !== currentUser._id && (
+                <div ref={actionMenuPostId === post._id ? actionMenuRef : undefined} className="relative">
+                  <button
+                    type="button"
+                    aria-label={`More actions for ${post.title}`}
+                    aria-expanded={actionMenuPostId === post._id}
+                    onClick={() => setActionMenuPostId((openId) => openId === post._id ? null : post._id)}
+                    className="rounded-lg p-1 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                  >
+                    <MoreHorizontal size={17} />
+                  </button>
+                  {actionMenuPostId === post._id && (
+                    <div className="absolute bottom-8 right-0 z-10 min-w-36 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg">
+                      {(feed === "following" || feed === "recommended") && (
+                        <button type="button" onClick={() => void handleMuteAuthor(post.author._id)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                          <VolumeX size={15} /> Mute user
+                        </button>
+                      )}
+                      <button type="button" onClick={() => void handleHide(post._id)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                        <EyeOff size={15} /> Hide post
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -2,6 +2,7 @@ import {
     bulkDeleteAdminComments,
     bulkDeleteAdminPosts,
     bulkDeleteAdminUsers,
+    blockUser,
     checkAdminAccess,
     createAdminUser,
     deleteAdminComment,
@@ -9,12 +10,15 @@ import {
     deleteAdminReply,
     deleteAdminUser,
     bookmarkPost,
+    getHiddenPosts,
     getAllPosts,
     getBookmarkedPosts,
+    getBlockedUsers,
     getFollowers,
     getFollowing,
     getFollowingPosts,
     getMyActivities,
+    getMutedUsers,
     getPostLikes,
     getRecommendedPosts,
     getSuggestedUsers,
@@ -25,7 +29,12 @@ import {
     getAdminPosts,
     getAdminUser,
     getAdminUsers,
+    hidePost,
+    muteUser,
     removeBookmark,
+    unhidePost,
+    unmuteUser,
+    unblockUser,
     updateAdminUser,
 } from '@/app/api/api';
 
@@ -70,6 +79,44 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[0][0]).toContain('/posts/post-7/likes?page=2&limit=10');
         expect(fetchMock.mock.calls[1][0]).toContain('/users/user-1/followers?page=1&limit=20');
         expect(fetchMock.mock.calls[2][0]).toContain('/users/user-1/following?page=3&limit=5');
+    });
+
+    it('requests personal block controls and the blocked users list', async () => {
+        await blockUser('user-2');
+        await unblockUser('user-2');
+        await getBlockedUsers(2, 20);
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/users/block/user-2');
+        expect(fetchMock.mock.calls[0][1].method).toBe('POST');
+        expect(fetchMock.mock.calls[1][0]).toContain('/users/unblock/user-2');
+        expect(fetchMock.mock.calls[1][1].method).toBe('POST');
+        expect(fetchMock.mock.calls[2][0]).toContain('/users/blocked?page=2&limit=20');
+    });
+
+    it('requests mute and hide controls and normalizes muted user pagination', async () => {
+        await muteUser('user-2');
+        await unmuteUser('user-2');
+        fetchMock.mockImplementationOnce(() => mockResponse({
+            data: [{ _id: 'user-2', name: 'Jordan', profilePic: null }],
+            pagination: { page: 1, limit: 20, total: 1, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+        }));
+        const muted = await getMutedUsers();
+        await hidePost('post-2');
+        await unhidePost('post-2');
+        await getHiddenPosts(2, 20);
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/users/mute/user-2');
+        expect(fetchMock.mock.calls[1][0]).toContain('/users/unmute/user-2');
+        expect(fetchMock.mock.calls[2][0]).toContain('/users/muted?page=1&limit=20');
+        expect(muted).toEqual({
+            items: [{ _id: 'user-2', name: 'Jordan', profilePic: null }],
+            pagination: { page: 1, limit: 20, total: 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+        });
+        expect(fetchMock.mock.calls[3][0]).toContain('/posts/post-2/hide');
+        expect(fetchMock.mock.calls[3][1].method).toBe('POST');
+        expect(fetchMock.mock.calls[4][0]).toContain('/posts/post-2/hide');
+        expect(fetchMock.mock.calls[4][1].method).toBe('DELETE');
+        expect(fetchMock.mock.calls[5][0]).toContain('/posts/hidden?page=2&limit=20');
     });
 
     it('requests only the current user activity with supported filters', async () => {

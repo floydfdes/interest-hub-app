@@ -191,6 +191,24 @@ export default function SettingsPage() {
                     >
                         Activity History
                     </Link>
+                    <Link
+                        href="/profile/blocked"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
+                    >
+                        Blocked Users
+                    </Link>
+                    <Link
+                        href="/profile/muted"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
+                    >
+                        Muted Users
+                    </Link>
+                    <Link
+                        href="/profile/hidden-posts"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
+                    >
+                        Hidden Posts
+                    </Link>
                     <button
                         onClick={() => setModal("change")}
                         className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"

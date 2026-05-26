@@ -37,6 +37,10 @@ export default function SavedPostsPage() {
         }
     };
 
+    const handleHide = (postId: string) => {
+        setPosts((currentPosts) => currentPosts.filter((post) => post._id !== postId));
+    };
+
     if (!currentUser || error) {
         return (
             <div className="surface shell-container max-w-lg p-10 text-center">
@@ -70,6 +74,7 @@ export default function SavedPostsPage() {
                             currentUser={currentUser}
                             isBookmarked
                             onBookmarkChange={handleBookmarkChange}
+                            onHide={handleHide}
                         />
                     ))}
                 </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { followUser, getErrorMessage, getSuggestedUsers } from '@/app/api/api';
+import { ApiError, followUser, getErrorMessage, getSuggestedUsers } from '@/app/api/api';
 import { IUser } from '@/app/types/user';
 import { Avatar, Skeleton } from 'antd';
 import { RefreshCcw, UserPlus, UsersRound } from 'lucide-react';
@@ -62,7 +62,9 @@ export default function SuggestedUsers({ authenticated }: SuggestedUsersProps) {
             await followUser(id);
             setUsers((currentUsers) => currentUsers.filter((user) => user._id !== id));
         } catch (err: unknown) {
-            setError(getErrorMessage(err, 'Failed to follow user.'));
+            setError(err instanceof ApiError && err.status === 403
+                ? 'You cannot follow this user.'
+                : getErrorMessage(err, 'Failed to follow user.'));
         } finally {
             setFollowingId('');
         }

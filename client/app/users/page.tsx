@@ -1,34 +1,63 @@
 "use client";
 
-import { followUser, getMe, searchUsers, unfollowUser } from "@/app/api/api";
-import { useEffect, useMemo, useState } from "react";
+import { ApiError, blockUser, followUser, getMe, muteUser, searchUsers, unblockUser, unfollowUser, unmuteUser } from "@/app/api/api";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { IUser } from "@/app/types/user";
 import { formatDistanceToNow } from "date-fns";
-import { Search, UsersRound } from "lucide-react";
+import { MoreHorizontal, Search, UsersRound } from "lucide-react";
 import Avatar from "react-avatar";
+import Swal from "sweetalert2";
 
 export default function UserSearchPage() {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<IUser[]>([]);
     const [followingIds, setFollowingIds] = useState<string[]>([]);
+    const [blockedIds, setBlockedIds] = useState<string[]>([]);
+    const [mutedIds, setMutedIds] = useState<string[]>([]);
+    const [currentUserId, setCurrentUserId] = useState("");
+    const [actionMenuUserId, setActionMenuUserId] = useState<string | null>(null);
     const [error, setError] = useState("");
     const [selectedInterest, setSelectedInterest] = useState("All");
     const [sortBy, setSortBy] = useState("name");
+    const actionMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fetchInitial = async () => {
+            if (localStorage.getItem("token")) {
+                try {
+                    const me = await getMe() as { user: IUser };
+                    setCurrentUserId(me.user._id);
+                    setFollowingIds(me.user.following || []);
+                    setBlockedIds(me.user.blockedUsers || []);
+                    setMutedIds(me.user.mutedUsers || []);
+                } catch {
+                    // People discovery is public; protected actions surface their own failures.
+                }
+            }
+
             try {
-                const me = await getMe() as { user: IUser };
-                setFollowingIds(me.user.following || []);
                 const initialUsers = await searchUsers("") as IUser[];
                 setResults(initialUsers);
             } catch {
-                setError("Failed to load user data");
+                // Do not show a search failure until the user explicitly searches.
             }
         };
-        fetchInitial();
+        void fetchInitial();
     }, []);
+
+    useEffect(() => {
+        if (!actionMenuUserId) return;
+
+        const closeActionsOnOutsideClick = (event: MouseEvent) => {
+            if (!actionMenuRef.current?.contains(event.target as Node)) {
+                setActionMenuUserId(null);
+            }
+        };
+
+        document.addEventListener("mousedown", closeActionsOnOutsideClick);
+        return () => document.removeEventListener("mousedown", closeActionsOnOutsideClick);
+    }, [actionMenuUserId]);
 
     const handleSearch = async () => {
         try {
@@ -37,6 +66,11 @@ export default function UserSearchPage() {
         } catch {
             setError("Search failed");
         }
+    };
+
+    const submitSearch = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        void handleSearch();
     };
 
     const handleFollowToggle = async (userId: string, isFollowing: boolean) => {
@@ -48,8 +82,56 @@ export default function UserSearchPage() {
                 await followUser(userId);
                 setFollowingIds((prev) => [...prev, userId]);
             }
+        } catch (err: unknown) {
+            setError(err instanceof ApiError && err.status === 403
+                ? "You cannot follow this user."
+                : "Failed to update follow status");
+        }
+    };
+
+    const handleBlockToggle = async (user: IUser, isBlocked: boolean) => {
+        setActionMenuUserId(null);
+        setError("");
+        if (!isBlocked) {
+            const confirmation = await Swal.fire({
+                title: `Block ${user.name}?`,
+                text: "Blocking this user will remove any follow connection between you.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Block user",
+                cancelButtonText: "Cancel",
+                confirmButtonColor: "#e11d48",
+            });
+            if (!confirmation.isConfirmed) return;
+        }
+
+        try {
+            if (isBlocked) {
+                await unblockUser(user._id);
+                setBlockedIds((previous) => previous.filter((id) => id !== user._id));
+            } else {
+                await blockUser(user._id);
+                setBlockedIds((previous) => [...previous, user._id]);
+                setFollowingIds((previous) => previous.filter((id) => id !== user._id));
+            }
         } catch {
-            setError("Failed to update follow status");
+            setError(`Failed to ${isBlocked ? "unblock" : "block"} user`);
+        }
+    };
+
+    const handleMuteToggle = async (user: IUser, isMuted: boolean) => {
+        setActionMenuUserId(null);
+        setError("");
+        try {
+            if (isMuted) {
+                await unmuteUser(user._id);
+                setMutedIds((previous) => previous.filter((id) => id !== user._id));
+            } else {
+                await muteUser(user._id);
+                setMutedIds((previous) => [...previous, user._id]);
+            }
+        } catch {
+            setError(`Failed to ${isMuted ? "unmute" : "mute"} user`);
         }
     };
 
@@ -84,7 +166,7 @@ export default function UserSearchPage() {
                 <p className="mt-2 text-slate-500">Discover creators through the interests you share.</p>
             </header>
 
-            <div className="surface mb-7 flex w-full flex-wrap gap-3 p-4">
+            <form onSubmit={submitSearch} className="surface mb-7 flex w-full flex-wrap gap-3 p-4">
                 <input
                     data-testid="users-search-input"
                     type="text"
@@ -94,8 +176,8 @@ export default function UserSearchPage() {
                     onChange={(e) => setQuery(e.target.value)}
                 />
                 <button
+                    type="submit"
                     data-testid="users-search-button"
-                    onClick={handleSearch}
                     className="primary-button"
                 >
                     <Search size={15} /> Search
@@ -117,7 +199,7 @@ export default function UserSearchPage() {
                     <option value="name">Sort by Name</option>
                     <option value="followers">Sort by Followers</option>
                 </select>
-            </div>
+            </form>
 
             {error && <p className="text-red-500 mb-4">{error}</p>}
 
@@ -125,6 +207,9 @@ export default function UserSearchPage() {
             <div className="grid w-full gap-4 lg:grid-cols-2">
                 {filteredResults.map((user) => {
                     const isFollowing = followingIds.includes(user._id);
+                    const isBlocked = blockedIds.includes(user._id);
+                    const isMuted = mutedIds.includes(user._id);
+                    const isCurrentUser = user._id === currentUserId;
                     return (
                         <div
                             key={user._id}
@@ -161,15 +246,51 @@ export default function UserSearchPage() {
 
                                 </div>
                             </div>
-                            <button
-                                onClick={() => handleFollowToggle(user._id, isFollowing)}
-                                className={`ml-4 rounded-xl px-4 py-2 text-sm font-semibold transition ${isFollowing
-                                    ? "bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600"
-                                    : "bg-indigo-600 text-white hover:bg-indigo-700"
-                                    }`}
-                            >
-                                {isFollowing ? "Unfollow" : "Follow"}
-                            </button>
+                            {!isCurrentUser && (
+                                <div
+                                    ref={actionMenuUserId === user._id ? actionMenuRef : undefined}
+                                    className="relative ml-4 flex shrink-0 items-start gap-2"
+                                >
+                                    {!isBlocked && (
+                                        <button
+                                            onClick={() => handleFollowToggle(user._id, isFollowing)}
+                                            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${isFollowing
+                                                ? "bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600"
+                                                : "bg-indigo-600 text-white hover:bg-indigo-700"
+                                                }`}
+                                        >
+                                            {isFollowing ? "Unfollow" : "Follow"}
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        aria-label={`More actions for ${user.name}`}
+                                        aria-expanded={actionMenuUserId === user._id}
+                                        onClick={() => setActionMenuUserId((openId) => openId === user._id ? null : user._id)}
+                                        className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                                    >
+                                        <MoreHorizontal size={18} />
+                                    </button>
+                                    {actionMenuUserId === user._id && (
+                                        <div className="absolute right-0 top-12 z-10 min-w-36 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => void handleMuteToggle(user, isMuted)}
+                                                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                                            >
+                                                {isMuted ? "Unmute" : "Mute"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => void handleBlockToggle(user, isBlocked)}
+                                                className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${isBlocked ? "text-slate-700" : "text-rose-600"}`}
+                                            >
+                                                {isBlocked ? "Unblock" : "Block"}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}

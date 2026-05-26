@@ -81,6 +81,10 @@ const PostList = () => {
         )));
     };
 
+    const handleHide = (postId: string) => {
+        setPosts((currentPosts) => currentPosts.filter((post) => post._id !== postId));
+    };
+
     if (loading) {
         return (
             <div className="surface p-6">
@@ -107,6 +111,7 @@ const PostList = () => {
                     currentUser={currentUser}
                     isBookmarked={post.isBookmarked}
                     onBookmarkChange={handleBookmarkChange}
+                    onHide={handleHide}
                 />
             ))}
             {pagination?.hasNextPage && (

@@ -8,6 +8,9 @@ export interface IUser {
     interests: string[];
     followers: string[];
     following: string[];
+    blockedUsers: string[];
+    mutedUsers: string[];
+    hiddenPosts: string[];
     otp: string | null;
     otpExpires: string | null;
     is2FAEnabled: boolean;
@@ -197,6 +200,12 @@ export type AdminPostsResponse = PaginatedResponse<IPost>;
 export type AdminActivitiesResponse = PaginatedResponse<AdminUserActivity>;
 
 export type MyActivitiesResponse = PaginatedResponse<UserActivity>;
+
+export type BlockedUsersResponse = PaginatedResponse<BasicUserSummary>;
+
+export type MutedUsersResponse = PaginatedResponse<BasicUserSummary>;
+
+export type HiddenPostsResponse = PaginatedResponse<IPost>;
 
 export interface AdminUserInput {
     name: string;

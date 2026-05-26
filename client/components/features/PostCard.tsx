@@ -9,11 +9,11 @@ import {
     UserOutlined,
 } from '@ant-design/icons';
 import { formatDistanceToNow } from 'date-fns';
-import { Globe2 } from 'lucide-react';
+import { EyeOff, Globe2, MoreHorizontal } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
-import { likePost, unlikePost } from '@/app/api/api';
+import { useEffect, useRef, useState } from 'react';
+import { hidePost, likePost, unlikePost } from '@/app/api/api';
 import { IPost, IUser, Like } from '@/app/types/user';
 import BookmarkButton from './BookmarkButton';
 
@@ -23,16 +23,32 @@ interface PostCardProps {
     currentUser: IUser | null;
     isBookmarked?: boolean;
     onBookmarkChange?: (postId: string, bookmarked: boolean) => void;
+    onHide?: (postId: string) => void;
 }
 
 function belongsToUser(like: Like, userId: string) {
     return (typeof like === 'string' ? like : like._id) === userId;
 }
 
-const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange }: PostCardProps) => {
+const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange, onHide }: PostCardProps) => {
     const [likes, setLikes] = useState<Like[]>(post.likes || []);
+    const [actionsOpen, setActionsOpen] = useState(false);
+    const actionMenuRef = useRef<HTMLDivElement>(null);
     const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
     const postImage = post.image || '/default_image.png';
+
+    useEffect(() => {
+        if (!actionsOpen) return;
+
+        const closeActionsOnOutsideClick = (event: MouseEvent) => {
+            if (!actionMenuRef.current?.contains(event.target as Node)) {
+                setActionsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', closeActionsOnOutsideClick);
+        return () => document.removeEventListener('mousedown', closeActionsOnOutsideClick);
+    }, [actionsOpen]);
 
     const handleLike = async () => {
         if (!currentUser) return;
@@ -42,6 +58,16 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange 
             setLikes(response.likes || []);
         } catch {
             // Keep the server-confirmed count displayed when engagement fails.
+        }
+    };
+
+    const handleHide = async () => {
+        setActionsOpen(false);
+        try {
+            await hidePost(post._id);
+            onHide?.(post._id);
+        } catch {
+            // Leave the post visible if the server did not confirm the hide.
         }
     };
 
@@ -104,6 +130,30 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange 
                         onBookmarkChange={onBookmarkChange}
                     />
                 </div>
+                <div ref={actionMenuRef} className="relative flex items-center gap-2">
+                {currentUser && post.author?._id !== currentUser._id && (
+                    <>
+                        <Button
+                            type="text"
+                            aria-label="More post actions"
+                            aria-expanded={actionsOpen}
+                            icon={<MoreHorizontal size={18} />}
+                            onClick={() => setActionsOpen((open) => !open)}
+                            className="!rounded-xl !text-slate-500"
+                        />
+                        {actionsOpen && (
+                            <div className="absolute bottom-11 right-0 z-10 min-w-32 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => void handleHide()}
+                                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                                >
+                                    <EyeOff size={15} /> Hide post
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
                 {currentUser && post.author?._id === currentUser._id && (
                     <Button
                         type="text"
@@ -115,6 +165,7 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange 
                         Remove
                     </Button>
                 )}
+                </div>
             </footer>
         </article>
     );

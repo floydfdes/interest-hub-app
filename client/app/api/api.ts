@@ -8,10 +8,12 @@ import {
     AdminUserUpdateInput,
     AdminUsersResponse,
     AuthResponse,
+    BasicUserSummary,
     IComment,
     IPost,
     IUser,
     LoginInput,
+    MutedUsersResponse,
     MyActivitiesResponse,
     PaginatedResponse,
     PostInput,
@@ -61,6 +63,13 @@ export interface MyActivityFilters {
     limit?: number;
     type?: ActivityType;
 }
+
+type RawMutedUsersResponse = {
+    data: BasicUserSummary[];
+    pagination: Omit<MutedUsersResponse["pagination"], "hasPreviousPage"> & {
+        hasPrevPage: boolean;
+    };
+};
 
 export class ApiError extends Error {
     status: number;
@@ -184,6 +193,10 @@ export const getRecommendedPosts = (limit = 20) =>
 export const getBookmarkedPosts = () => request<IPost[]>("GET", "/posts/bookmarks");
 export const bookmarkPost = (id: string) => request<MessageResponse>("POST", `/posts/${id}/bookmark`);
 export const removeBookmark = (id: string) => request<MessageResponse>("DELETE", `/posts/${id}/bookmark`);
+export const hidePost = (id: string) => request<MessageResponse>("POST", `/posts/${id}/hide`);
+export const unhidePost = (id: string) => request<MessageResponse>("DELETE", `/posts/${id}/hide`);
+export const getHiddenPosts = (page = 1, limit = 20) =>
+    request<PaginatedResponse<IPost>>("GET", "/posts/hidden", { queryParams: { page, limit } });
 
 // Users
 export const getMe = () => request<UserResponse>("GET", "/users/me");
@@ -197,8 +210,26 @@ export const getFollowers = (id: string, page = 1, limit = 20) =>
     request<PaginatedResponse<IUser>>("GET", `/users/${id}/followers`, { queryParams: { page, limit } });
 export const getFollowing = (id: string, page = 1, limit = 20) =>
     request<PaginatedResponse<IUser>>("GET", `/users/${id}/following`, { queryParams: { page, limit } });
-export const blockUser = (id: string) => request<void>("POST", `/users/block/${id}`);
-export const unblockUser = (id: string) => request<void>("POST", `/users/unblock/${id}`);
+export const blockUser = (id: string) => request<MessageResponse>("POST", `/users/block/${id}`);
+export const unblockUser = (id: string) => request<MessageResponse>("POST", `/users/unblock/${id}`);
+export const getBlockedUsers = (page = 1, limit = 20) =>
+    request<PaginatedResponse<BasicUserSummary>>("GET", "/users/blocked", { queryParams: { page, limit } });
+export const muteUser = (id: string) => request<MessageResponse>("POST", `/users/mute/${id}`);
+export const unmuteUser = (id: string) => request<MessageResponse>("POST", `/users/unmute/${id}`);
+export const getMutedUsers = async (page = 1, limit = 20): Promise<MutedUsersResponse> => {
+    const response = await request<RawMutedUsersResponse>("GET", "/users/muted", { queryParams: { page, limit } });
+    return {
+        items: response.data,
+        pagination: {
+            page: response.pagination.page,
+            limit: response.pagination.limit,
+            total: response.pagination.total,
+            totalPages: response.pagination.totalPages,
+            hasNextPage: response.pagination.hasNextPage,
+            hasPreviousPage: response.pagination.hasPrevPage,
+        },
+    };
+};
 export const searchUsers = (query: string) =>
     request<IUser[]>("GET", "/users/search", { queryParams: { query } });
 export const getSuggestedUsers = (limit = 10) =>
