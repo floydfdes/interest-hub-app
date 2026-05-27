@@ -1,4 +1,4 @@
-import { hidePost } from '@/app/api/api';
+import { archivePost, hidePost } from '@/app/api/api';
 import { IPost, IUser } from '@/app/types/user';
 import PostCard from '@/components/features/PostCard';
 import { App } from 'antd';
@@ -6,6 +6,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 jest.mock('@/app/api/api', () => ({
     bookmarkPost: jest.fn(),
+    archivePost: jest.fn(),
     hidePost: jest.fn(),
     likePost: jest.fn(),
     removeBookmark: jest.fn(),
@@ -13,6 +14,7 @@ jest.mock('@/app/api/api', () => ({
 }));
 
 const mockedHidePost = jest.mocked(hidePost);
+const mockedArchivePost = jest.mocked(archivePost);
 
 describe('PostCard hide action', () => {
     it('hides another user post and removes it from its visible feed owner', async () => {
@@ -44,5 +46,30 @@ describe('PostCard hide action', () => {
 
         await waitFor(() => expect(mockedHidePost).toHaveBeenCalledWith('post-2'));
         expect(onHide).toHaveBeenCalledWith('post-2');
+    });
+
+    it('archives an owned post from the overflow menu', async () => {
+        mockedArchivePost.mockResolvedValue({ message: 'Post archived', post: { _id: 'post-2', isArchived: true, archivedAt: '2026-05-27T00:00:00.000Z' } });
+        const onArchive = jest.fn();
+        const post = {
+            _id: 'post-2',
+            title: 'My post',
+            content: 'Post content',
+            author: { _id: 'me', name: 'Me', profilePic: '' },
+            likes: [],
+            comments: [],
+        } as unknown as IPost;
+
+        render(
+            <App>
+                <PostCard post={post} currentUser={{ _id: 'me' } as IUser} onArchive={onArchive} />
+            </App>
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'More post actions' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Archive' }));
+
+        await waitFor(() => expect(mockedArchivePost).toHaveBeenCalledWith('post-2'));
+        expect(onArchive).toHaveBeenCalledWith('post-2');
     });
 });

@@ -59,8 +59,12 @@ export default function SuggestedUsers({ authenticated }: SuggestedUsersProps) {
         setFollowingId(id);
         setError('');
         try {
-            await followUser(id);
-            setUsers((currentUsers) => currentUsers.filter((user) => user._id !== id));
+            const response = await followUser(id);
+            if (response?.status === 'requested') {
+                setUsers((currentUsers) => currentUsers.map((user) => user._id === id ? { ...user, hasRequestedFollow: true } : user));
+            } else {
+                setUsers((currentUsers) => currentUsers.filter((user) => user._id !== id));
+            }
         } catch (err: unknown) {
             setError(err instanceof ApiError && err.status === 403
                 ? 'You cannot follow this user.'
@@ -102,12 +106,12 @@ export default function SuggestedUsers({ authenticated }: SuggestedUsersProps) {
                             </div>
                             <button
                                 type="button"
-                                aria-label={`Follow ${user.name}`}
+                                aria-label={user.hasRequestedFollow ? `Requested ${user.name}` : `Follow ${user.name}`}
                                 onClick={() => void handleFollow(user._id)}
-                                disabled={followingId === user._id}
+                                disabled={followingId === user._id || Boolean(user.hasRequestedFollow)}
                                 className="rounded-xl bg-indigo-50 p-2 text-indigo-600 transition hover:bg-indigo-100 disabled:opacity-50"
                             >
-                                <UserPlus size={16} />
+                                {user.hasRequestedFollow ? 'Requested' : <UserPlus size={16} />}
                             </button>
                         </div>
                     ))}

@@ -27,7 +27,7 @@ describe('SuggestedUsers', () => {
 
     it('loads suggestions and removes a person after following', async () => {
         mockedGetSuggestedUsers.mockResolvedValue([{ _id: 'suggested-1', name: 'Anya', interests: ['Design'] } as IUser]);
-        mockedFollowUser.mockResolvedValue(undefined);
+        mockedFollowUser.mockResolvedValue({ message: 'Followed successfully', status: 'followed' });
 
         render(<SuggestedUsers authenticated />);
 
@@ -46,5 +46,16 @@ describe('SuggestedUsers', () => {
         fireEvent.click(await screen.findByRole('button', { name: 'Follow Anya' }));
 
         expect(await screen.findByText('You cannot follow this user.')).toBeInTheDocument();
+    });
+
+    it('keeps a private user visible with requested status after sending a follow request', async () => {
+        mockedGetSuggestedUsers.mockResolvedValue([{ _id: 'suggested-1', name: 'Anya' } as IUser]);
+        mockedFollowUser.mockResolvedValue({ message: 'Follow request sent', status: 'requested' });
+
+        render(<SuggestedUsers authenticated />);
+        fireEvent.click(await screen.findByRole('button', { name: 'Follow Anya' }));
+
+        expect(await screen.findByRole('button', { name: 'Requested Anya' })).toBeDisabled();
+        expect(screen.getByText('Anya')).toBeInTheDocument();
     });
 });

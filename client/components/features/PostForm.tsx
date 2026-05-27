@@ -97,7 +97,7 @@ const PostForm = () => {
                         options={[
                             { value: 'public', label: 'Public' },
                             { value: 'followersOnly', label: 'Followers only' },
-                            { value: 'private', label: 'Private' },
+                            { value: 'private', label: 'Only me' },
                         ]}
                     />
                 </Form.Item>

@@ -75,6 +75,7 @@ export default function SavedPostsPage() {
                             isBookmarked
                             onBookmarkChange={handleBookmarkChange}
                             onHide={handleHide}
+                            onArchive={handleHide}
                         />
                     ))}
                 </div>

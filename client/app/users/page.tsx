@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { IUser } from "@/app/types/user";
 import { MoreHorizontal, Search, UsersRound } from "lucide-react";
+import Link from "next/link";
 import Avatar from "react-avatar";
 import Swal from "sweetalert2";
 
@@ -12,6 +13,7 @@ export default function UserSearchPage() {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<IUser[]>([]);
     const [followingIds, setFollowingIds] = useState<string[]>([]);
+    const [requestedIds, setRequestedIds] = useState<string[]>([]);
     const [blockedIds, setBlockedIds] = useState<string[]>([]);
     const [mutedIds, setMutedIds] = useState<string[]>([]);
     const [currentUserId, setCurrentUserId] = useState("");
@@ -38,6 +40,7 @@ export default function UserSearchPage() {
             try {
                 const initialUsers = await searchUsers("") as IUser[];
                 setResults(initialUsers);
+                setRequestedIds(initialUsers.filter((user) => user.hasRequestedFollow).map((user) => user._id));
             } catch {
                 // Do not show a search failure until the user explicitly searches.
             }
@@ -62,6 +65,7 @@ export default function UserSearchPage() {
         try {
             const users = await searchUsers(query) as IUser[];
             setResults(users);
+            setRequestedIds(users.filter((user) => user.hasRequestedFollow).map((user) => user._id));
         } catch {
             setError("Search failed");
         }
@@ -78,8 +82,13 @@ export default function UserSearchPage() {
                 await unfollowUser(userId);
                 setFollowingIds((prev) => prev.filter((id) => id !== userId));
             } else {
-                await followUser(userId);
-                setFollowingIds((prev) => [...prev, userId]);
+                const response = await followUser(userId);
+                if (response?.status === "requested") {
+                    setRequestedIds((prev) => [...new Set([...prev, userId])]);
+                } else {
+                    setFollowingIds((prev) => [...new Set([...prev, userId])]);
+                    setRequestedIds((prev) => prev.filter((id) => id !== userId));
+                }
             }
         } catch (err: unknown) {
             setError(err instanceof ApiError && err.status === 403
@@ -206,6 +215,7 @@ export default function UserSearchPage() {
             <div className="grid w-full gap-4 lg:grid-cols-2">
                 {filteredResults.map((user) => {
                     const isFollowing = followingIds.includes(user._id);
+                    const isRequested = requestedIds.includes(user._id);
                     const isBlocked = blockedIds.includes(user._id);
                     const isMuted = mutedIds.includes(user._id);
                     const isCurrentUser = user._id === currentUserId;
@@ -222,11 +232,11 @@ export default function UserSearchPage() {
                                     round
                                 />
                                 <div className="flex-grow">
-                                    <p className="font-semibold text-slate-900">{user.name}</p>
-                                    {user.bio && (
+                                    <Link href={`/users/${user._id}`} className="font-semibold text-slate-900 hover:text-indigo-700">{user.name}</Link>
+                                    {user.canViewProfile !== false && user.bio && (
                                         <p className="text-sm text-gray-600">{user.bio}</p>
                                     )}
-                                    {user.interests?.length > 0 && (
+                                    {user.canViewProfile !== false && user.interests?.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1">
                                             {user.interests.map((i) => (
                                                 <span
@@ -252,12 +262,15 @@ export default function UserSearchPage() {
                                     {!isBlocked && (
                                         <button
                                             onClick={() => handleFollowToggle(user._id, isFollowing)}
+                                            disabled={isRequested}
                                             className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${isFollowing
                                                 ? "bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600"
-                                                : "bg-indigo-600 text-white hover:bg-indigo-700"
+                                                : isRequested
+                                                    ? "bg-slate-100 text-slate-500"
+                                                    : "bg-indigo-600 text-white hover:bg-indigo-700"
                                                 }`}
                                         >
-                                            {isFollowing ? "Unfollow" : "Follow"}
+                                            {isFollowing ? "Unfollow" : isRequested ? "Requested" : "Follow"}
                                         </button>
                                     )}
                                     <button

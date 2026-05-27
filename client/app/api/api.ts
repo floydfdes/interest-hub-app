@@ -11,6 +11,7 @@ import {
     AdminUserInput,
     AdminUserUpdateInput,
     AdminUsersResponse,
+    ArchivedPostsResponse,
     AuthResponse,
     BasicUserSummary,
     IComment,
@@ -23,6 +24,7 @@ import {
     PostInput,
     PostUpdateInput,
     ProfileUpdateInput,
+    PublicUserProfile,
     RegisterInput,
     UserResponse,
 } from "@/app/types/user";
@@ -48,6 +50,14 @@ export type TrendingPeriod = "day" | "week" | "month" | "all";
 
 export interface MessageResponse {
     message: string;
+}
+
+export interface FollowResponse extends MessageResponse {
+    status: "followed" | "requested" | "existing";
+}
+
+export interface ArchivedPostResponse extends MessageResponse {
+    post: Pick<IPost, "_id" | "isArchived" | "archivedAt">;
 }
 
 export interface BulkDeleteResponse extends MessageResponse {
@@ -201,14 +211,18 @@ export const hidePost = (id: string) => request<MessageResponse>("POST", `/posts
 export const unhidePost = (id: string) => request<MessageResponse>("DELETE", `/posts/${id}/hide`);
 export const getHiddenPosts = (page = 1, limit = 20) =>
     request<PaginatedResponse<IPost>>("GET", "/posts/hidden", { queryParams: { page, limit } });
+export const archivePost = (id: string) => request<ArchivedPostResponse>("PATCH", `/posts/${id}/archive`);
+export const unarchivePost = (id: string) => request<ArchivedPostResponse>("PATCH", `/posts/${id}/unarchive`);
+export const getArchivedPosts = (page = 1, limit = 20) =>
+    request<ArchivedPostsResponse>("GET", "/posts/archived", { queryParams: { page, limit } });
 
 // Users
 export const getMe = () => request<UserResponse>("GET", "/users/me");
-export const getUserProfile = (id: string) => request<IUser>("GET", `/users/${id}`);
+export const getUserProfile = (id: string) => request<PublicUserProfile>("GET", `/users/profile/${id}`);
 export const updateUser = (data: ProfileUpdateInput) =>
     request<UserResponse>("PATCH", "/users/update", { body: { ...data } });
 export const deleteUser = () => request<void>("DELETE", "/users/delete");
-export const followUser = (id: string) => request<void>("POST", `/users/follow/${id}`);
+export const followUser = (id: string) => request<FollowResponse>("POST", `/users/follow/${id}`);
 export const unfollowUser = (id: string) => request<void>("POST", `/users/unfollow/${id}`);
 export const getFollowers = (id: string, page = 1, limit = 20) =>
     request<PaginatedResponse<IUser>>("GET", `/users/${id}/followers`, { queryParams: { page, limit } });
@@ -234,6 +248,12 @@ export const getMutedUsers = async (page = 1, limit = 20): Promise<MutedUsersRes
         },
     };
 };
+export const getFollowRequests = (page = 1, limit = 20) =>
+    request<PaginatedResponse<BasicUserSummary>>("GET", "/users/follow-requests", { queryParams: { page, limit } });
+export const acceptFollowRequest = (id: string) =>
+    request<MessageResponse>("POST", `/users/follow-requests/${id}/accept`);
+export const rejectFollowRequest = (id: string) =>
+    request<MessageResponse>("POST", `/users/follow-requests/${id}/reject`);
 export const searchUsers = (query: string) =>
     request<IUser[]>("GET", "/users/search", { queryParams: { query } });
 export const getSuggestedUsers = (limit = 10) =>

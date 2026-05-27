@@ -11,7 +11,11 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 const categories = ["Tech", "Health", "Travel", "Design", "Education"];
-const visibilities = ["public", "private", "followersOnly"];
+const visibilities = [
+    { value: "public", label: "Public" },
+    { value: "followersOnly", label: "Followers only" },
+    { value: "private", label: "Only me" },
+] as const;
 type EditablePost = Omit<PostInput, "tags"> & { tags: string };
 
 export default function EditPostPage() {
@@ -325,8 +329,8 @@ export default function EditPostPage() {
                     onChange={(e) => handleChange("visibility", e.target.value)}
                 >
                     {visibilities.map((option) => (
-                        <option key={option} value={option}>
-                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                        <option key={option.value} value={option.value}>
+                            {option.label}
                         </option>
                     ))}
                 </select>

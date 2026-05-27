@@ -5,11 +5,13 @@ import {
     deleteUser,
     forgotPassword,
     getErrorMessage,
-    resetPassword
+    getMe,
+    resetPassword,
+    updateUser
 } from "@/app/api/api";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { notifyAuthChanged } from "@/app/hooks/useCurrentUser";
 import Link from "next/link";
 
@@ -24,7 +26,47 @@ export default function SettingsPage() {
     });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isPrivate, setIsPrivate] = useState(false);
+    const [privacyLoading, setPrivacyLoading] = useState(true);
+    const [privacySaving, setPrivacySaving] = useState(false);
     const router = useRouter();
+
+    useEffect(() => {
+        let cancelled = false;
+        const loadPrivacy = async () => {
+            if (!localStorage.getItem("token")) {
+                if (!cancelled) setPrivacyLoading(false);
+                return;
+            }
+            try {
+                const response = await getMe();
+                if (!cancelled) setIsPrivate(Boolean(response.user.isPrivate));
+            } catch {
+                // Settings actions surface their own request failures.
+            } finally {
+                if (!cancelled) setPrivacyLoading(false);
+            }
+        };
+        void loadPrivacy();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const handlePrivacyChange = async (nextPrivate: boolean) => {
+        setPrivacySaving(true);
+        setError("");
+        try {
+            const response = await updateUser({ isPrivate: nextPrivate });
+            setIsPrivate(Boolean(response.user.isPrivate));
+            localStorage.setItem("user", JSON.stringify(response.user));
+            notifyAuthChanged();
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to update account privacy"));
+        } finally {
+            setPrivacySaving(false);
+        }
+    };
 
     const closeModal = () => {
         setModal(null);
@@ -183,8 +225,29 @@ export default function SettingsPage() {
             <div className="surface w-full max-w-xl p-7 sm:p-8">
                 <span className="eyebrow">Account</span>
                 <h1 className="mb-7 mt-4 text-3xl font-bold tracking-tight text-slate-900">Settings</h1>
+                <div className="mb-5 flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-5 py-4">
+                    <div>
+                        <p className="font-medium text-slate-700">Private account</p>
+                        <p className="mt-1 text-sm text-slate-500">Approve new followers before they can view your profile details.</p>
+                    </div>
+                    <input
+                        type="checkbox"
+                        aria-label="Private account"
+                        checked={isPrivate}
+                        onChange={(event) => void handlePrivacyChange(event.target.checked)}
+                        disabled={privacyLoading || privacySaving}
+                        className="h-5 w-5 accent-indigo-600"
+                    />
+                </div>
+                {!modal && error && <p className="mb-5 rounded-xl bg-rose-50 p-3 text-sm font-medium text-rose-600">{error}</p>}
 
                 <div className="flex flex-col space-y-3">
+                    <Link
+                        href="/profile/follow-requests"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
+                    >
+                        Follow Requests
+                    </Link>
                     <Link
                         href="/profile/activities"
                         className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
@@ -208,6 +271,12 @@ export default function SettingsPage() {
                         className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
                     >
                         Hidden Posts
+                    </Link>
+                    <Link
+                        href="/profile/archived-posts"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
+                    >
+                        Archived Posts
                     </Link>
                     <button
                         onClick={() => setModal("change")}

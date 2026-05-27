@@ -112,6 +112,7 @@ const PostList = () => {
                     isBookmarked={post.isBookmarked}
                     onBookmarkChange={handleBookmarkChange}
                     onHide={handleHide}
+                    onArchive={handleHide}
                 />
             ))}
             {pagination?.hasNextPage && (

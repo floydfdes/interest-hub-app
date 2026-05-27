@@ -1,8 +1,8 @@
 "use client";
 
-import { Edit, EyeOff, Flame, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
+import { Archive, Edit, EyeOff, Flame, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { advancedSearchPosts, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTrendingPosts, hidePost, muteUser, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
+import { advancedSearchPosts, archivePost, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTrendingPosts, hidePost, muteUser, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
 import { IPost, Pagination } from "../types/user";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
@@ -231,6 +231,16 @@ export default function Explore() {
       await loadDiscoveryFeed(feed, trendingPeriod);
     } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to mute user."));
+    }
+  };
+
+  const handleArchive = async (postId: string) => {
+    setActionMenuPostId(null);
+    try {
+      await archivePost(postId);
+      setPosts((previous) => previous.filter((post) => post._id !== postId));
+    } catch (err: unknown) {
+      setSearchError(getErrorMessage(err, "Failed to archive post."));
     }
   };
 
@@ -481,9 +491,21 @@ export default function Explore() {
                   <Link data-testid="post-edit-link" href={`/explore/post/${post._id}/edit`} className="text-indigo-600 transition hover:text-indigo-800">
                     <Edit size={15} />
                   </Link>
-                  <button data-testid="post-delete-button" onClick={() => void handleDelete(post._id)} className="text-rose-500 transition hover:text-rose-700">
-                    <Trash2 size={15} />
-                  </button>
+                  <div ref={actionMenuPostId === post._id ? actionMenuRef : undefined} className="relative">
+                    <button type="button" aria-label={`More actions for ${post.title}`} aria-expanded={actionMenuPostId === post._id} onClick={() => setActionMenuPostId((openId) => openId === post._id ? null : post._id)} className="rounded-lg p-1 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700">
+                      <MoreHorizontal size={17} />
+                    </button>
+                    {actionMenuPostId === post._id && (
+                      <div className="absolute bottom-8 right-0 z-10 min-w-36 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg">
+                        <button type="button" onClick={() => void handleArchive(post._id)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                          <Archive size={15} /> Archive
+                        </button>
+                        <button data-testid="post-delete-button" type="button" onClick={() => void handleDelete(post._id)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-50">
+                          <Trash2 size={15} /> Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               {currentUser && post.author?._id !== currentUser._id && (

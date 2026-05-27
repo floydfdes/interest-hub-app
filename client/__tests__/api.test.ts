@@ -1,4 +1,6 @@
 import {
+    acceptFollowRequest,
+    archivePost,
     bulkDeleteAdminComments,
     bulkDeleteAdminPosts,
     bulkDeleteAdminUsers,
@@ -13,11 +15,13 @@ import {
     deleteAdminUser,
     bookmarkPost,
     getHiddenPosts,
+    getArchivedPosts,
     getAllPosts,
     getBookmarkedPosts,
     getBlockedUsers,
     getFollowers,
     getFollowing,
+    getFollowRequests,
     getFollowingPosts,
     getMyActivities,
     getMutedUsers,
@@ -31,12 +35,15 @@ import {
     getAdminPosts,
     getAdminUser,
     getAdminUsers,
+    getUserProfile,
     hidePost,
     muteUser,
     removeBookmark,
     unhidePost,
+    unarchivePost,
     unmuteUser,
     unblockUser,
+    rejectFollowRequest,
     updateAdminUser,
 } from '@/app/api/api';
 
@@ -119,6 +126,25 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[4][0]).toContain('/posts/post-2/hide');
         expect(fetchMock.mock.calls[4][1].method).toBe('DELETE');
         expect(fetchMock.mock.calls[5][0]).toContain('/posts/hidden?page=2&limit=20');
+    });
+
+    it('requests private profile, follow request, and archived post controls', async () => {
+        await getUserProfile('user-2');
+        await getFollowRequests(2, 20);
+        await acceptFollowRequest('user-2');
+        await rejectFollowRequest('user-3');
+        await archivePost('post-2');
+        await unarchivePost('post-2');
+        await getArchivedPosts(3, 20);
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/users/profile/user-2');
+        expect(fetchMock.mock.calls[1][0]).toContain('/users/follow-requests?page=2&limit=20');
+        expect(fetchMock.mock.calls[2][0]).toContain('/users/follow-requests/user-2/accept');
+        expect(fetchMock.mock.calls[3][0]).toContain('/users/follow-requests/user-3/reject');
+        expect(fetchMock.mock.calls[4][0]).toContain('/posts/post-2/archive');
+        expect(fetchMock.mock.calls[4][1].method).toBe('PATCH');
+        expect(fetchMock.mock.calls[5][0]).toContain('/posts/post-2/unarchive');
+        expect(fetchMock.mock.calls[6][0]).toContain('/posts/archived?page=3&limit=20');
     });
 
     it('requests only the current user activity with supported filters', async () => {

@@ -79,7 +79,7 @@ export default function PostDetailPage() {
             >
                 Back
             </Button>
-            <PostCard post={post} currentUser={currentUser} />
+            <PostCard post={post} currentUser={currentUser} onArchive={() => router.push('/profile/archived-posts')} />
             <CommentList
                 comments={post.comments || []}
                 postId={post._id}

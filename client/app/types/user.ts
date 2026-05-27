@@ -11,6 +11,13 @@ export interface IUser {
     blockedUsers: string[];
     mutedUsers: string[];
     hiddenPosts: string[];
+    isPrivate: boolean;
+    followRequests: string[];
+    isFollowing?: boolean;
+    hasRequestedFollow?: boolean;
+    canViewProfile?: boolean;
+    followersCount?: number;
+    followingCount?: number;
     otp: string | null;
     otpExpires: string | null;
     is2FAEnabled: boolean;
@@ -72,6 +79,8 @@ export interface IPost {
     sharedFrom: string | null;
     isEdited: boolean;
     isBookmarked?: boolean;
+    isArchived?: boolean;
+    archivedAt?: string | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -166,8 +175,22 @@ export type PostUpdateInput = Omit<PostInput, "image"> & {
 };
 
 export type ProfileUpdateInput = Partial<
-    Pick<IUser, "name" | "bio" | "interests" | "profilePic">
+    Pick<IUser, "name" | "bio" | "interests" | "profilePic" | "isPrivate">
 >;
+
+export interface PublicUserProfile {
+    _id: string;
+    name: string;
+    profilePic: string | null;
+    isPrivate: boolean;
+    isFollowing: boolean;
+    hasRequestedFollow: boolean;
+    canViewProfile: boolean;
+    bio?: string;
+    interests?: string[];
+    followersCount: number;
+    followingCount: number;
+}
 
 export type AdminUser = Omit<IUser, "profilePic"> & {
     profilePic: string | null;
@@ -206,6 +229,10 @@ export type BlockedUsersResponse = PaginatedResponse<BasicUserSummary>;
 export type MutedUsersResponse = PaginatedResponse<BasicUserSummary>;
 
 export type HiddenPostsResponse = PaginatedResponse<IPost>;
+
+export type FollowRequestsResponse = PaginatedResponse<BasicUserSummary>;
+
+export type ArchivedPostsResponse = PaginatedResponse<IPost>;
 
 export interface AdminUserInput {
     name: string;
