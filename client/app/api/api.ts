@@ -2,6 +2,10 @@ import {
     ActivityType,
     AdminActivitiesResponse,
     AdminDashboardResponse,
+    AdminBulkCreatePostsResponse,
+    AdminBulkCreateUsersResponse,
+    AdminBulkPostInput,
+    AdminBulkUserInput,
     AdminPostsResponse,
     AdminUserDetailResponse,
     AdminUserInput,
@@ -273,6 +277,8 @@ export const unblockAdminUser = (id: string) => request<void>("PATCH", `/admin/u
 export const deleteAdminUser = (id: string) => request<void>("DELETE", `/admin/users/${id}`);
 export const bulkDeleteAdminUsers = (ids: string[]) =>
     request<BulkDeleteResponse>("POST", "/admin/users/bulk-delete", { body: { ids } });
+export const bulkCreateAdminUsers = (users: AdminBulkUserInput[]) =>
+    request<AdminBulkCreateUsersResponse>("POST", "/admin/users/bulk-create", { body: { users } });
 export const getAdminPosts = (
     query = "",
     authorId = "",
@@ -286,6 +292,8 @@ export const getAdminPost = (id: string) => request<IPost>("GET", `/admin/posts/
 export const deleteAdminPost = (id: string) => request<void>("DELETE", `/admin/posts/${id}`);
 export const bulkDeleteAdminPosts = (ids: string[]) =>
     request<BulkDeleteResponse>("POST", "/admin/posts/bulk-delete", { body: { ids } });
+export const bulkCreateAdminPosts = (posts: AdminBulkPostInput[]) =>
+    request<AdminBulkCreatePostsResponse>("POST", "/admin/posts/bulk-create", { body: { posts } });
 export const deleteAdminComment = (commentId: string) =>
     request<void>("DELETE", `/admin/comments/${commentId}`);
 export const bulkDeleteAdminComments = (ids: string[]) =>

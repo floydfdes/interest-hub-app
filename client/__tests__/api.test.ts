@@ -2,6 +2,8 @@ import {
     bulkDeleteAdminComments,
     bulkDeleteAdminPosts,
     bulkDeleteAdminUsers,
+    bulkCreateAdminPosts,
+    bulkCreateAdminUsers,
     blockUser,
     checkAdminAccess,
     createAdminUser,
@@ -190,6 +192,33 @@ describe('discovery and bookmark API client', () => {
 
         expect(fetchMock.mock.calls[0][0]).toContain('/admin/activities?page=2&limit=10&type=post_liked&actorId=user-7');
         expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
+    });
+
+    it('posts admin bulk creation payloads', async () => {
+        await bulkCreateAdminUsers([{
+            name: 'Jane',
+            email: 'jane@example.com',
+            password: 'password123',
+            role: 'user',
+            profilePic: null,
+            bio: '',
+            interests: ['music'],
+            isBlocked: false,
+        }]);
+        await bulkCreateAdminPosts([{
+            author: 'user-1',
+            title: 'TypeScript',
+            content: 'Post',
+            image: 'data:image/png;base64,a',
+            category: 'Technology',
+            tags: ['typescript'],
+            visibility: 'public',
+        }]);
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/admin/users/bulk-create');
+        expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: expect.stringContaining('jane@example.com') });
+        expect(fetchMock.mock.calls[1][0]).toContain('/admin/posts/bulk-create');
+        expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: 'POST', body: expect.stringContaining('"author":"user-1"') });
     });
 
     it('preserves the forbidden status from the access request', async () => {

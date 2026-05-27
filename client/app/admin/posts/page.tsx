@@ -2,8 +2,9 @@
 
 import { bulkDeleteAdminPosts, deleteAdminPost, getAdminPosts, getErrorMessage } from '@/app/api/api';
 import { AdminPostsResponse, IPost } from '@/app/types/user';
+import AdminBulkPostModal from '@/components/admin/AdminBulkPostModal';
 import { App, Empty, Skeleton } from 'antd';
-import { Eye, Newspaper, Search, Trash2 } from 'lucide-react';
+import { Eye, Newspaper, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
@@ -16,6 +17,7 @@ export default function AdminPostsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [bulkCreateOpen, setBulkCreateOpen] = useState(false);
     const { message } = App.useApp();
 
     const loadPosts = async (page = 1) => {
@@ -132,11 +134,16 @@ export default function AdminPostsPage() {
                     <h1 className="gradient-heading mt-4 text-4xl font-bold">Post moderation</h1>
                     <p className="mt-2 text-slate-500">Review posts and remove content when necessary.</p>
                 </div>
-                {selectedIds.size > 0 && (
-                    <button type="button" onClick={() => void handleBulkDelete()} className="rounded-xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700">
-                        <Trash2 size={16} className="mr-2 inline" /> Delete selected
+                <div className="flex flex-wrap gap-3">
+                    {selectedIds.size > 0 && (
+                        <button type="button" onClick={() => void handleBulkDelete()} className="rounded-xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700">
+                            <Trash2 size={16} className="mr-2 inline" /> Delete selected
+                        </button>
+                    )}
+                    <button type="button" onClick={() => setBulkCreateOpen(true)} className="primary-button">
+                        <Plus size={16} /> Bulk Add Posts
                     </button>
-                )}
+                </div>
             </header>
 
             <form onSubmit={handleSearch} className="surface mb-6 grid gap-3 p-4 sm:grid-cols-[1fr_14rem_12rem_auto]">
@@ -216,6 +223,12 @@ export default function AdminPostsPage() {
                         </div>
                     </div>
                 </>
+            )}
+            {bulkCreateOpen && (
+                <AdminBulkPostModal
+                    onClose={() => setBulkCreateOpen(false)}
+                    onSaved={() => void loadPosts(1)}
+                />
             )}
         </div>
     );

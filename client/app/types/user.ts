@@ -219,3 +219,34 @@ export interface AdminUserInput {
 }
 
 export type AdminUserUpdateInput = Partial<AdminUserInput>;
+
+export type AdminBulkUserInput = AdminUserInput & {
+    password: string;
+};
+
+export interface AdminBulkCreateUsersResponse {
+    message: string;
+    created: number;
+    users: Array<Pick<AdminUser, "_id" | "name" | "email" | "role">>;
+}
+
+export interface AdminBulkPostInput {
+    author: string;
+    title: string;
+    content: string;
+    image: string;
+    category: string;
+    tags?: string[];
+    visibility?: IPost["visibility"];
+}
+
+export interface AdminBulkCreatedPost extends Omit<AdminBulkPostInput, "visibility"> {
+    _id: string;
+    visibility: IPost["visibility"];
+}
+
+export interface AdminBulkCreatePostsResponse {
+    message: string;
+    created: number;
+    posts: AdminBulkCreatedPost[];
+}

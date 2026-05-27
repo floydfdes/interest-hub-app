@@ -10,6 +10,7 @@ import {
 } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { AdminUser, AdminUsersResponse } from '@/app/types/user';
+import AdminBulkUserModal from '@/components/admin/AdminBulkUserModal';
 import AdminUserModal from '@/components/admin/AdminUserModal';
 import { App, Empty, Skeleton } from 'antd';
 import { Ban, Eye, Pencil, Plus, Search, Trash2, Undo2, UsersRound } from 'lucide-react';
@@ -23,6 +24,7 @@ export default function AdminUsersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [modalUser, setModalUser] = useState<AdminUser | null | undefined>();
+    const [bulkCreateOpen, setBulkCreateOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const currentUser = useCurrentUser();
     const { message } = App.useApp();
@@ -162,6 +164,9 @@ export default function AdminUsersPage() {
                     <button type="button" onClick={() => setModalUser(null)} className="primary-button">
                         <Plus size={16} /> Create user
                     </button>
+                    <button type="button" onClick={() => setBulkCreateOpen(true)} className="secondary-button">
+                        <Plus size={16} /> Bulk Add Users
+                    </button>
                 </div>
             </header>
 
@@ -257,6 +262,12 @@ export default function AdminUsersPage() {
                     user={modalUser}
                     onClose={() => setModalUser(undefined)}
                     onSaved={() => void loadUsers(response?.pagination.page || 1)}
+                />
+            )}
+            {bulkCreateOpen && (
+                <AdminBulkUserModal
+                    onClose={() => setBulkCreateOpen(false)}
+                    onSaved={() => void loadUsers(1)}
                 />
             )}
         </div>
