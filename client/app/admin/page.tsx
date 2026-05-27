@@ -4,7 +4,7 @@ import { getAdminDashboard, getErrorMessage } from '@/app/api/api';
 import { AdminDashboardResponse } from '@/app/types/user';
 import { Empty, Skeleton } from 'antd';
 import { formatDistanceToNow } from 'date-fns';
-import { MessagesSquare, Newspaper, Shield, UserRoundX, UsersRound } from 'lucide-react';
+import { Flag, MessagesSquare, Newspaper, Shield, UserRoundX, UsersRound } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -69,6 +69,14 @@ export default function AdminDashboardPage() {
                     </div>
                 ))}
             </section>
+
+            <Link href="/admin/reports" className="surface mb-8 flex items-center justify-between gap-4 p-5 transition hover:bg-indigo-50">
+                <div>
+                    <p className="text-lg font-semibold text-slate-900">Report moderation</p>
+                    <p className="mt-1 text-sm text-slate-500">Review pending reports and apply moderation actions.</p>
+                </div>
+                <span className="rounded-2xl bg-rose-50 p-3 text-rose-600"><Flag size={21} /></span>
+            </Link>
 
             <div className="grid gap-6 lg:grid-cols-2">
                 <section className="surface p-5 sm:p-6">

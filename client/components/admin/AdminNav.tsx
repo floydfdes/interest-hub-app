@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, LayoutDashboard, Newspaper, UsersRound } from 'lucide-react';
+import { Activity, Flag, LayoutDashboard, Newspaper, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -9,6 +9,7 @@ const items = [
     { href: '/admin/users', label: 'Users', icon: UsersRound },
     { href: '/admin/posts', label: 'Posts', icon: Newspaper },
     { href: '/admin/activities', label: 'Activity', icon: Activity },
+    { href: '/admin/reports', label: 'Reports', icon: Flag },
 ];
 
 export default function AdminNav() {

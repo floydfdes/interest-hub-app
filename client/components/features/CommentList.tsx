@@ -15,7 +15,9 @@ import { IComment, IReply, IUser, Like } from '@/app/types/user';
 import { LikeFilled, LikeOutlined, UserOutlined } from '@ant-design/icons';
 import { App, Avatar, Button, Input, Typography } from 'antd';
 import { formatDistanceToNow } from 'date-fns';
-import { useState } from 'react';
+import { Flag, MoreHorizontal } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import ReportModal from './ReportModal';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -54,10 +56,27 @@ const CommentItem = ({
     const [editing, setEditing] = useState(false);
     const [editContent, setEditContent] = useState(comment.content);
     const [likes, setLikes] = useState<Like[]>(comment.likes || []);
+    const [reportOpen, setReportOpen] = useState(false);
+    const [reportActionsOpen, setReportActionsOpen] = useState(false);
+    const reportMenuRef = useRef<HTMLDivElement>(null);
     const { message } = App.useApp();
     const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
     const isReply = parentCommentId !== undefined && replyIndex !== undefined;
     const canManage = Boolean(currentUser && comment.user?._id === currentUser._id);
+    const canReport = Boolean(currentUser && !canManage && !isReply);
+
+    useEffect(() => {
+        if (!reportActionsOpen) return;
+
+        const closeMenu = (event: MouseEvent) => {
+            if (!reportMenuRef.current?.contains(event.target as Node)) {
+                setReportActionsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', closeMenu);
+        return () => document.removeEventListener('mousedown', closeMenu);
+    }, [reportActionsOpen]);
 
     const handleLike = async () => {
         if (!currentUser) return;
@@ -100,11 +119,40 @@ const CommentItem = ({
             <div className="flex gap-3">
                 <Avatar src={comment.user?.profilePic || null} icon={<UserOutlined />} size="small" />
                 <div className="flex-1 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-                    <div className="flex justify-between items-center mb-1">
+                    <div className="flex justify-between items-center gap-2 mb-1">
                         <Text strong className="text-sm">{comment.user?.name || 'Unknown'}</Text>
-                        <Text type="secondary" className="text-xs">
-                            {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true }) : ''}
-                        </Text>
+                        <div className="flex items-center gap-1">
+                            <Text type="secondary" className="text-xs">
+                                {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true }) : ''}
+                            </Text>
+                            {canReport && (
+                                <div ref={reportMenuRef} className="relative">
+                                    <button
+                                        type="button"
+                                        aria-label="More comment actions"
+                                        aria-expanded={reportActionsOpen}
+                                        onClick={() => setReportActionsOpen((open) => !open)}
+                                        className="rounded-lg p-1 text-slate-400 transition hover:bg-white hover:text-slate-600"
+                                    >
+                                        <MoreHorizontal size={15} />
+                                    </button>
+                                    {reportActionsOpen && (
+                                        <div className="absolute right-0 top-7 z-10 min-w-28 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setReportActionsOpen(false);
+                                                    setReportOpen(true);
+                                                }}
+                                                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-50"
+                                            >
+                                                <Flag size={14} /> Report
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     {editing ? (
                         <div className="flex gap-2">
@@ -193,6 +241,14 @@ const CommentItem = ({
                         />
                     ))}
                 </div>
+            )}
+            {reportOpen && (
+                <ReportModal
+                    targetType="comment"
+                    targetId={comment._id}
+                    targetLabel={comment.content}
+                    onClose={() => setReportOpen(false)}
+                />
             )}
         </div>
     );

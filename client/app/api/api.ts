@@ -7,6 +7,7 @@ import {
     AdminBulkPostInput,
     AdminBulkUserInput,
     AdminPostsResponse,
+    AdminReportsResponse,
     AdminUserDetailResponse,
     AdminUserInput,
     AdminUserUpdateInput,
@@ -20,12 +21,18 @@ import {
     LoginInput,
     MutedUsersResponse,
     MyActivitiesResponse,
+    MyReportsResponse,
     PaginatedResponse,
     PostInput,
     PostUpdateInput,
     ProfileUpdateInput,
     PublicUserProfile,
     RegisterInput,
+    ReportAction,
+    ReportInput,
+    ReportStatus,
+    ReportTargetType,
+    UserReport,
     UserResponse,
 } from "@/app/types/user";
 
@@ -76,6 +83,13 @@ export interface MyActivityFilters {
     page?: number;
     limit?: number;
     type?: ActivityType;
+}
+
+export interface AdminReportFilters {
+    page?: number;
+    limit?: number;
+    status?: ReportStatus;
+    targetType?: ReportTargetType;
 }
 
 type RawMutedUsersResponse = {
@@ -269,6 +283,12 @@ export const getMyActivities = ({
     return request<MyActivitiesResponse>("GET", "/users/activities", { queryParams });
 };
 
+// Reports
+export const submitReport = (data: ReportInput) =>
+    request<UserReport>("POST", "/reports", { body: { ...data } });
+export const getMyReports = (page = 1, limit = 20) =>
+    request<MyReportsResponse>("GET", "/reports/me", { queryParams: { page, limit } });
+
 // Admin
 export const checkAdminAccess = () => request<{ isAdmin: true }>("GET", "/admin/access");
 export const getAdminDashboard = () => request<AdminDashboardResponse>("GET", "/admin/dashboard");
@@ -284,6 +304,28 @@ export const getAdminActivities = ({
 
     return request<AdminActivitiesResponse>("GET", "/admin/activities", { queryParams });
 };
+export const getAdminReports = ({
+    page = 1,
+    limit = 20,
+    status,
+    targetType,
+}: AdminReportFilters = {}) => {
+    const queryParams: Record<string, QueryValue> = { page, limit };
+    if (status) queryParams.status = status;
+    if (targetType) queryParams.targetType = targetType;
+
+    return request<AdminReportsResponse>("GET", "/admin/reports", { queryParams });
+};
+export const getAdminReport = (id: string) =>
+    request<UserReport>("GET", `/admin/reports/${id}`);
+export const updateAdminReportStatus = (id: string, status: Exclude<ReportStatus, "pending">, note?: string) =>
+    request<UserReport>("PATCH", `/admin/reports/${id}/status`, {
+        body: note?.trim() ? { status, note: note.trim() } : { status },
+    });
+export const applyAdminReportAction = (id: string, action: Exclude<ReportAction, "none">, note?: string) =>
+    request<UserReport>("PATCH", `/admin/reports/${id}/action`, {
+        body: note?.trim() ? { action, note: note.trim() } : { action },
+    });
 export const getAdminUsers = (query = "", page = 1, limit = 20) =>
     request<AdminUsersResponse>("GET", "/admin/users", { queryParams: { query, page, limit } });
 export const getAdminUser = (id: string) =>

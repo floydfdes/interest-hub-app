@@ -9,13 +9,14 @@ import {
     UserOutlined,
 } from '@ant-design/icons';
 import { formatDistanceToNow } from 'date-fns';
-import { Archive, EyeOff, Globe2, MoreHorizontal } from 'lucide-react';
+import { Archive, EyeOff, Flag, Globe2, MoreHorizontal } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { archivePost, hidePost, likePost, unlikePost } from '@/app/api/api';
 import { IPost, IUser, Like } from '@/app/types/user';
 import BookmarkButton from './BookmarkButton';
+import ReportModal from './ReportModal';
 
 interface PostCardProps {
     post: IPost;
@@ -34,6 +35,7 @@ function belongsToUser(like: Like, userId: string) {
 const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange, onHide, onArchive }: PostCardProps) => {
     const [likes, setLikes] = useState<Like[]>(post.likes || []);
     const [actionsOpen, setActionsOpen] = useState(false);
+    const [reportOpen, setReportOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
     const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
     const postImage = post.image || '/default_image.png';
@@ -174,13 +176,25 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
                                         )}
                                     </>
                                 ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => void handleHide()}
-                                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
-                                    >
-                                        <EyeOff size={15} /> Hide post
-                                    </button>
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => void handleHide()}
+                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                                        >
+                                            <EyeOff size={15} /> Hide post
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setActionsOpen(false);
+                                                setReportOpen(true);
+                                            }}
+                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-50"
+                                        >
+                                            <Flag size={15} /> Report
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         )}
@@ -188,6 +202,14 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
                 )}
                 </div>
             </footer>
+            {reportOpen && (
+                <ReportModal
+                    targetType="post"
+                    targetId={post._id}
+                    targetLabel={post.title}
+                    onClose={() => setReportOpen(false)}
+                />
+            )}
         </article>
     );
 };

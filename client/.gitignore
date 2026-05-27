@@ -1,3 +1,6 @@
 # Playwright test artifacts
 test-results/
 playwright-report/
+
+# Local feature roadmap maintained during implementation
+FEATURE_TRACKER.local.md

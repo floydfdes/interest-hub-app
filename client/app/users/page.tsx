@@ -4,10 +4,11 @@ import { ApiError, blockUser, followUser, getMe, muteUser, searchUsers, unblockU
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { IUser } from "@/app/types/user";
-import { MoreHorizontal, Search, UsersRound } from "lucide-react";
+import { Flag, MoreHorizontal, Search, UsersRound } from "lucide-react";
 import Link from "next/link";
 import Avatar from "react-avatar";
 import Swal from "sweetalert2";
+import ReportModal from "@/components/features/ReportModal";
 
 export default function UserSearchPage() {
     const [query, setQuery] = useState("");
@@ -18,6 +19,7 @@ export default function UserSearchPage() {
     const [mutedIds, setMutedIds] = useState<string[]>([]);
     const [currentUserId, setCurrentUserId] = useState("");
     const [actionMenuUserId, setActionMenuUserId] = useState<string | null>(null);
+    const [reportUser, setReportUser] = useState<IUser | null>(null);
     const [error, setError] = useState("");
     const [selectedInterest, setSelectedInterest] = useState("All");
     const [sortBy, setSortBy] = useState("name");
@@ -298,6 +300,16 @@ export default function UserSearchPage() {
                                             >
                                                 {isBlocked ? "Unblock" : "Block"}
                                             </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setActionMenuUserId(null);
+                                                    setReportUser(user);
+                                                }}
+                                                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-50"
+                                            >
+                                                <Flag size={14} /> Report
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -306,6 +318,14 @@ export default function UserSearchPage() {
                     );
                 })}
             </div>
+            {reportUser && (
+                <ReportModal
+                    targetType="user"
+                    targetId={reportUser._id}
+                    targetLabel={reportUser.name}
+                    onClose={() => setReportUser(null)}
+                />
+            )}
         </div>
     );
 }

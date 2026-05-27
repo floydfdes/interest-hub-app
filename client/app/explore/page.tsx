@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Edit, EyeOff, Flame, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
+import { Archive, Edit, EyeOff, Flag, Flame, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { advancedSearchPosts, archivePost, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTrendingPosts, hidePost, muteUser, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
 import { IPost, Pagination } from "../types/user";
@@ -11,6 +11,7 @@ import Swal from "sweetalert2";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 import BookmarkButton from "@/components/features/BookmarkButton";
 import SuggestedUsers from "@/components/features/SuggestedUsers";
+import ReportModal from "@/components/features/ReportModal";
 
 type ViewMode = "cards" | "list";
 type SearchMode = "quick" | "advanced";
@@ -30,6 +31,7 @@ export default function Explore() {
   const [searchError, setSearchError] = useState("");
   const [resultLabel, setResultLabel] = useState("");
   const [actionMenuPostId, setActionMenuPostId] = useState<string | null>(null);
+  const [reportPost, setReportPost] = useState<IPost | null>(null);
   const currentUser = useCurrentUser();
   const actionMenuRef = useRef<HTMLDivElement>(null);
 
@@ -529,6 +531,16 @@ export default function Explore() {
                       <button type="button" onClick={() => void handleHide(post._id)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
                         <EyeOff size={15} /> Hide post
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActionMenuPostId(null);
+                          setReportPost(post);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-50"
+                      >
+                        <Flag size={15} /> Report
+                      </button>
                     </div>
                   )}
                 </div>
@@ -546,6 +558,14 @@ export default function Explore() {
       <div className="mt-7">
         <SuggestedUsers authenticated={Boolean(currentUser)} />
       </div>
+      {reportPost && (
+        <ReportModal
+          targetType="post"
+          targetId={reportPost._id}
+          targetLabel={reportPost.title}
+          onClose={() => setReportPost(null)}
+        />
+      )}
     </div>
   );
 }

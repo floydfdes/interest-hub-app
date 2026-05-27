@@ -24,12 +24,15 @@ import {
     getFollowRequests,
     getFollowingPosts,
     getMyActivities,
+    getMyReports,
     getMutedUsers,
     getPostLikes,
     getRecommendedPosts,
     getSuggestedUsers,
     getTrendingPosts,
     getAdminActivities,
+    getAdminReport,
+    getAdminReports,
     getAdminDashboard,
     getAdminPost,
     getAdminPosts,
@@ -44,6 +47,9 @@ import {
     unmuteUser,
     unblockUser,
     rejectFollowRequest,
+    submitReport,
+    updateAdminReportStatus,
+    applyAdminReportAction,
     updateAdminUser,
 } from '@/app/api/api';
 
@@ -155,6 +161,18 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
     });
 
+    it('submits reports and requests the current user report history', async () => {
+        await submitReport({ targetType: 'post', targetId: 'post-7', reason: 'spam', details: 'Repeated ads' });
+        await getMyReports(2, 20);
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/reports');
+        expect(fetchMock.mock.calls[0][1]).toMatchObject({
+            method: 'POST',
+            body: JSON.stringify({ targetType: 'post', targetId: 'post-7', reason: 'spam', details: 'Repeated ads' }),
+        });
+        expect(fetchMock.mock.calls[1][0]).toContain('/reports/me?page=2&limit=20');
+    });
+
     it('uses bookmark list, create, and delete endpoints', async () => {
         fetchMock.mockImplementation(() => mockResponse({ message: 'ok' }));
 
@@ -218,6 +236,25 @@ describe('discovery and bookmark API client', () => {
 
         expect(fetchMock.mock.calls[0][0]).toContain('/admin/activities?page=2&limit=10&type=post_liked&actorId=user-7');
         expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
+    });
+
+    it('requests and moderates filtered admin reports', async () => {
+        await getAdminReports({ page: 2, limit: 10, status: 'reviewing', targetType: 'comment' });
+        await getAdminReport('report-1');
+        await updateAdminReportStatus('report-1', 'dismissed', 'No violation');
+        await applyAdminReportAction('report-2', 'content_hidden', 'Policy violation');
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/admin/reports?page=2&limit=10&status=reviewing&targetType=comment');
+        expect(fetchMock.mock.calls[1][0]).toContain('/admin/reports/report-1');
+        expect(fetchMock.mock.calls[2][1]).toMatchObject({
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'dismissed', note: 'No violation' }),
+        });
+        expect(fetchMock.mock.calls[3][0]).toContain('/admin/reports/report-2/action');
+        expect(fetchMock.mock.calls[3][1]).toMatchObject({
+            method: 'PATCH',
+            body: JSON.stringify({ action: 'content_hidden', note: 'Policy violation' }),
+        });
     });
 
     it('posts admin bulk creation payloads', async () => {

@@ -152,6 +152,52 @@ export interface AdminUserActivity extends Omit<UserActivity, "actor" | "targetU
     metadata: Record<string, unknown>;
 }
 
+export type ReportTargetType = "post" | "comment" | "user";
+
+export type ReportReason =
+    | "spam"
+    | "harassment"
+    | "hate_speech"
+    | "violence"
+    | "sexual_content"
+    | "misinformation"
+    | "impersonation"
+    | "other";
+
+export type ReportStatus = "pending" | "reviewing" | "resolved" | "dismissed";
+
+export type ReportAction = "none" | "content_hidden" | "content_removed" | "user_suspended";
+
+export interface ReportInput {
+    targetType: ReportTargetType;
+    targetId: string;
+    reason: ReportReason;
+    details?: string;
+}
+
+export interface ReportCommentSummary {
+    _id: string;
+    content: string;
+    user?: BasicUserSummary;
+}
+
+export interface UserReport {
+    _id: string;
+    targetType: ReportTargetType;
+    reason: ReportReason;
+    details?: string;
+    status: ReportStatus;
+    action: ReportAction;
+    reporter?: BasicUserSummary | AdminActivityUserSummary;
+    post?: BasicPostSummary;
+    comment?: ReportCommentSummary;
+    user?: BasicUserSummary;
+    targetUser?: BasicUserSummary;
+    note?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
 export interface LoginInput {
     email: string;
     password: string;
@@ -223,6 +269,10 @@ export type AdminPostsResponse = PaginatedResponse<IPost>;
 export type AdminActivitiesResponse = PaginatedResponse<AdminUserActivity>;
 
 export type MyActivitiesResponse = PaginatedResponse<UserActivity>;
+
+export type MyReportsResponse = PaginatedResponse<UserReport>;
+
+export type AdminReportsResponse = PaginatedResponse<UserReport>;
 
 export type BlockedUsersResponse = PaginatedResponse<BasicUserSummary>;
 
