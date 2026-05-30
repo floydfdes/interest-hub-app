@@ -3,6 +3,7 @@
 import { getBookmarkedPosts, getErrorMessage } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { IPost } from '@/app/types/user';
+import { filterVisiblePosts } from '@/app/utils/moderation';
 import PostCard from '@/components/features/PostCard';
 import { Empty, Skeleton } from 'antd';
 import { Bookmark } from 'lucide-react';
@@ -20,7 +21,7 @@ export default function SavedPostsPage() {
 
         const loadBookmarks = async () => {
             try {
-                setPosts(await getBookmarkedPosts());
+                setPosts(filterVisiblePosts(await getBookmarkedPosts()));
             } catch (err: unknown) {
                 setError(getErrorMessage(err, 'Failed to load saved posts.'));
             } finally {

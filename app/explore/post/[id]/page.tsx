@@ -1,5 +1,6 @@
 import { getPostById } from "@/app/api/api";
 import { IPost } from "@/app/types/user";
+import { filterVisibleComments, isUnderReview } from "@/app/utils/moderation";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,9 +10,11 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     const { id } = await params;
     const post = await getPostById(id) as IPost;
 
-    if (!post) {
+    if (!post || isUnderReview(post)) {
         return <div className="surface shell-container max-w-xl p-10 text-center text-slate-500">Post not found</div>;
     }
+
+    const visibleComments = filterVisibleComments(post.comments || []);
 
     return (
         <div className="shell-container flex flex-col items-center">
@@ -52,7 +55,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                 <div className="mt-8 border-t border-slate-100 pt-7">
                     <h3 className="mb-5 text-xl font-semibold text-slate-900">Comments</h3>
 
-                    {post.comments.map((comment) => (
+                    {visibleComments.map((comment) => (
                         <div key={comment._id} className="mb-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
                             <div className="flex items-center gap-3 mb-2">
                                 <Image

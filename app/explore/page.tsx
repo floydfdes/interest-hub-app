@@ -4,6 +4,7 @@ import { Archive, Edit, EyeOff, Flag, Flame, LayoutGrid, List, MessageCircle, Mo
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { advancedSearchPosts, archivePost, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTrendingPosts, hidePost, muteUser, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
 import { IPost, Pagination } from "../types/user";
+import { filterVisiblePosts } from "../utils/moderation";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -45,7 +46,7 @@ export default function Explore() {
         ]);
         const nextBookmarkedIds = new Set(bookmarks.map((post) => post._id));
         setBookmarkedIds(nextBookmarkedIds);
-        setPosts(nextPosts.map((post) => ({ ...post, isBookmarked: nextBookmarkedIds.has(post._id) || post.isBookmarked })));
+        setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: nextBookmarkedIds.has(post._id) || post.isBookmarked })));
       } catch (err: unknown) {
         setSearchError(getErrorMessage(err, "Failed to fetch posts."));
       } finally {
@@ -91,7 +92,7 @@ export default function Explore() {
           ? await getRecommendedPosts()
           : await getTrendingPosts(period);
       setPagination(followingResponse?.pagination || null);
-      setPosts(nextPosts.map((post) => ({
+      setPosts(filterVisiblePosts(nextPosts).map((post) => ({
         ...post,
         isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
       })));
@@ -112,7 +113,7 @@ export default function Explore() {
       const response = await getFollowingPosts(pagination.page + 1, pagination.limit);
       setPosts((currentPosts) => [
         ...currentPosts,
-        ...response.items.map((post) => ({
+        ...filterVisiblePosts(response.items).map((post) => ({
           ...post,
           isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
         })),
@@ -149,7 +150,7 @@ export default function Explore() {
     setSearchError("");
     try {
       const nextPosts = await searchPosts(query);
-      setPosts(nextPosts.map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked })));
+      setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked })));
       setResultLabel(`Results for "${query}"`);
     } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to search posts."));
@@ -164,7 +165,7 @@ export default function Explore() {
     setSearchError("");
     try {
       const nextPosts = await advancedSearchPosts(filters);
-      setPosts(nextPosts.map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked })));
+      setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked })));
       setResultLabel("Advanced search results");
     } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to search posts."));

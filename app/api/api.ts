@@ -16,6 +16,7 @@ import {
     AuthResponse,
     BasicUserSummary,
     IComment,
+    IReply,
     IPost,
     IUser,
     LoginInput,
@@ -365,9 +366,9 @@ export const deleteAdminReply = (commentId: string, replyIndex: number) =>
 
 // Comments
 export const createComment = (postId: string, content: string) =>
-    request<void>("POST", "/comments", { body: { postId, content } });
+    request<IComment>("POST", "/comments", { body: { postId, content } });
 export const editComment = (commentId: string, content: string) =>
-    request<void>("PATCH", `/comments/${commentId}`, { body: { content } });
+    request<IComment>("PATCH", `/comments/${commentId}`, { body: { content } });
 export const deleteComment = (commentId: string) =>
     request<void>("DELETE", `/comments/${commentId}`);
 export const likeComment = (commentId: string) =>
@@ -375,9 +376,9 @@ export const likeComment = (commentId: string) =>
 export const unlikeComment = (commentId: string) =>
     request<Pick<IComment, "likes">>("POST", `/comments/${commentId}/unlike`);
 export const replyToComment = (commentId: string, content: string) =>
-    request<void>("POST", `/comments/${commentId}/reply`, { body: { content } });
+    request<IReply>("POST", `/comments/${commentId}/reply`, { body: { content } });
 export const editReply = (commentId: string, replyIndex: number, content: string) =>
-    request<void>("PATCH", `/comments/${commentId}/reply/${replyIndex}`, { body: { content } });
+    request<IReply>("PATCH", `/comments/${commentId}/reply/${replyIndex}`, { body: { content } });
 export const deleteReply = (commentId: string, replyIndex: number) =>
     request<void>("DELETE", `/comments/${commentId}/reply/${replyIndex}`);
 export const likeReply = (commentId: string, replyIndex: number) =>

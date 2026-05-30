@@ -2,6 +2,7 @@
 
 import { createPost, getErrorMessage } from '@/app/api/api';
 import { compressAndConvertToBase64 } from '@/app/api/imageUtil';
+import { getModerationNoticeMessage } from '@/app/utils/moderation';
 import { IPost } from '@/app/types/user';
 import { UploadOutlined } from '@ant-design/icons';
 import { App, Button, Card, Form, Input, Select, Typography, Upload } from 'antd';
@@ -40,11 +41,16 @@ const PostForm = () => {
                 return;
             }
 
-            await createPost({
+            const response = await createPost({
                 ...values,
                 image,
             });
-            message.success('Post created successfully!');
+            const moderationMessage = getModerationNoticeMessage(response);
+            if (moderationMessage) {
+                message.warning(moderationMessage);
+            } else {
+                message.success('Post created successfully!');
+            }
             router.push('/');
         } catch (error: unknown) {
             message.error(getErrorMessage(error, 'Failed to create post'));

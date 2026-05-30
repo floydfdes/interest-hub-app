@@ -3,6 +3,7 @@
 import { getBookmarkedPosts, getPostById } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { IPost } from '@/app/types/user';
+import { filterVisibleComments, isUnderReview } from '@/app/utils/moderation';
 import CommentList from '@/components/features/CommentList';
 import PostCard from '@/components/features/PostCard';
 import { ArrowLeftOutlined } from '@ant-design/icons';
@@ -21,11 +22,15 @@ export default function PostDetailPage() {
     const fetchPost = async () => {
         try {
             const nextPost = await getPostById(id);
+            if (isUnderReview(nextPost)) {
+                setPost(null);
+                return;
+            }
             if (localStorage.getItem('token')) {
                 const bookmarks = await getBookmarkedPosts().catch(() => []);
                 nextPost.isBookmarked = bookmarks.some((bookmark) => bookmark._id === id) || nextPost.isBookmarked;
             }
-            setPost(nextPost);
+            setPost({ ...nextPost, comments: filterVisibleComments(nextPost.comments || []) });
         } catch {
             message.error('Failed to load post');
         } finally {
@@ -39,11 +44,15 @@ export default function PostDetailPage() {
         const loadPost = async () => {
             try {
                 const nextPost = await getPostById(id);
+                if (isUnderReview(nextPost)) {
+                    if (!cancelled) setPost(null);
+                    return;
+                }
                 if (localStorage.getItem('token')) {
                     const bookmarks = await getBookmarkedPosts().catch(() => []);
                     nextPost.isBookmarked = bookmarks.some((bookmark) => bookmark._id === id) || nextPost.isBookmarked;
                 }
-                if (!cancelled) setPost(nextPost);
+                if (!cancelled) setPost({ ...nextPost, comments: filterVisibleComments(nextPost.comments || []) });
             } catch {
                 if (!cancelled) message.error('Failed to load post');
             } finally {

@@ -18,6 +18,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Flag, MoreHorizontal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ReportModal from './ReportModal';
+import { filterVisibleComments, getModerationNoticeMessage } from '@/app/utils/moderation';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -270,10 +271,11 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
         if (!newComment.trim()) return;
         setSubmitting(true);
         try {
-            await createComment(postId, newComment);
+            const response = await createComment(postId, newComment);
             setNewComment('');
             await onCommentAdded();
-            message.success('Comment added');
+            const moderationMessage = getModerationNoticeMessage(response);
+            message[moderationMessage ? 'warning' : 'success'](moderationMessage || 'Comment added');
         } catch {
             message.error('Failed to add comment');
         } finally {
@@ -283,9 +285,10 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
 
     const handleReply = async (commentId: string, content: string) => {
         try {
-            await replyToComment(commentId, content);
+            const response = await replyToComment(commentId, content);
             await onCommentAdded();
-            message.success('Reply added');
+            const moderationMessage = getModerationNoticeMessage(response);
+            message[moderationMessage ? 'warning' : 'success'](moderationMessage || 'Reply added');
         } catch {
             message.error('Failed to reply');
         }
@@ -293,9 +296,10 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
 
     const handleEditComment = async (commentId: string, content: string) => {
         try {
-            await editComment(commentId, content);
+            const response = await editComment(commentId, content);
             await onCommentAdded();
-            message.success('Comment updated');
+            const moderationMessage = getModerationNoticeMessage(response);
+            message[moderationMessage ? 'warning' : 'success'](moderationMessage || 'Comment updated');
         } catch {
             message.error('Failed to edit comment');
         }
@@ -313,9 +317,10 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
 
     const handleEditReply = async (commentId: string, replyIndex: number, content: string) => {
         try {
-            await editReply(commentId, replyIndex, content);
+            const response = await editReply(commentId, replyIndex, content);
             await onCommentAdded();
-            message.success('Reply updated');
+            const moderationMessage = getModerationNoticeMessage(response);
+            message[moderationMessage ? 'warning' : 'success'](moderationMessage || 'Reply updated');
         } catch {
             message.error('Failed to edit reply');
         }
@@ -357,7 +362,7 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
                 </div>
             )}
             <div className="space-y-4">
-                {comments.map((comment, index) => (
+                {filterVisibleComments(comments).map((comment, index) => (
                     <CommentItem
                         key={comment._id || `${comment.user?._id || 'comment'}-${index}`}
                         comment={comment}

@@ -1,12 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { App } from "antd";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createPost, getErrorMessage } from "../api/api";
 import { compressAndConvertToBase64 } from "../api/imageUtil";
 import { PostInput } from "../types/user";
+import { getModerationNoticeMessage } from "../utils/moderation";
+import { parseTagInput } from "../utils/postTags";
 
 const categories = ["Tech", "Health", "Travel", "Design", "Education"];
 const visibilities = [
@@ -19,6 +22,7 @@ type EditablePost = Omit<PostInput, "tags"> & { tags: string };
 export default function CreatePostPage() {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const { message } = App.useApp();
 
     const [form, setForm] = useState<EditablePost>({
         title: "",
@@ -64,12 +68,16 @@ export default function CreatePostPage() {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("You must be logged in");
 
+            const { tags: tagText, ...postFields } = form;
+            const tags = parseTagInput(tagText);
             const payload = {
-                ...form,
-                tags: form.tags.split(",").map((tag) => tag.trim()),
+                ...postFields,
+                ...(tags.length > 0 ? { tags } : {}),
             };
 
-            await createPost(payload);
+            const response = await createPost(payload);
+            const moderationMessage = getModerationNoticeMessage(response);
+            if (moderationMessage) message.warning(moderationMessage);
             router.push("/explore");
         } catch (err: unknown) {
             setError(getErrorMessage(err, "Failed to create post"));

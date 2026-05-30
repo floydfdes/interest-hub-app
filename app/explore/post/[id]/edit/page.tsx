@@ -4,11 +4,14 @@ import { createComment, deleteComment, deleteReply, editComment, editReply, getE
 import { compressAndConvertToBase64, resizeImageToBase64 } from "@/app/api/imageUtil";
 import { useCurrentUser } from "@/app/hooks/useCurrentUser";
 import { IComment, IPost, PostInput } from "@/app/types/user";
+import { filterVisibleComments, getModerationNoticeMessage } from "@/app/utils/moderation";
+import { parseTagInput } from "@/app/utils/postTags";
 import { Edit, ThumbsUp, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import Image from "next/image";
+import { App } from "antd";
 
 const categories = ["Tech", "Health", "Travel", "Design", "Education"];
 const visibilities = [
@@ -23,6 +26,7 @@ export default function EditPostPage() {
     const params = useParams();
     const postId = params?.id as string;
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const { message } = App.useApp();
 
     const [form, setForm] = useState<EditablePost>({
         title: "",
@@ -50,12 +54,12 @@ export default function EditPostPage() {
                 title: data.title,
                 content: data.content,
                 category: data.category,
-                tags: data.tags.join(", "),
+                tags: (data.tags || []).join(", "),
                 image: data.image,
                 visibility: data.visibility,
             });
             setImagePreview(data.image || null);
-            setComments(data.comments);
+            setComments(filterVisibleComments(data.comments));
         } catch {
             setError("Failed to fetch post");
         } finally {
@@ -75,12 +79,12 @@ export default function EditPostPage() {
                     title: data.title,
                     content: data.content,
                     category: data.category,
-                    tags: data.tags.join(", "),
+                    tags: (data.tags || []).join(", "),
                     image: data.image,
                     visibility: data.visibility,
                 });
                 setImagePreview(data.image || null);
-                setComments(data.comments);
+                setComments(filterVisibleComments(data.comments));
             } catch {
                 if (!cancelled) setError("Failed to fetch post");
             } finally {
@@ -124,19 +128,24 @@ export default function EditPostPage() {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("Unauthorized");
 
+            const tags = parseTagInput(form.tags);
             const payload = {
                 title: form.title,
                 content: form.content,
                 category: form.category,
                 visibility: form.visibility,
                 ...(form.image.startsWith("data:") && { image: form.image }),
-                tags: form.tags.split(",").map((t) => t.trim()),
+                ...(tags.length > 0 ? { tags } : {}),
             };
 
-            await updatePost(postId, payload);
+            const response = await updatePost(postId, payload);
+            const moderationMessage = getModerationNoticeMessage(response);
+            if (moderationMessage) message.warning(moderationMessage);
             router.push("/explore");
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Update failed"));
+            const errorMessage = getErrorMessage(err, "Update failed");
+            setError(errorMessage);
+            message.error(errorMessage);
         }
     };
 
@@ -151,7 +160,9 @@ export default function EditPostPage() {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("Unauthorized");
 
-            await createComment(postId, newComment);
+            const response = await createComment(postId, newComment);
+            const moderationMessage = getModerationNoticeMessage(response);
+            if (moderationMessage) message.warning(moderationMessage);
             await fetchPost();
             setNewComment("");
         } catch (err: unknown) {
@@ -161,7 +172,9 @@ export default function EditPostPage() {
 
     const handleEditComment = async (commentId: string, updatedContent: string) => {
         try {
-            await editComment(commentId, updatedContent);
+            const response = await editComment(commentId, updatedContent);
+            const moderationMessage = getModerationNoticeMessage(response);
+            if (moderationMessage) message.warning(moderationMessage);
             await fetchPost();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to edit comment"));
@@ -197,7 +210,9 @@ export default function EditPostPage() {
 
     const handleReplyToComment = async (commentId: string, replyContent: string) => {
         try {
-            await replyToComment(commentId, replyContent);
+            const response = await replyToComment(commentId, replyContent);
+            const moderationMessage = getModerationNoticeMessage(response);
+            if (moderationMessage) message.warning(moderationMessage);
             await fetchPost();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to reply to comment"));
@@ -206,7 +221,9 @@ export default function EditPostPage() {
 
     const handleEditReply = async (commentId: string, replyIndex: number, updatedContent: string) => {
         try {
-            await editReply(commentId, replyIndex, updatedContent);
+            const response = await editReply(commentId, replyIndex, updatedContent);
+            const moderationMessage = getModerationNoticeMessage(response);
+            if (moderationMessage) message.warning(moderationMessage);
             await fetchPost();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to edit reply"));
@@ -239,7 +256,11 @@ export default function EditPostPage() {
                 <span className="eyebrow">Edit</span>
                 <h1 className="mb-7 mt-4 text-3xl font-bold tracking-tight text-slate-900">Update post</h1>
 
-                {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+                {error && (
+                    <p role="alert" className="mb-4 rounded-xl bg-rose-50 p-3 text-center text-sm font-medium text-rose-600">
+                        {error}
+                    </p>
+                )}
 
                 <input
                     data-testid="edit-post-title"
@@ -334,6 +355,12 @@ export default function EditPostPage() {
                         </option>
                     ))}
                 </select>
+
+                {error && (
+                    <p role="alert" className="mb-4 rounded-xl bg-rose-50 p-3 text-sm font-medium text-rose-600">
+                        {error}
+                    </p>
+                )}
 
                 <button
                     data-testid="edit-post-submit"

@@ -46,6 +46,9 @@ export interface IReply {
     user: IUserPreview;
     content: string;
     likes: Like[];
+    needsReview?: boolean;
+    moderationReasons?: string[];
+    moderationNotice?: ModerationNotice;
     createdAt: string;
     replies?: IReply[];
 }
@@ -57,6 +60,9 @@ export interface IComment {
     content: string;
     likes: Like[];
     replies: IReply[];
+    needsReview?: boolean;
+    moderationReasons?: string[];
+    moderationNotice?: ModerationNotice;
     createdAt: string;
     updatedAt: string;
     isEditing?: boolean;
@@ -81,6 +87,9 @@ export interface IPost {
     isBookmarked?: boolean;
     isArchived?: boolean;
     archivedAt?: string | null;
+    needsReview?: boolean;
+    moderationReasons?: string[];
+    moderationNotice?: ModerationNotice;
     createdAt: string;
     updatedAt: string;
 }
@@ -106,6 +115,12 @@ export interface Pagination {
 export interface PaginatedResponse<T> {
     items: T[];
     pagination: Pagination;
+}
+
+export interface ModerationNotice {
+    needsReview: true;
+    reasons: string[];
+    message: string;
 }
 
 export type ActivityType =

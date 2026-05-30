@@ -3,6 +3,7 @@
 import { deletePost, getAllPosts, getBookmarkedPosts } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { IPost, Pagination } from '@/app/types/user';
+import { filterVisiblePosts } from '@/app/utils/moderation';
 import { App, Empty, Skeleton } from 'antd';
 import { useEffect, useState } from 'react';
 import PostCard from './PostCard';
@@ -25,7 +26,7 @@ const PostList = () => {
                     hasToken ? getBookmarkedPosts().catch(() => []) : Promise.resolve([]),
                 ]);
                 const nextBookmarkedIds = new Set(bookmarks.map((post) => post._id));
-                setPosts(response.items.map((post) => ({
+                setPosts(filterVisiblePosts(response.items).map((post) => ({
                     ...post,
                     isBookmarked: nextBookmarkedIds.has(post._id) || post.isBookmarked,
                 })));
@@ -47,7 +48,7 @@ const PostList = () => {
         setLoadingMore(true);
         try {
             const response = await getAllPosts(pagination.page + 1, pagination.limit);
-            setPosts((currentPosts) => [...currentPosts, ...response.items.map((post) => ({
+            setPosts((currentPosts) => [...currentPosts, ...filterVisiblePosts(response.items).map((post) => ({
                 ...post,
                 isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
             }))]);
