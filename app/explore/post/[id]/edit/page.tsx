@@ -145,7 +145,12 @@ export default function EditPostPage() {
         } catch (err: unknown) {
             const errorMessage = getErrorMessage(err, "Update failed");
             setError(errorMessage);
-            message.error(errorMessage);
+            message.open({
+                type: "error",
+                content: errorMessage,
+                duration: 4,
+                style: { marginTop: "calc(100vh - 160px)" },
+            });
         }
     };
 

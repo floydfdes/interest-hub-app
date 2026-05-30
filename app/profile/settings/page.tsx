@@ -279,6 +279,12 @@ export default function SettingsPage() {
                         Hidden Posts
                     </Link>
                     <Link
+                        href="/profile/review-posts"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
+                    >
+                        Under Review
+                    </Link>
+                    <Link
                         href="/profile/archived-posts"
                         className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
                     >

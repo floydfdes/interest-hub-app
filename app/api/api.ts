@@ -140,6 +140,24 @@ export function getErrorMessage(error: unknown, fallback: string) {
     return error instanceof Error && error.message ? error.message : fallback;
 }
 
+function getApiErrorMessage(data: unknown) {
+    if (!data || typeof data !== "object") return "Request failed";
+
+    const payload = data as { message?: unknown; errors?: unknown };
+    if (Array.isArray(payload.errors)) {
+        const errors = payload.errors
+            .filter((error): error is string => typeof error === "string" && error.trim().length > 0)
+            .map((error) => error.trim());
+        if (errors.length > 0) return errors.join("\n");
+    }
+
+    if (typeof payload.message === "string" && payload.message.trim()) {
+        return payload.message.trim();
+    }
+
+    return "Request failed";
+}
+
 const request = async <T>(
     method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
     endpoint: string,
@@ -166,8 +184,8 @@ const request = async <T>(
         });
 
         if (!response.ok) {
-            const data = await response.json().catch(() => ({})) as { message?: string };
-            throw new ApiError(data.message || "Request failed", response.status);
+            const data = await response.json().catch(() => ({}));
+            throw new ApiError(getApiErrorMessage(data), response.status);
         }
 
         if (response.status === 204) return undefined as T;
@@ -230,6 +248,8 @@ export const archivePost = (id: string) => request<ArchivedPostResponse>("PATCH"
 export const unarchivePost = (id: string) => request<ArchivedPostResponse>("PATCH", `/posts/${id}/unarchive`);
 export const getArchivedPosts = (page = 1, limit = 20) =>
     request<ArchivedPostsResponse>("GET", "/posts/archived", { queryParams: { page, limit } });
+export const getReviewPosts = (page = 1, limit = 20) =>
+    request<PaginatedResponse<IPost>>("GET", "/posts/review", { queryParams: { page, limit } });
 
 // Users
 export const getMe = () => request<UserResponse>("GET", "/users/me");

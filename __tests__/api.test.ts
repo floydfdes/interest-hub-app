@@ -28,6 +28,7 @@ import {
     getMutedUsers,
     getPostLikes,
     getRecommendedPosts,
+    getReviewPosts,
     getSuggestedUsers,
     getTrendingPosts,
     getAdminActivities,
@@ -134,7 +135,7 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[5][0]).toContain('/posts/hidden?page=2&limit=20');
     });
 
-    it('requests private profile, follow request, and archived post controls', async () => {
+    it('requests private profile, follow request, archived, and review post controls', async () => {
         await getUserProfile('user-2');
         await getFollowRequests(2, 20);
         await acceptFollowRequest('user-2');
@@ -142,6 +143,7 @@ describe('discovery and bookmark API client', () => {
         await archivePost('post-2');
         await unarchivePost('post-2');
         await getArchivedPosts(3, 20);
+        await getReviewPosts(2, 10);
 
         expect(fetchMock.mock.calls[0][0]).toContain('/users/profile/user-2');
         expect(fetchMock.mock.calls[1][0]).toContain('/users/follow-requests?page=2&limit=20');
@@ -151,6 +153,7 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[4][1].method).toBe('PATCH');
         expect(fetchMock.mock.calls[5][0]).toContain('/posts/post-2/unarchive');
         expect(fetchMock.mock.calls[6][0]).toContain('/posts/archived?page=3&limit=20');
+        expect(fetchMock.mock.calls[7][0]).toContain('/posts/review?page=2&limit=10');
     });
 
     it('requests only the current user activity with supported filters', async () => {
@@ -185,6 +188,16 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[1][0]).toContain('/posts/post-7/bookmark');
         expect(fetchMock.mock.calls[1][1].method).toBe('POST');
         expect(fetchMock.mock.calls[2][1].method).toBe('DELETE');
+    });
+
+    it('surfaces validation error arrays from failed API responses', async () => {
+        fetchMock.mockResolvedValueOnce({
+            ok: false,
+            status: 400,
+            json: async () => ({ errors: ['Tags cannot be null'] }),
+        } as Response);
+
+        await expect(getAdminPost('post-1')).rejects.toThrow('Tags cannot be null');
     });
 
     it('constructs the protected admin management requests', async () => {
