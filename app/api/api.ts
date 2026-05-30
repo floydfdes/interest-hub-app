@@ -23,6 +23,7 @@ import {
     MutedUsersResponse,
     MyActivitiesResponse,
     MyReportsResponse,
+    NotificationsResponse,
     PaginatedResponse,
     PostInput,
     PostUpdateInput,
@@ -34,6 +35,8 @@ import {
     ReportStatus,
     ReportTargetType,
     UserReport,
+    UnreadNotificationsResponse,
+    UserPostsResponse,
     UserResponse,
 } from "@/app/types/user";
 
@@ -254,6 +257,8 @@ export const getReviewPosts = (page = 1, limit = 20) =>
 // Users
 export const getMe = () => request<UserResponse>("GET", "/users/me");
 export const getUserProfile = (id: string) => request<PublicUserProfile>("GET", `/users/profile/${id}`);
+export const getUserPosts = (id: string, page = 1, limit = 20) =>
+    request<UserPostsResponse>("GET", `/users/${id}/posts`, { queryParams: { page, limit } });
 export const updateUser = (data: ProfileUpdateInput) =>
     request<UserResponse>("PATCH", "/users/update", { body: { ...data } });
 export const deleteUser = () => request<void>("DELETE", "/users/delete");
@@ -309,6 +314,16 @@ export const submitReport = (data: ReportInput) =>
     request<UserReport>("POST", "/reports", { body: { ...data } });
 export const getMyReports = (page = 1, limit = 20) =>
     request<MyReportsResponse>("GET", "/reports/me", { queryParams: { page, limit } });
+
+// Notifications
+export const getNotifications = (page = 1, limit = 20) =>
+    request<NotificationsResponse>("GET", "/notifications", { queryParams: { page, limit } });
+export const getUnreadNotificationCount = () =>
+    request<UnreadNotificationsResponse>("GET", "/notifications/unread-count");
+export const markNotificationRead = (id: string) =>
+    request<MessageResponse>("PATCH", `/notifications/${id}/read`);
+export const markAllNotificationsRead = () =>
+    request<MessageResponse>("PATCH", "/notifications/read-all");
 
 // Admin
 export const checkAdminAccess = () => request<{ isAdmin: true }>("GET", "/admin/access");

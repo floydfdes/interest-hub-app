@@ -213,6 +213,38 @@ export interface UserReport {
     updatedAt?: string;
 }
 
+
+export type NotificationType =
+    | "post_liked"
+    | "user_followed"
+    | "comment_created"
+    | "reply_created"
+    | "moderation_review"
+    | "report_resolved"
+    | "system";
+
+export interface UserNotification {
+    _id: string;
+    recipient?: string;
+    actor?: BasicUserSummary;
+    type: NotificationType;
+    title?: string;
+    message: string;
+    post?: BasicPostSummary;
+    comment?: ReportCommentSummary;
+    targetUser?: BasicUserSummary;
+    link?: string;
+    read: boolean;
+    readAt?: string | null;
+    metadata?: Record<string, unknown>;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface UnreadNotificationsResponse {
+    count: number;
+}
+
 export interface LoginInput {
     email: string;
     password: string;
@@ -251,6 +283,8 @@ export interface PublicUserProfile {
     interests?: string[];
     followersCount: number;
     followingCount: number;
+    postsCount: number;
+    posts?: IPost[];
 }
 
 export type AdminUser = Omit<IUser, "profilePic"> & {
@@ -287,6 +321,8 @@ export type MyActivitiesResponse = PaginatedResponse<UserActivity>;
 
 export type MyReportsResponse = PaginatedResponse<UserReport>;
 
+export type NotificationsResponse = PaginatedResponse<UserNotification>;
+
 export type AdminReportsResponse = PaginatedResponse<UserReport>;
 
 export type BlockedUsersResponse = PaginatedResponse<BasicUserSummary>;
@@ -298,6 +334,8 @@ export type HiddenPostsResponse = PaginatedResponse<IPost>;
 export type FollowRequestsResponse = PaginatedResponse<BasicUserSummary>;
 
 export type ArchivedPostsResponse = PaginatedResponse<IPost>;
+
+export type UserPostsResponse = PaginatedResponse<IPost>;
 
 export interface AdminUserInput {
     name: string;

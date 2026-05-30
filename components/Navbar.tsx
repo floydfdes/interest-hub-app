@@ -1,12 +1,14 @@
 'use client';
 
+import { getUnreadNotificationCount } from '@/app/api/api';
 import { notifyAuthChanged, useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { useAdminAccess } from '@/app/hooks/useAdminAccess';
 import { setTheme, useTheme } from '@/app/hooks/useTheme';
 import { Avatar, Dropdown } from 'antd';
-import { Bookmark, ChevronDown, Compass, LogIn, LogOut, Moon, PenLine, Search, Shield, Sun, UserRound } from 'lucide-react';
+import { Bell, Bookmark, ChevronDown, Compass, LogIn, LogOut, Moon, PenLine, Search, Shield, Sun, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const navItems = [
     { href: '/', label: 'Feed', icon: Compass, authOnly: false },
@@ -21,6 +23,34 @@ const Navbar = () => {
     const user = useCurrentUser();
     const { isAdmin } = useAdminAccess();
     const theme = useTheme();
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadUnreadCount = async () => {
+            if (!user) {
+                setUnreadNotifications(0);
+                return;
+            }
+
+            try {
+                const response = await getUnreadNotificationCount();
+                if (!cancelled) setUnreadNotifications(response.count);
+            } catch {
+                if (!cancelled) setUnreadNotifications(0);
+            }
+        };
+
+        void loadUnreadCount();
+        window.addEventListener('notifications:changed', loadUnreadCount);
+
+        return () => {
+            cancelled = true;
+            window.removeEventListener('notifications:changed', loadUnreadCount);
+        };
+    }, [pathname, user]);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -94,6 +124,18 @@ const Navbar = () => {
                             <Link href="/create-post" className="primary-button hidden sm:inline-flex">
                                 <PenLine size={15} />
                                 Post
+                            </Link>
+                            <Link
+                                href="/notifications"
+                                aria-label={unreadNotifications > 0 ? `${unreadNotifications} unread notifications` : 'Notifications'}
+                                className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
+                            >
+                                <Bell size={18} />
+                                {unreadNotifications > 0 && (
+                                    <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-rose-500 px-1.5 py-0.5 text-center text-[0.68rem] font-bold leading-none text-white">
+                                        {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                                    </span>
+                                )}
                             </Link>
                             <Dropdown menu={{ items: userMenu }} placement="bottomRight" trigger={['click']}>
                                 <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1.5 pr-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200">
