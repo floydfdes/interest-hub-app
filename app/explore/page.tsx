@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Edit, EyeOff, Flag, Flame, Hash, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
+import { Archive, Edit, EyeOff, Flag, Flame, Hash, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, Share2, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { advancedSearchPosts, archivePost, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTagPosts, getTrendingPosts, getTrendingTags, hidePost, muteUser, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
 import { IPost, Pagination, TrendingTag } from "../types/user";
@@ -13,6 +13,7 @@ import { useCurrentUser } from "../hooks/useCurrentUser";
 import BookmarkButton from "@/components/features/BookmarkButton";
 import SuggestedUsers from "@/components/features/SuggestedUsers";
 import ReportModal from "@/components/features/ReportModal";
+import ShareModal from "@/components/features/ShareModal";
 
 type ViewMode = "cards" | "list";
 type SearchMode = "quick" | "advanced";
@@ -35,6 +36,7 @@ export default function Explore() {
   const [resultLabel, setResultLabel] = useState("");
   const [actionMenuPostId, setActionMenuPostId] = useState<string | null>(null);
   const [reportPost, setReportPost] = useState<IPost | null>(null);
+  const [sharePost, setSharePost] = useState<IPost | null>(null);
   const currentUser = useCurrentUser();
   const actionMenuRef = useRef<HTMLDivElement>(null);
 
@@ -563,6 +565,9 @@ export default function Explore() {
                     </button>
                     {actionMenuPostId === post._id && (
                       <div className="absolute bottom-8 right-0 z-10 min-w-36 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg">
+                        <button type="button" onClick={() => { setActionMenuPostId(null); setSharePost(post); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                          <Share2 size={15} /> Share
+                        </button>
                         <button type="button" onClick={() => void handleArchive(post._id)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
                           <Archive size={15} /> Archive
                         </button>
@@ -587,6 +592,9 @@ export default function Explore() {
                   </button>
                   {actionMenuPostId === post._id && (
                     <div className="absolute bottom-8 right-0 z-10 min-w-36 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg">
+                      <button type="button" onClick={() => { setActionMenuPostId(null); setSharePost(post); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                        <Share2 size={15} /> Share
+                      </button>
                       {(feed === "following" || feed === "recommended") && (
                         <button type="button" onClick={() => void handleMuteAuthor(post.author._id)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
                           <VolumeX size={15} /> Mute user
@@ -627,6 +635,15 @@ export default function Explore() {
       <div className="mt-7">
         <SuggestedUsers authenticated={Boolean(currentUser)} />
       </div>
+      {sharePost && (
+        <ShareModal
+          targetType="post"
+          targetId={sharePost._id}
+          targetLabel={sharePost.title}
+          currentUserId={currentUser?._id}
+          onClose={() => setSharePost(null)}
+        />
+      )}
       {reportPost && (
         <ReportModal
           targetType="post"

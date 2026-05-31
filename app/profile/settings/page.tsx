@@ -261,6 +261,12 @@ export default function SettingsPage() {
                         My Reports
                     </Link>
                     <Link
+                        href="/profile/shares"
+                        className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
+                    >
+                        Shares
+                    </Link>
+                    <Link
                         href="/profile/blocked"
                         className="rounded-xl bg-slate-50 px-5 py-4 text-left font-medium text-slate-700 transition hover:bg-indigo-50 hover:text-indigo-700"
                     >

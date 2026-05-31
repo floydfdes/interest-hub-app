@@ -9,6 +9,7 @@ import {
     blockUser,
     checkAdminAccess,
     createAdminUser,
+    createShare,
     deleteAdminComment,
     deleteAdminPost,
     deleteAdminReply,
@@ -37,7 +38,9 @@ import {
     getTagSuggestions,
     getTrendingTags,
     getUnreadNotificationCount,
+    getReceivedShares,
     getReviewPosts,
+    getSentShares,
     getSuggestedUsers,
     getTrendingPosts,
     getAdminActivities,
@@ -183,6 +186,27 @@ describe('discovery and bookmark API client', () => {
 
         expect(fetchMock.mock.calls[0][0]).toContain('/users/activities?page=2&limit=20&type=user_followed');
         expect(fetchMock.mock.calls[0][0]).not.toContain('actorId');
+        expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
+    });
+
+
+    it('creates shares and requests share inboxes', async () => {
+        await createShare({ recipientId: 'user-2', targetType: 'post', targetId: 'post-1', message: 'Check this out' });
+        await createShare({ recipientId: 'user-3', targetType: 'profile', targetId: 'user-4' });
+        await getReceivedShares(2, 10);
+        await getSentShares(3, 5);
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/shares');
+        expect(fetchMock.mock.calls[0][1]).toMatchObject({
+            method: 'POST',
+            body: JSON.stringify({ recipientId: 'user-2', targetType: 'post', targetId: 'post-1', message: 'Check this out' }),
+        });
+        expect(fetchMock.mock.calls[1][1]).toMatchObject({
+            method: 'POST',
+            body: JSON.stringify({ recipientId: 'user-3', targetType: 'profile', targetId: 'user-4' }),
+        });
+        expect(fetchMock.mock.calls[2][0]).toContain('/shares/received?page=2&limit=10');
+        expect(fetchMock.mock.calls[3][0]).toContain('/shares/sent?page=3&limit=5');
         expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
     });
 

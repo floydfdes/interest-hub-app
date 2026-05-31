@@ -9,7 +9,7 @@ import {
     UserOutlined,
 } from '@ant-design/icons';
 import { formatDistanceToNow } from 'date-fns';
-import { Archive, EyeOff, Flag, Globe2, MoreHorizontal } from 'lucide-react';
+import { Archive, EyeOff, Flag, Globe2, MoreHorizontal, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -17,6 +17,7 @@ import { archivePost, hidePost, likePost, unlikePost } from '@/app/api/api';
 import { IPost, IUser } from '@/app/types/user';
 import BookmarkButton from './BookmarkButton';
 import ReportModal from './ReportModal';
+import ShareModal from './ShareModal';
 
 interface PostCardProps {
     post: IPost;
@@ -33,6 +34,7 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
     const [likedByMe, setLikedByMe] = useState(Boolean(post.isLikedByMe));
     const [actionsOpen, setActionsOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
     const isLiked = Boolean(currentUser && likedByMe);
     const postImage = post.image || '/default_image.png';
@@ -161,6 +163,16 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
                                     <>
                                         <button
                                             type="button"
+                                            onClick={() => {
+                                                setActionsOpen(false);
+                                                setShareOpen(true);
+                                            }}
+                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                                        >
+                                            <Share2 size={15} /> Share
+                                        </button>
+                                        <button
+                                            type="button"
                                             onClick={() => void handleArchive()}
                                             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
                                         >
@@ -178,6 +190,16 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
                                     </>
                                 ) : (
                                     <>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setActionsOpen(false);
+                                                setShareOpen(true);
+                                            }}
+                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                                        >
+                                            <Share2 size={15} /> Share
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={() => void handleHide()}
@@ -203,6 +225,15 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
                 )}
                 </div>
             </footer>
+            {shareOpen && (
+                <ShareModal
+                    targetType="post"
+                    targetId={post._id}
+                    targetLabel={post.title}
+                    currentUserId={currentUser?._id}
+                    onClose={() => setShareOpen(false)}
+                />
+            )}
             {reportOpen && (
                 <ReportModal
                     targetType="post"

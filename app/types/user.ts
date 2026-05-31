@@ -232,6 +232,8 @@ export interface UserReport {
 export type NotificationType =
     | "post_liked"
     | "user_followed"
+    | "post_shared"
+    | "profile_shared"
     | "comment_created"
     | "reply_created"
     | "moderation_review"
@@ -351,6 +353,31 @@ export type FollowRequestsResponse = PaginatedResponse<BasicUserSummary>;
 export type ArchivedPostsResponse = PaginatedResponse<IPost>;
 
 export type UserPostsResponse = PaginatedResponse<IPost>;
+
+export type ShareTargetType = "post" | "profile";
+
+export interface ShareInput {
+    recipientId: string;
+    targetType: ShareTargetType;
+    targetId: string;
+    message?: string;
+}
+
+export interface UserShare {
+    _id: string;
+    sender?: BasicUserSummary;
+    recipient?: BasicUserSummary;
+    targetType: ShareTargetType;
+    targetId?: string;
+    post?: BasicPostSummary;
+    profile?: BasicUserSummary;
+    targetUser?: BasicUserSummary;
+    message?: string;
+    createdAt: string;
+    updatedAt?: string;
+}
+
+export type SharesResponse = PaginatedResponse<UserShare>;
 
 export interface AdminUserInput {
     name: string;

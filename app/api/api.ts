@@ -37,7 +37,10 @@ import {
     ReportInput,
     ReportStatus,
     ReportTargetType,
+    ShareInput,
+    SharesResponse,
     UserReport,
+    UserShare,
     UnreadNotificationsResponse,
     UserPostsResponse,
     UserResponse,
@@ -338,6 +341,14 @@ export const submitReport = (data: ReportInput) =>
     request<UserReport>("POST", "/reports", { body: { ...data } });
 export const getMyReports = (page = 1, limit = 20) =>
     request<MyReportsResponse>("GET", "/reports/me", { queryParams: { page, limit } });
+
+// Shares
+export const createShare = (data: ShareInput) =>
+    request<UserShare>("POST", "/shares", { body: { ...data } });
+export const getReceivedShares = (page = 1, limit = 20) =>
+    request<SharesResponse>("GET", "/shares/received", { queryParams: { page, limit } });
+export const getSentShares = (page = 1, limit = 20) =>
+    request<SharesResponse>("GET", "/shares/sent", { queryParams: { page, limit } });
 
 // Notifications
 export const getNotifications = (page = 1, limit = 20) =>

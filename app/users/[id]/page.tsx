@@ -5,11 +5,12 @@ import { useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { IPost, Pagination, PublicUserProfile } from '@/app/types/user';
 import { Avatar, Empty, Skeleton } from 'antd';
 import Image from 'next/image';
-import { ArrowLeft, Flag, LockKeyhole, MessageCircle, MoreHorizontal, ThumbsUp } from 'lucide-react';
+import { ArrowLeft, Flag, LockKeyhole, MessageCircle, MoreHorizontal, Share2, ThumbsUp } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import ReportModal from '@/components/features/ReportModal';
+import ShareModal from '@/components/features/ShareModal';
 
 export default function PublicProfilePage() {
     const { id } = useParams<{ id: string }>();
@@ -19,6 +20,7 @@ export default function PublicProfilePage() {
     const [error, setError] = useState('');
     const [actionsOpen, setActionsOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
     const [posts, setPosts] = useState<IPost[]>([]);
     const [postsPagination, setPostsPagination] = useState<Pagination | null>(null);
     const [postsLoading, setPostsLoading] = useState(false);
@@ -163,6 +165,16 @@ export default function PublicProfilePage() {
                                             type="button"
                                             onClick={() => {
                                                 setActionsOpen(false);
+                                                setShareOpen(true);
+                                            }}
+                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                                        >
+                                            <Share2 size={15} /> Share
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setActionsOpen(false);
                                                 setReportOpen(true);
                                             }}
                                             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-50"
@@ -254,6 +266,15 @@ export default function PublicProfilePage() {
                 </section>
             )}
 
+            {shareOpen && (
+                <ShareModal
+                    targetType="profile"
+                    targetId={profile._id}
+                    targetLabel={profile.name}
+                    currentUserId={currentUser?._id}
+                    onClose={() => setShareOpen(false)}
+                />
+            )}
             {reportOpen && (
                 <ReportModal
                     targetType="user"
