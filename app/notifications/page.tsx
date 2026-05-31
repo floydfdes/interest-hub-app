@@ -1,22 +1,13 @@
 'use client';
 
-import { getErrorMessage, getNotifications, markAllNotificationsRead, markNotificationRead } from '@/app/api/api';
+import { clearAllNotifications, clearReadNotifications, deleteNotification, getErrorMessage, getNotifications, markAllNotificationsRead, markNotificationRead } from '@/app/api/api';
 import { Pagination, UserNotification } from '@/app/types/user';
-import { Empty, Skeleton, message } from 'antd';
-import { format } from 'date-fns';
-import { ArrowLeft, Bell, CheckCheck, Heart, MessageCircle, ShieldAlert, UserPlus } from 'lucide-react';
+import { Avatar, Empty, Modal, Skeleton, message } from 'antd';
+import { formatDistanceToNowStrict, isYesterday } from 'date-fns';
+import { ArrowLeft, Bell, CheckCheck, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-
-function getNotificationIcon(type: UserNotification['type']) {
-    if (type === 'post_liked') return <Heart size={18} />;
-    if (type === 'user_followed') return <UserPlus size={18} />;
-    if (type === 'comment_created' || type === 'reply_created') return <MessageCircle size={18} />;
-    if (type === 'moderation_review' || type === 'report_resolved') return <ShieldAlert size={18} />;
-    return <Bell size={18} />;
-}
-
 
 function getNotificationMessage(notification: UserNotification) {
     const actorName = notification.actor?.name;
@@ -37,6 +28,32 @@ function getNotificationHref(notification: UserNotification) {
     return null;
 }
 
+
+function formatNotificationTime(date: string) {
+    const createdAt = new Date(date);
+    if (isYesterday(createdAt)) return 'Yesterday';
+
+    return formatDistanceToNowStrict(createdAt, { addSuffix: true })
+        .replace(/^about /, '')
+        .replace(' hours', 'hrs')
+        .replace(' hour', 'hr')
+        .replace(' minutes', 'min')
+        .replace(' minute', 'min')
+        .replace(' seconds', 'sec')
+        .replace(' second', 'sec')
+        .replace(' days', 'days')
+        .replace(' day', 'day')
+        .replace(' months', 'months')
+        .replace(' month', 'month')
+        .replace(' years', 'yrs')
+        .replace(' year', 'yr');
+}
+
+
+function markNotificationLocallyRead(notification: UserNotification, readAt: string) {
+    return { ...notification, isRead: true, readAt };
+}
+
 function notifyNotificationsChanged() {
     window.dispatchEvent(new Event('notifications:changed'));
 }
@@ -48,6 +65,8 @@ export default function NotificationsPage() {
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [markingAll, setMarkingAll] = useState(false);
+    const [clearing, setClearing] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const [error, setError] = useState('');
     const [requiresLogin, setRequiresLogin] = useState(false);
 
@@ -85,6 +104,14 @@ export default function NotificationsPage() {
         };
     }, []);
 
+
+    const refreshNotifications = async () => {
+        const response = await getNotifications();
+        setNotifications(response.items);
+        setPagination(response.pagination);
+        notifyNotificationsChanged();
+    };
+
     const loadMore = async () => {
         if (!pagination?.hasNextPage) return;
 
@@ -103,10 +130,10 @@ export default function NotificationsPage() {
 
     const openNotification = async (notification: UserNotification) => {
         try {
-            if (!notification.read) {
+            if (!notification.isRead) {
                 await markNotificationRead(notification._id);
                 setNotifications((currentNotifications) => currentNotifications.map((item) => (
-                    item._id === notification._id ? { ...item, read: true, readAt: new Date().toISOString() } : item
+                    item._id === notification._id ? markNotificationLocallyRead(item, new Date().toISOString()) : item
                 )));
                 notifyNotificationsChanged();
             }
@@ -124,11 +151,9 @@ export default function NotificationsPage() {
         try {
             await markAllNotificationsRead();
             const now = new Date().toISOString();
-            setNotifications((currentNotifications) => currentNotifications.map((notification) => ({
-                ...notification,
-                read: true,
-                readAt: notification.readAt || now,
-            })));
+            setNotifications((currentNotifications) => currentNotifications.map((notification) => (
+                markNotificationLocallyRead(notification, notification.readAt || now)
+            )));
             notifyNotificationsChanged();
             message.success('Notifications marked as read');
         } catch (err: unknown) {
@@ -138,7 +163,59 @@ export default function NotificationsPage() {
         }
     };
 
-    const unreadCount = notifications.filter((notification) => !notification.read).length;
+
+    const removeNotification = async (notificationId: string) => {
+        setDeletingId(notificationId);
+        setError('');
+        try {
+            await deleteNotification(notificationId);
+            await refreshNotifications();
+            message.success('Notification deleted');
+        } catch (err: unknown) {
+            message.error(getErrorMessage(err, 'Failed to delete notification.'));
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const clearRead = async () => {
+        setClearing(true);
+        setError('');
+        try {
+            const response = await clearReadNotifications();
+            await refreshNotifications();
+            message.success(`${response.deleted} read notification${response.deleted === 1 ? '' : 's'} cleared`);
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, 'Failed to clear read notifications.'));
+        } finally {
+            setClearing(false);
+        }
+    };
+
+    const clearAll = () => {
+        Modal.confirm({
+            title: 'Clear all notifications?',
+            content: 'This will remove every notification from your inbox.',
+            okText: 'Clear all',
+            okButtonProps: { danger: true },
+            cancelText: 'Cancel',
+            async onOk() {
+                setClearing(true);
+                setError('');
+                try {
+                    const response = await clearAllNotifications();
+                    await refreshNotifications();
+                    message.success(`${response.deleted} notification${response.deleted === 1 ? '' : 's'} cleared`);
+                } catch (err: unknown) {
+                    setError(getErrorMessage(err, 'Failed to clear notifications.'));
+                } finally {
+                    setClearing(false);
+                }
+            },
+        });
+    };
+
+    const unreadCount = notifications.filter((notification) => !notification.isRead).length;
     const hasUnread = unreadCount > 0;
 
     if (error && notifications.length === 0) {
@@ -157,22 +234,41 @@ export default function NotificationsPage() {
                 <ArrowLeft size={15} /> Back to feed
             </Link>
 
-            <header className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <header className="mb-7 space-y-5">
                 <div>
                     <span className="eyebrow"><Bell size={12} /> Inbox</span>
                     <h1 className="gradient-heading mt-4 text-4xl font-bold">Notifications</h1>
                     <p className="mt-2 text-slate-500">Likes, follows, comments, replies, and moderation updates from your account.</p>
                     <p className="mt-3 text-sm font-semibold text-indigo-600">{unreadCount} unread</p>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => void markAllRead()}
-                    disabled={!hasUnread || markingAll}
-                    className="secondary-button disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    <CheckCheck size={16} />
-                    {markingAll ? 'Marking...' : 'Mark all as read'}
-                </button>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <button
+                        type="button"
+                        onClick={() => void markAllRead()}
+                        disabled={!hasUnread || markingAll || clearing}
+                        className="secondary-button w-full !min-h-0 whitespace-nowrap !px-3 !py-2.5 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <CheckCheck size={16} />
+                        {markingAll ? 'Marking...' : 'Mark all as read'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => void clearRead()}
+                        disabled={clearing || notifications.every((notification) => !notification.isRead)}
+                        className="secondary-button w-full !min-h-0 whitespace-nowrap !px-3 !py-2.5 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        Clear read
+                    </button>
+                    <button
+                        type="button"
+                        onClick={clearAll}
+                        disabled={clearing || notifications.length === 0}
+                        className="secondary-button w-full !min-h-0 whitespace-nowrap !px-3 !py-2.5 !text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <Trash2 size={16} />
+                        Clear all
+                    </button>
+                </div>
             </header>
 
             {error && <p className="surface mb-5 p-4 text-sm font-medium text-rose-600">{error}</p>}
@@ -184,32 +280,42 @@ export default function NotificationsPage() {
             ) : (
                 <div className="space-y-3">
                     {notifications.map((notification) => {
-                        const href = getNotificationHref(notification);
                         return (
-                            <button
+                            <div
                                 key={notification._id}
-                                type="button"
-                                onClick={() => void openNotification(notification)}
-                                className={`surface w-full p-4 text-left transition hover:border-indigo-200 ${!notification.read ? 'border-indigo-200 bg-indigo-50/60' : ''}`}
+                                className={`surface flex w-full items-center gap-3 p-3 transition hover:border-indigo-200 ${!notification.isRead ? 'border-indigo-200 bg-indigo-50/60' : 'bg-white/80'}`}
                             >
-                                <div className="flex gap-4">
-                                    <span className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${!notification.read ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                        {getNotificationIcon(notification.type)}
+                                <button
+                                    type="button"
+                                    onClick={() => void openNotification(notification)}
+                                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                                >
+                                    <span className="relative shrink-0">
+                                        <Avatar src={notification.actor?.profilePic || null} size={42}>
+                                            {notification.actor?.name?.charAt(0) || 'N'}
+                                        </Avatar>
+                                        {!notification.isRead && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-accent" />}
                                     </span>
                                     <span className="min-w-0 flex-1">
-                                        <span className="flex flex-wrap items-center gap-2">
-                                            {notification.title && <span className="font-semibold text-slate-900">{notification.title}</span>}
-                                            {!notification.read && <span className="tag-pill !bg-indigo-600 !text-white">New</span>}
+                                        <span className={`block text-sm ${notification.isRead ? 'font-medium text-slate-600' : 'font-semibold text-slate-900'}`}>
+                                            {getNotificationMessage(notification)}
                                         </span>
-                                        <span className="mt-1 block text-sm text-slate-600">{getNotificationMessage(notification)}</span>
-                                        {notification.post && <span className="mt-2 block truncate text-sm font-medium text-indigo-600">{notification.post.title}</span>}
-                                        <span className="mt-2 block text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
-                                            {format(new Date(notification.createdAt), 'MMM d, yyyy, h:mm a')}
-                                            {href ? ' · Open' : ''}
+                                        {notification.post && <span className="mt-0.5 block truncate text-sm font-medium text-indigo-600">{notification.post.title}</span>}
+                                        <span className="mt-1 block text-xs font-medium text-slate-400">
+                                            {formatNotificationTime(notification.createdAt)}
                                         </span>
                                     </span>
-                                </div>
-                            </button>
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label={`Delete notification ${notification._id}`}
+                                    onClick={() => void removeNotification(notification._id)}
+                                    disabled={deletingId === notification._id}
+                                    className="ml-auto shrink-0 rounded-xl p-2 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                         );
                     })}
 

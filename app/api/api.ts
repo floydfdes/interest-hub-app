@@ -76,6 +76,10 @@ export interface BulkDeleteResponse extends MessageResponse {
     deleted: number;
 }
 
+export interface ClearNotificationsResponse {
+    deleted: number;
+}
+
 export interface AdminActivityFilters {
     page?: number;
     limit?: number;
@@ -101,6 +105,11 @@ type RawMutedUsersResponse = {
     pagination: Omit<MutedUsersResponse["pagination"], "hasPreviousPage"> & {
         hasPrevPage: boolean;
     };
+};
+
+type RawUnreadNotificationsResponse = {
+    count?: number;
+    unreadCount?: number;
 };
 
 export class ApiError extends Error {
@@ -322,12 +331,20 @@ export const getMyReports = (page = 1, limit = 20) =>
 // Notifications
 export const getNotifications = (page = 1, limit = 20) =>
     request<NotificationsResponse>("GET", "/notifications", { queryParams: { page, limit } });
-export const getUnreadNotificationCount = () =>
-    request<UnreadNotificationsResponse>("GET", "/notifications/unread-count");
+export const getUnreadNotificationCount = async (): Promise<UnreadNotificationsResponse> => {
+    const response = await request<RawUnreadNotificationsResponse>("GET", "/notifications/unread-count");
+    return { count: response.count ?? response.unreadCount ?? 0 };
+};
 export const markNotificationRead = (id: string) =>
     request<MessageResponse>("PATCH", `/notifications/${id}/read`);
 export const markAllNotificationsRead = () =>
     request<MessageResponse>("PATCH", "/notifications/read-all");
+export const deleteNotification = (id: string) =>
+    request<MessageResponse>("DELETE", `/notifications/${id}`);
+export const clearReadNotifications = () =>
+    request<ClearNotificationsResponse>("DELETE", "/notifications/read");
+export const clearAllNotifications = () =>
+    request<ClearNotificationsResponse>("DELETE", "/notifications");
 
 // Admin
 export const checkAdminAccess = () => request<{ isAdmin: true }>("GET", "/admin/access");

@@ -238,7 +238,7 @@ export interface UserNotification {
     comment?: ReportCommentSummary;
     targetUser?: BasicUserSummary;
     link?: string;
-    read: boolean;
+    isRead: boolean;
     readAt?: string | null;
     metadata?: Record<string, unknown>;
     createdAt: string;

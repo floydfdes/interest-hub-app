@@ -26,6 +26,9 @@ import {
     getMyActivities,
     getMyReports,
     getMutedUsers,
+    clearAllNotifications,
+    clearReadNotifications,
+    deleteNotification,
     getNotifications,
     getPostComments,
     getPostLikes,
@@ -179,6 +182,9 @@ describe('discovery and bookmark API client', () => {
         await getUnreadNotificationCount();
         await markNotificationRead('notification-1');
         await markAllNotificationsRead();
+        await deleteNotification('notification-1');
+        await clearReadNotifications();
+        await clearAllNotifications();
 
         expect(fetchMock.mock.calls[0][0]).toContain('/notifications?page=2&limit=10');
         expect(fetchMock.mock.calls[1][0]).toContain('/notifications/unread-count');
@@ -186,6 +192,12 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[2][1].method).toBe('PATCH');
         expect(fetchMock.mock.calls[3][0]).toContain('/notifications/read-all');
         expect(fetchMock.mock.calls[3][1].method).toBe('PATCH');
+        expect(fetchMock.mock.calls[4][0]).toContain('/notifications/notification-1');
+        expect(fetchMock.mock.calls[4][1].method).toBe('DELETE');
+        expect(fetchMock.mock.calls[5][0]).toContain('/notifications/read');
+        expect(fetchMock.mock.calls[5][1].method).toBe('DELETE');
+        expect(fetchMock.mock.calls[6][0]).toContain('/notifications');
+        expect(fetchMock.mock.calls[6][1].method).toBe('DELETE');
         expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
     });
 
