@@ -83,6 +83,10 @@ describe('admin bulk deletion controls', () => {
             title: 'Moderated post',
             content: 'Post content',
             author: { _id: 'author-1', name: 'Author', profilePic: '' },
+            likesCount: 0,
+            commentsCount: 1,
+            isLikedByMe: false,
+            isSavedByMe: false,
             comments: [{
                 _id: 'comment-1',
                 user: { _id: 'user-2', name: 'Reader', profilePic: '' },

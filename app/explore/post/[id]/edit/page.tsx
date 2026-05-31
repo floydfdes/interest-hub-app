@@ -1,6 +1,6 @@
 "use client";
 
-import { createComment, deleteComment, deleteReply, editComment, editReply, getErrorMessage, getPostById, likeComment, likeReply, replyToComment, unlikeComment, updatePost } from "@/app/api/api";
+import { createComment, deleteComment, deleteReply, editComment, editReply, getErrorMessage, getPostById, getPostComments, likeComment, likeReply, replyToComment, unlikeComment, updatePost } from "@/app/api/api";
 import { compressAndConvertToBase64, resizeImageToBase64 } from "@/app/api/imageUtil";
 import { useCurrentUser } from "@/app/hooks/useCurrentUser";
 import { IComment, IPost, PostInput } from "@/app/types/user";
@@ -47,24 +47,21 @@ export default function EditPostPage() {
     const currentUser = useCurrentUser();
     const currentUserId = currentUser?._id || "";
 
-    const fetchPost = async () => {
-        try {
-            const data = await getPostById(postId) as IPost;
-            setForm({
-                title: data.title,
-                content: data.content,
-                category: data.category,
-                tags: (data.tags || []).join(", "),
-                image: data.image,
-                visibility: data.visibility,
-            });
-            setImagePreview(data.image || null);
-            setComments(filterVisibleComments(data.comments));
-        } catch {
-            setError("Failed to fetch post");
-        } finally {
-            setLoading(false);
-        }
+    const applyPost = (data: IPost) => {
+        setForm({
+            title: data.title,
+            content: data.content,
+            category: data.category,
+            tags: (data.tags || []).join(", "),
+            image: data.image,
+            visibility: data.visibility,
+        });
+        setImagePreview(data.image || null);
+    };
+
+    const fetchComments = async () => {
+        const response = await getPostComments(postId);
+        setComments(filterVisibleComments(response.items));
     };
 
     useEffect(() => {
@@ -75,16 +72,9 @@ export default function EditPostPage() {
             try {
                 const data = await getPostById(postId) as IPost;
                 if (cancelled) return;
-                setForm({
-                    title: data.title,
-                    content: data.content,
-                    category: data.category,
-                    tags: (data.tags || []).join(", "),
-                    image: data.image,
-                    visibility: data.visibility,
-                });
-                setImagePreview(data.image || null);
-                setComments(filterVisibleComments(data.comments));
+                applyPost(data);
+                const response = await getPostComments(postId);
+                if (!cancelled) setComments(filterVisibleComments(response.items));
             } catch {
                 if (!cancelled) setError("Failed to fetch post");
             } finally {
@@ -168,7 +158,7 @@ export default function EditPostPage() {
             const response = await createComment(postId, newComment);
             const moderationMessage = getModerationNoticeMessage(response);
             if (moderationMessage) message.warning(moderationMessage);
-            await fetchPost();
+            await fetchComments();
             setNewComment("");
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to add comment"));
@@ -180,7 +170,7 @@ export default function EditPostPage() {
             const response = await editComment(commentId, updatedContent);
             const moderationMessage = getModerationNoticeMessage(response);
             if (moderationMessage) message.warning(moderationMessage);
-            await fetchPost();
+            await fetchComments();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to edit comment"));
         }
@@ -189,7 +179,7 @@ export default function EditPostPage() {
     const handleDeleteComment = async (commentId: string) => {
         try {
             await deleteComment(commentId);
-            await fetchPost();
+            await fetchComments();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to delete comment"));
         }
@@ -198,7 +188,7 @@ export default function EditPostPage() {
     const handleLikeComment = async (commentId: string) => {
         try {
             await likeComment(commentId);
-            await fetchPost();
+            await fetchComments();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to like comment"));
         }
@@ -207,7 +197,7 @@ export default function EditPostPage() {
     const handleUnlikeComment = async (commentId: string) => {
         try {
             await unlikeComment(commentId);
-            await fetchPost();
+            await fetchComments();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to unlike comment"));
         }
@@ -218,7 +208,7 @@ export default function EditPostPage() {
             const response = await replyToComment(commentId, replyContent);
             const moderationMessage = getModerationNoticeMessage(response);
             if (moderationMessage) message.warning(moderationMessage);
-            await fetchPost();
+            await fetchComments();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to reply to comment"));
         }
@@ -229,7 +219,7 @@ export default function EditPostPage() {
             const response = await editReply(commentId, replyIndex, updatedContent);
             const moderationMessage = getModerationNoticeMessage(response);
             if (moderationMessage) message.warning(moderationMessage);
-            await fetchPost();
+            await fetchComments();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to edit reply"));
         }
@@ -238,7 +228,7 @@ export default function EditPostPage() {
     const handleDeleteReply = async (commentId: string, replyIndex: number) => {
         try {
             await deleteReply(commentId, replyIndex);
-            await fetchPost();
+            await fetchComments();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to delete reply"));
         }
@@ -247,7 +237,7 @@ export default function EditPostPage() {
     const handleLikeReply = async (commentId: string, replyIndex: number) => {
         try {
             await likeReply(commentId, replyIndex);
-            await fetchPost();
+            await fetchComments();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to like reply"));
         }

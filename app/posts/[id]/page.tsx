@@ -1,8 +1,8 @@
 'use client';
 
-import { getBookmarkedPosts, getPostById } from '@/app/api/api';
+import { getPostById, getPostComments } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
-import { IPost } from '@/app/types/user';
+import { IComment, IPost } from '@/app/types/user';
 import { filterVisibleComments, isUnderReview } from '@/app/utils/moderation';
 import CommentList from '@/components/features/CommentList';
 import PostCard from '@/components/features/PostCard';
@@ -15,9 +15,15 @@ export default function PostDetailPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
     const [post, setPost] = useState<IPost | null>(null);
+    const [comments, setComments] = useState<IComment[]>([]);
     const [loading, setLoading] = useState(true);
     const currentUser = useCurrentUser();
     const { message } = App.useApp();
+
+    const fetchComments = async () => {
+        const response = await getPostComments(id);
+        setComments(filterVisibleComments(response.items));
+    };
 
     const fetchPost = async () => {
         try {
@@ -26,18 +32,14 @@ export default function PostDetailPage() {
                 setPost(null);
                 return;
             }
-            if (localStorage.getItem('token')) {
-                const bookmarks = await getBookmarkedPosts().catch(() => []);
-                nextPost.isBookmarked = bookmarks.some((bookmark) => bookmark._id === id) || nextPost.isBookmarked;
-            }
-            setPost({ ...nextPost, comments: filterVisibleComments(nextPost.comments || []) });
+            setPost(nextPost);
+            await fetchComments();
         } catch {
             message.error('Failed to load post');
         } finally {
             setLoading(false);
         }
     };
-
     useEffect(() => {
         let cancelled = false;
 
@@ -48,17 +50,18 @@ export default function PostDetailPage() {
                     if (!cancelled) setPost(null);
                     return;
                 }
-                if (localStorage.getItem('token')) {
-                    const bookmarks = await getBookmarkedPosts().catch(() => []);
-                    nextPost.isBookmarked = bookmarks.some((bookmark) => bookmark._id === id) || nextPost.isBookmarked;
+                const response = await getPostComments(id);
+                if (!cancelled) {
+                    setPost(nextPost);
+                    setComments(filterVisibleComments(response.items));
                 }
-                if (!cancelled) setPost({ ...nextPost, comments: filterVisibleComments(nextPost.comments || []) });
             } catch {
                 if (!cancelled) message.error('Failed to load post');
             } finally {
                 if (!cancelled) setLoading(false);
             }
         };
+
 
         void loadPost();
         return () => {
@@ -90,7 +93,7 @@ export default function PostDetailPage() {
             </Button>
             <PostCard post={post} currentUser={currentUser} onArchive={() => router.push('/profile/archived-posts')} />
             <CommentList
-                comments={post.comments || []}
+                comments={comments}
                 postId={post._id}
                 onCommentAdded={fetchPost}
             />

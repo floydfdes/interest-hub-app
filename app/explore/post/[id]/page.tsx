@@ -1,4 +1,4 @@
-import { getPostById } from "@/app/api/api";
+import { getPostById, getPostComments } from "@/app/api/api";
 import { IPost } from "@/app/types/user";
 import { filterVisibleComments, isUnderReview } from "@/app/utils/moderation";
 import { formatDistanceToNow } from "date-fns";
@@ -14,7 +14,8 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         return <div className="surface shell-container max-w-xl p-10 text-center text-slate-500">Post not found</div>;
     }
 
-    const visibleComments = filterVisibleComments(post.comments || []);
+    const commentsResponse = await getPostComments(id);
+    const visibleComments = filterVisibleComments(commentsResponse.items);
 
     return (
         <div className="shell-container flex flex-col items-center">
@@ -48,8 +49,8 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                 <p className="mt-3 text-base leading-7 text-slate-600">{post.content}</p>
 
                 <div className="mt-5 flex items-center gap-4 text-sm font-medium text-slate-500">
-                    <span><span className="font-medium">Likes:</span> {post.likes?.length || 0}</span>
-                    <BookmarkButton postId={post._id} initialBookmarked={post.isBookmarked} showLabel />
+                    <span><span className="font-medium">Likes:</span> {post.likesCount ?? post.likes?.length ?? 0}</span>
+                    <BookmarkButton postId={post._id} initialBookmarked={post.isSavedByMe ?? post.isBookmarked} showLabel />
                 </div>
 
                 <div className="mt-8 border-t border-slate-100 pt-7">

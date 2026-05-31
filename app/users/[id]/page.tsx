@@ -237,8 +237,8 @@ export default function PublicProfilePage() {
                                             <p className="truncate text-sm font-semibold">{post.title}</p>
                                         </div>
                                         <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-slate-950/75 to-transparent p-3 text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
-                                            <span className="flex items-center gap-1"><ThumbsUp size={13} /> {post.likes?.length || 0}</span>
-                                            <span className="flex items-center gap-1"><MessageCircle size={13} /> {post.comments?.length || 0}</span>
+                                            <span className="flex items-center gap-1"><ThumbsUp size={13} /> {post.likesCount ?? post.likes?.length ?? 0}</span>
+                                            <span className="flex items-center gap-1"><MessageCircle size={13} /> {post.commentsCount ?? post.comments?.length ?? 0}</span>
                                         </div>
                                     </Link>
                                 );

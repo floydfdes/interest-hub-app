@@ -14,7 +14,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { archivePost, hidePost, likePost, unlikePost } from '@/app/api/api';
-import { IPost, IUser, Like } from '@/app/types/user';
+import { IPost, IUser } from '@/app/types/user';
 import BookmarkButton from './BookmarkButton';
 import ReportModal from './ReportModal';
 
@@ -28,16 +28,13 @@ interface PostCardProps {
     onArchive?: (postId: string) => void;
 }
 
-function belongsToUser(like: Like, userId: string) {
-    return (typeof like === 'string' ? like : like._id) === userId;
-}
-
 const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange, onHide, onArchive }: PostCardProps) => {
-    const [likes, setLikes] = useState<Like[]>(post.likes || []);
+    const [likesCount, setLikesCount] = useState(post.likesCount ?? post.likes?.length ?? 0);
+    const [likedByMe, setLikedByMe] = useState(Boolean(post.isLikedByMe));
     const [actionsOpen, setActionsOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
-    const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
+    const isLiked = Boolean(currentUser && likedByMe);
     const postImage = post.image || '/default_image.png';
 
     useEffect(() => {
@@ -57,8 +54,12 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
         if (!currentUser) return;
 
         try {
+            const nextLiked = !isLiked;
+            setLikedByMe(nextLiked);
+            setLikesCount((currentCount) => Math.max(0, currentCount + (nextLiked ? 1 : -1)));
             const response = await (isLiked ? unlikePost(post._id) : likePost(post._id));
-            setLikes(response.likes || []);
+            setLikedByMe(response.isLikedByMe);
+            setLikesCount(response.likesCount);
         } catch {
             // Keep the server-confirmed count displayed when engagement fails.
         }
@@ -129,17 +130,17 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
                         onClick={handleLike}
                         className={`!flex !items-center !rounded-xl !px-3 ${isLiked ? '!bg-indigo-50 !text-indigo-600' : '!text-slate-500'}`}
                     >
-                        {likes.length}
+                        {likesCount}
                     </Button>
                     <Link href={`/posts/${post._id}`}>
                         <Button type="text" icon={<CommentOutlined />} className="!rounded-xl !px-3 !text-slate-500">
-                            {post.comments?.length || 0}
+                            {post.commentsCount ?? post.comments?.length ?? 0}
                         </Button>
                     </Link>
                     <BookmarkButton
                         postId={post._id}
                         currentUser={currentUser}
-                        initialBookmarked={isBookmarked ?? post.isBookmarked}
+                        initialBookmarked={isBookmarked ?? post.isSavedByMe ?? post.isBookmarked}
                         onBookmarkChange={onBookmarkChange}
                     />
                 </div>

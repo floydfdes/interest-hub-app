@@ -27,6 +27,7 @@ import {
     getMyReports,
     getMutedUsers,
     getNotifications,
+    getPostComments,
     getPostLikes,
     getRecommendedPosts,
     getUnreadNotificationCount,
@@ -94,12 +95,14 @@ describe('discovery and bookmark API client', () => {
 
     it('requests paginated likes and relationship lists', async () => {
         await getPostLikes('post-7', 2, 10);
+        await getPostComments('post-7', 3, 5);
         await getFollowers('user-1');
         await getFollowing('user-1', 3, 5);
 
         expect(fetchMock.mock.calls[0][0]).toContain('/posts/post-7/likes?page=2&limit=10');
-        expect(fetchMock.mock.calls[1][0]).toContain('/users/user-1/followers?page=1&limit=20');
-        expect(fetchMock.mock.calls[2][0]).toContain('/users/user-1/following?page=3&limit=5');
+        expect(fetchMock.mock.calls[1][0]).toContain('/posts/post-7/comments?page=3&limit=5');
+        expect(fetchMock.mock.calls[2][0]).toContain('/users/user-1/followers?page=1&limit=20');
+        expect(fetchMock.mock.calls[3][0]).toContain('/users/user-1/following?page=3&limit=5');
     });
 
     it('requests personal block controls and the blocked users list', async () => {

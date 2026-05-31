@@ -73,7 +73,7 @@ export default function AdminUserDetailPage() {
                                     <span className="tag-pill !px-2 !py-0.5">{post.visibility}</span>
                                 </div>
                                 <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-500">{post.content}</p>
-                                <p className="mt-4 text-xs text-slate-400">{post.comments?.length || 0} comments</p>
+                                <p className="mt-4 text-xs text-slate-400">{post.commentsCount ?? post.comments?.length ?? 0} comments</p>
                             </Link>
                         ))}
                     </div>

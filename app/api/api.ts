@@ -230,8 +230,12 @@ export const createPost = (data: PostInput) =>
 export const updatePost = (id: string, data: PostUpdateInput) =>
     request<IPost>("PUT", `/posts/${id}`, { body: { ...data } });
 export const deletePost = (id: string) => request<void>("DELETE", `/posts/${id}`);
-export const likePost = (id: string) => request<Pick<IPost, "likes">>("POST", `/posts/${id}/like`);
-export const unlikePost = (id: string) => request<Pick<IPost, "likes">>("POST", `/posts/${id}/unlike`);
+export const likePost = (id: string) =>
+    request<Pick<IPost, "likesCount" | "isLikedByMe">>("POST", `/posts/${id}/like`);
+export const unlikePost = (id: string) =>
+    request<Pick<IPost, "likesCount" | "isLikedByMe">>("POST", `/posts/${id}/unlike`);
+export const getPostComments = (id: string, page = 1, limit = 20) =>
+    request<PaginatedResponse<IComment>>("GET", `/posts/${id}/comments`, { queryParams: { page, limit } });
 export const getPostLikes = (id: string, page = 1, limit = 20) =>
     request<PaginatedResponse<IUser>>("GET", `/posts/${id}/likes`, { queryParams: { page, limit } });
 export const getFollowingPosts = (page = 1, limit = 20) =>

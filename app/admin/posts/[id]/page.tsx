@@ -158,7 +158,7 @@ export default function AdminPostDetailPage() {
                 <div className="mt-6 flex flex-wrap gap-4 border-t border-slate-100 pt-5 text-sm text-slate-500">
                     <span>By {post.author?.name || 'Unknown author'}</span>
                     <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
-                    <span>{post.likes?.length || 0} likes</span>
+                    <span>{post.likesCount ?? post.likes?.length ?? 0} likes</span>
                 </div>
             </article>
 
@@ -175,7 +175,7 @@ export default function AdminPostDetailPage() {
                     <div className="surface p-10"><Empty description="No comments on this post" /></div>
                 ) : (
                     <div className="space-y-4">
-                        {post.comments.map((comment) => (
+                        {(post.comments || []).map((comment) => (
                             <div key={comment._id} className="surface p-5">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex items-start gap-3">

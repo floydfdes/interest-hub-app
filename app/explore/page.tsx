@@ -46,7 +46,7 @@ export default function Explore() {
         ]);
         const nextBookmarkedIds = new Set(bookmarks.map((post) => post._id));
         setBookmarkedIds(nextBookmarkedIds);
-        setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: nextBookmarkedIds.has(post._id) || post.isBookmarked })));
+        setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: nextBookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked) })));
       } catch (err: unknown) {
         setSearchError(getErrorMessage(err, "Failed to fetch posts."));
       } finally {
@@ -94,7 +94,7 @@ export default function Explore() {
       setPagination(followingResponse?.pagination || null);
       setPosts(filterVisiblePosts(nextPosts).map((post) => ({
         ...post,
-        isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
+        isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked),
       })));
     } catch (err: unknown) {
       setPosts([]);
@@ -115,7 +115,7 @@ export default function Explore() {
         ...currentPosts,
         ...filterVisiblePosts(response.items).map((post) => ({
           ...post,
-          isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
+          isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked),
         })),
       ]);
       setPagination(response.pagination);
@@ -150,7 +150,7 @@ export default function Explore() {
     setSearchError("");
     try {
       const nextPosts = await searchPosts(query);
-      setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked })));
+      setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked) })));
       setResultLabel(`Results for "${query}"`);
     } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to search posts."));
@@ -165,7 +165,7 @@ export default function Explore() {
     setSearchError("");
     try {
       const nextPosts = await advancedSearchPosts(filters);
-      setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked })));
+      setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked) })));
       setResultLabel("Advanced search results");
     } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to search posts."));
@@ -480,12 +480,12 @@ export default function Explore() {
             </Link>
             <div className={`flex items-center justify-between border-t border-slate-100 text-sm text-slate-500 ${viewMode === "cards" ? "px-5 py-3" : "mt-4 pt-4"}`}>
               <div className="flex items-center gap-4">
-                <span className="flex items-center gap-1.5"><ThumbsUp size={14} />{post.likes?.length || 0}</span>
-                <span className="flex items-center gap-1.5"><MessageCircle size={14} />{post.comments?.length || 0}</span>
+                <span className="flex items-center gap-1.5"><ThumbsUp size={14} />{post.likesCount ?? post.likes?.length ?? 0}</span>
+                <span className="flex items-center gap-1.5"><MessageCircle size={14} />{post.commentsCount ?? post.comments?.length ?? 0}</span>
                 <BookmarkButton
                   postId={post._id}
                   currentUser={currentUser}
-                  initialBookmarked={post.isBookmarked}
+                  initialBookmarked={post.isSavedByMe ?? post.isBookmarked}
                   onBookmarkChange={setBookmarkState}
                 />
               </div>

@@ -78,8 +78,12 @@ export interface IPost {
     category: string;
     tags: string[];
     author: IUserPreview;
-    likes: Like[];
-    comments: IComment[];
+    likes?: Like[];
+    comments?: IComment[];
+    likesCount: number;
+    commentsCount: number;
+    isLikedByMe: boolean;
+    isSavedByMe: boolean;
     visibility: "public" | "private" | "followersOnly";
     viewCount: number;
     sharedFrom: string | null;

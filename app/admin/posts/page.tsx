@@ -202,7 +202,7 @@ export default function AdminPostsPage() {
                                         </td>
                                         <td className="px-5 py-4 text-slate-600">{post.author?.name || 'Unknown'}</td>
                                         <td className="px-5 py-4"><span className="tag-pill !px-2 !py-0.5">{post.visibility}</span></td>
-                                        <td className="px-5 py-4 text-slate-600">{post.comments?.length || 0}</td>
+                                        <td className="px-5 py-4 text-slate-600">{post.commentsCount ?? post.comments?.length ?? 0}</td>
                                         <td className="px-5 py-4">
                                             <div className="flex justify-end gap-2">
                                                 <Link href={`/admin/posts/${post._id}`} aria-label={`View ${post.title}`} className="rounded-xl bg-slate-50 p-2 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"><Eye size={16} /></Link>

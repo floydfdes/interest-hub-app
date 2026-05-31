@@ -28,7 +28,7 @@ const PostList = () => {
                 const nextBookmarkedIds = new Set(bookmarks.map((post) => post._id));
                 setPosts(filterVisiblePosts(response.items).map((post) => ({
                     ...post,
-                    isBookmarked: nextBookmarkedIds.has(post._id) || post.isBookmarked,
+                    isBookmarked: nextBookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked),
                 })));
                 setBookmarkedIds(nextBookmarkedIds);
                 setPagination(response.pagination);
@@ -50,7 +50,7 @@ const PostList = () => {
             const response = await getAllPosts(pagination.page + 1, pagination.limit);
             setPosts((currentPosts) => [...currentPosts, ...filterVisiblePosts(response.items).map((post) => ({
                 ...post,
-                isBookmarked: bookmarkedIds.has(post._id) || post.isBookmarked,
+                isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked),
             }))]);
             setPagination(response.pagination);
         } catch {
@@ -110,7 +110,7 @@ const PostList = () => {
                     post={post}
                     onDelete={handleDelete}
                     currentUser={currentUser}
-                    isBookmarked={post.isBookmarked}
+                    isBookmarked={post.isSavedByMe ?? post.isBookmarked}
                     onBookmarkChange={handleBookmarkChange}
                     onHide={handleHide}
                     onArchive={handleHide}
