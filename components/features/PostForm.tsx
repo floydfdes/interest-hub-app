@@ -1,6 +1,6 @@
 'use client';
 
-import { createPost, getErrorMessage } from '@/app/api/api';
+import { createDraftPost, createPost, getErrorMessage } from '@/app/api/api';
 import { compressAndConvertToBase64 } from '@/app/api/imageUtil';
 import { getModerationNoticeMessage } from '@/app/utils/moderation';
 import { IPost } from '@/app/types/user';
@@ -26,8 +26,37 @@ interface PostFormValues {
 const PostForm = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [savingDraft, setSavingDraft] = useState(false);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const { message } = App.useApp();
+    const [form] = Form.useForm<PostFormValues>();
+
+    const getSelectedImage = async () => {
+        const originalImage = fileList[0]?.originFileObj as File | undefined;
+        if (!originalImage) return '';
+        return await compressAndConvertToBase64(originalImage);
+    };
+
+    const saveDraft = async () => {
+        const values = form.getFieldsValue();
+        setSavingDraft(true);
+        try {
+            const image = await getSelectedImage();
+            await createDraftPost({
+                title: values.title || '',
+                content: values.content || '',
+                category: values.category || '',
+                image: image || '',
+                visibility: values.visibility || 'public',
+            });
+            message.success('Draft saved');
+            router.push('/profile/drafts');
+        } catch (error: unknown) {
+            message.error(getErrorMessage(error, 'Failed to save draft'));
+        } finally {
+            setSavingDraft(false);
+        }
+    };
 
     const onFinish = async (values: PostFormValues) => {
         const originalImage = fileList[0]?.originFileObj as File | undefined;
@@ -72,6 +101,7 @@ const PostForm = () => {
                 <p className="text-slate-500">Tell your community what you have been exploring lately.</p>
             </div>
             <Form<PostFormValues>
+                form={form}
                 layout="vertical"
                 onFinish={onFinish}
                 initialValues={{ visibility: 'public' }}
@@ -133,17 +163,30 @@ const PostForm = () => {
                     )}
                 </Form.Item>
                 <Form.Item>
-                    <Button
-                        data-testid="post-submit"
-                        type="primary"
-                        htmlType="submit"
-                        loading={loading}
-                        block
-                        size="large"
-                        className="!h-12 !rounded-xl !font-semibold"
-                    >
-                        Publish post
-                    </Button>
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                        <Button
+                            data-testid="post-draft-submit"
+                            type="default"
+                            onClick={() => void saveDraft()}
+                            loading={savingDraft}
+                            block
+                            size="large"
+                            className="!h-12 !rounded-xl !font-semibold"
+                        >
+                            Save draft
+                        </Button>
+                        <Button
+                            data-testid="post-submit"
+                            type="primary"
+                            htmlType="submit"
+                            loading={loading}
+                            block
+                            size="large"
+                            className="!h-12 !rounded-xl !font-semibold"
+                        >
+                            Publish post
+                        </Button>
+                    </div>
                 </Form.Item>
             </Form>
         </Card>

@@ -85,6 +85,7 @@ export interface IPost {
     isLikedByMe: boolean;
     isSavedByMe: boolean;
     visibility: "public" | "private" | "followersOnly";
+    status?: "draft" | "published";
     viewCount: number;
     sharedFrom: string | null;
     isEdited: boolean;
@@ -283,6 +284,10 @@ export interface PostInput {
 export type PostUpdateInput = Omit<PostInput, "image"> & {
     image?: string;
 };
+
+export type DraftPostInput = Partial<PostInput>;
+
+export type DraftPostsResponse = PaginatedResponse<IPost>;
 
 export type ProfileUpdateInput = Partial<
     Pick<IUser, "name" | "bio" | "interests" | "profilePic" | "isPrivate">

@@ -10,6 +10,7 @@ import {
     checkAdminAccess,
     createAdminUser,
     createShare,
+    createDraftPost,
     deleteAdminComment,
     deleteAdminPost,
     deleteAdminReply,
@@ -38,6 +39,7 @@ import {
     getTagSuggestions,
     getTrendingTags,
     getUnreadNotificationCount,
+    getDraftPosts,
     getReceivedShares,
     getReviewPosts,
     getSentShares,
@@ -64,6 +66,8 @@ import {
     unblockUser,
     rejectFollowRequest,
     submitReport,
+    updateDraftPost,
+    publishDraftPost,
     updateAdminReportStatus,
     applyAdminReportAction,
     updateAdminUser,
@@ -156,6 +160,28 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[4][0]).toContain('/posts/post-2/hide');
         expect(fetchMock.mock.calls[4][1].method).toBe('DELETE');
         expect(fetchMock.mock.calls[5][0]).toContain('/posts/hidden?page=2&limit=20');
+    });
+
+
+    it('creates, updates, lists, and publishes drafts', async () => {
+        await createDraftPost({ title: 'Draft', content: '', category: '', image: '', tags: ['travel'], visibility: 'public' });
+        await getDraftPosts(2, 10);
+        await updateDraftPost('draft-1', { title: 'Updated', content: 'Body', category: 'Travel', visibility: 'followersOnly' });
+        await publishDraftPost('draft-1');
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/posts/drafts');
+        expect(fetchMock.mock.calls[0][1]).toMatchObject({
+            method: 'POST',
+            body: JSON.stringify({ title: 'Draft', content: '', category: '', image: '', tags: ['travel'], visibility: 'public' }),
+        });
+        expect(fetchMock.mock.calls[1][0]).toContain('/posts/drafts?page=2&limit=10');
+        expect(fetchMock.mock.calls[2][0]).toContain('/posts/drafts/draft-1');
+        expect(fetchMock.mock.calls[2][1]).toMatchObject({
+            method: 'PUT',
+            body: JSON.stringify({ title: 'Updated', content: 'Body', category: 'Travel', visibility: 'followersOnly' }),
+        });
+        expect(fetchMock.mock.calls[3][0]).toContain('/posts/drafts/draft-1/publish');
+        expect(fetchMock.mock.calls[3][1].method).toBe('POST');
     });
 
     it('requests private profile, follow request, archived, and review post controls', async () => {

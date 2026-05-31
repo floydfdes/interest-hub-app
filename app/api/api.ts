@@ -15,6 +15,8 @@ import {
     ArchivedPostsResponse,
     AuthResponse,
     BasicUserSummary,
+    DraftPostInput,
+    DraftPostsResponse,
     IComment,
     IReply,
     IPost,
@@ -272,6 +274,14 @@ export const getArchivedPosts = (page = 1, limit = 20) =>
     request<ArchivedPostsResponse>("GET", "/posts/archived", { queryParams: { page, limit } });
 export const getReviewPosts = (page = 1, limit = 20) =>
     request<PaginatedResponse<IPost>>("GET", "/posts/review", { queryParams: { page, limit } });
+export const createDraftPost = (data: DraftPostInput) =>
+    request<IPost>("POST", "/posts/drafts", { body: { ...data } });
+export const getDraftPosts = (page = 1, limit = 20) =>
+    request<DraftPostsResponse>("GET", "/posts/drafts", { queryParams: { page, limit } });
+export const updateDraftPost = (id: string, data: DraftPostInput) =>
+    request<IPost>("PUT", `/posts/drafts/${id}`, { body: { ...data } });
+export const publishDraftPost = (id: string) =>
+    request<IPost>("POST", `/posts/drafts/${id}/publish`);
 
 // Tags
 export const getTagSuggestions = (query: string, limit = 10) =>
