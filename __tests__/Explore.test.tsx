@@ -1,5 +1,5 @@
 import Explore from '@/app/explore/page';
-import { getRecommendedPosts, getTrendingPosts, muteUser } from '@/app/api/api';
+import { getRecommendedPosts, getTagPosts, getTrendingPosts, muteUser } from '@/app/api/api';
 import { IUser } from '@/app/types/user';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
@@ -17,7 +17,12 @@ jest.mock('@/app/api/api', () => ({
     hidePost: jest.fn(),
     muteUser: jest.fn(() => Promise.resolve({ message: 'User muted' })),
     getRecommendedPosts: jest.fn(() => Promise.resolve([])),
+    getTagPosts: jest.fn(() => Promise.resolve({
+        items: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false },
+    })),
     getTrendingPosts: jest.fn(() => Promise.resolve([])),
+    getTrendingTags: jest.fn(() => Promise.resolve([{ tag: 'travel', postsCount: 12, lastUsedAt: '2026-05-31T00:00:00.000Z' }])),
     searchPosts: jest.fn(() => Promise.resolve([])),
 }));
 
@@ -29,6 +34,7 @@ jest.mock('@/app/hooks/useCurrentUser', () => ({
 
 const mockedGetTrendingPosts = jest.mocked(getTrendingPosts);
 const mockedGetRecommendedPosts = jest.mocked(getRecommendedPosts);
+const mockedGetTagPosts = jest.mocked(getTagPosts);
 const mockedMuteUser = jest.mocked(muteUser);
 
 describe('Explore discovery feeds', () => {
@@ -44,6 +50,17 @@ describe('Explore discovery feeds', () => {
         await waitFor(() => expect(mockedGetTrendingPosts).toHaveBeenCalledWith('week'));
         fireEvent.change(screen.getByRole('combobox', { name: 'Trending period' }), { target: { value: 'day' } });
         await waitFor(() => expect(mockedGetTrendingPosts).toHaveBeenCalledWith('day'));
+    });
+
+
+    it('loads posts for a clicked trending tag', async () => {
+        render(<Explore />);
+
+        const tagButton = await screen.findByRole('button', { name: /#travel/ });
+        fireEvent.click(tagButton);
+
+        await waitFor(() => expect(mockedGetTagPosts).toHaveBeenCalledWith('travel', 1));
+        expect(await screen.findAllByText('#travel')).not.toHaveLength(0);
     });
 
     it('shows a login state for personalized feeds when signed out', async () => {

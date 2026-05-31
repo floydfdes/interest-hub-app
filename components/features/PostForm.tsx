@@ -14,6 +14,7 @@ import { useState } from 'react';
 const { Title } = Typography;
 const { TextArea } = Input;
 const DEFAULT_POST_IMAGE = '/default_image.png';
+const categories = ['Tech', 'Health', 'Travel', 'Design', 'Education'];
 
 interface PostFormValues {
     title: string;
@@ -92,9 +93,14 @@ const PostForm = () => {
                 <Form.Item
                     label="Category"
                     name="category"
-                    rules={[{ required: true, message: 'Please add a category.' }]}
+                    rules={[{ required: true, message: 'Please select a category.' }]}
                 >
-                    <Input data-testid="post-category" className="soft-input" placeholder="For example: Photography" />
+                    <Select
+                        data-testid="post-category"
+                        className="!h-12"
+                        placeholder="Select Category"
+                        options={categories.map((category) => ({ value: category, label: category }))}
+                    />
                 </Form.Item>
                 <Form.Item label="Visibility" name="visibility">
                     <Select

@@ -8,8 +8,9 @@ import { useRouter } from "next/navigation";
 import { createPost, getErrorMessage } from "../api/api";
 import { compressAndConvertToBase64 } from "../api/imageUtil";
 import { PostInput } from "../types/user";
+import TagSuggestionChips from "@/components/features/TagSuggestionChips";
 import { getModerationNoticeMessage } from "../utils/moderation";
-import { parseTagInput } from "../utils/postTags";
+import { applyTagSuggestion, parseAndValidateTags } from "../utils/postTags";
 
 const categories = ["Tech", "Health", "Travel", "Design", "Education"];
 const visibilities = [
@@ -69,7 +70,12 @@ export default function CreatePostPage() {
             if (!token) throw new Error("You must be logged in");
 
             const { tags: tagText, ...postFields } = form;
-            const tags = parseTagInput(tagText);
+            const { tags, error: tagError } = parseAndValidateTags(tagText);
+            if (tagError) {
+                setError(tagError);
+                return;
+            }
+
             const payload = {
                 ...postFields,
                 ...(tags.length > 0 ? { tags } : {}),
@@ -137,6 +143,11 @@ export default function CreatePostPage() {
                     value={form.tags}
                     onChange={(e) => handleChange("tags", e.target.value)}
                 />
+                <TagSuggestionChips
+                    value={form.tags}
+                    onSelect={(tag) => handleChange("tags", applyTagSuggestion(form.tags, tag))}
+                />
+                <p className="-mt-3 mb-5 text-xs text-slate-400">Optional. Use commas between tags. Letters, numbers, underscores, and hyphens only.</p>
 
                 {/* Upload / URL */}
                 <div className="mb-6">

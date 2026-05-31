@@ -5,7 +5,8 @@ import { compressAndConvertToBase64, resizeImageToBase64 } from "@/app/api/image
 import { useCurrentUser } from "@/app/hooks/useCurrentUser";
 import { IComment, IPost, PostInput } from "@/app/types/user";
 import { filterVisibleComments, getModerationNoticeMessage } from "@/app/utils/moderation";
-import { parseTagInput } from "@/app/utils/postTags";
+import { applyTagSuggestion, parseAndValidateTags } from "@/app/utils/postTags";
+import TagSuggestionChips from "@/components/features/TagSuggestionChips";
 import { Edit, ThumbsUp, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -118,7 +119,18 @@ export default function EditPostPage() {
             const token = localStorage.getItem("token");
             if (!token) throw new Error("Unauthorized");
 
-            const tags = parseTagInput(form.tags);
+            const { tags, error: tagError } = parseAndValidateTags(form.tags);
+            if (tagError) {
+                setError(tagError);
+                message.open({
+                    type: "error",
+                    content: tagError,
+                    duration: 4,
+                    style: { marginTop: "calc(100vh - 160px)" },
+                });
+                return;
+            }
+
             const payload = {
                 title: form.title,
                 content: form.content,
@@ -294,6 +306,11 @@ export default function EditPostPage() {
                     value={form.tags}
                     onChange={(e) => handleChange("tags", e.target.value)}
                 />
+                <TagSuggestionChips
+                    value={form.tags}
+                    onSelect={(tag) => handleChange("tags", applyTagSuggestion(form.tags, tag))}
+                />
+                <p className="-mt-2 mb-4 text-xs text-slate-400">Optional. Use commas between tags. Letters, numbers, underscores, and hyphens only.</p>
 
                 <div className="mb-4">
                     <p className="mb-2 text-sm font-medium text-slate-700">Update image</p>

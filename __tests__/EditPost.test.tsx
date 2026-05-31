@@ -1,5 +1,5 @@
 import EditPostPage from '@/app/explore/post/[id]/edit/page';
-import { getPostById, updatePost } from '@/app/api/api';
+import { getPostById, getPostComments, updatePost } from '@/app/api/api';
 import { IPost } from '@/app/types/user';
 import { App } from 'antd';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -28,6 +28,8 @@ jest.mock('@/app/api/api', () => ({
     editReply: jest.fn(),
     getErrorMessage: (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback,
     getPostById: jest.fn(),
+    getPostComments: jest.fn(),
+    getTagSuggestions: jest.fn(() => Promise.resolve([])),
     likeComment: jest.fn(),
     likeReply: jest.fn(),
     replyToComment: jest.fn(),
@@ -36,6 +38,7 @@ jest.mock('@/app/api/api', () => ({
 }));
 
 const mockedGetPostById = jest.mocked(getPostById);
+const mockedGetPostComments = jest.mocked(getPostComments);
 const mockedUpdatePost = jest.mocked(updatePost);
 
 const post = {
@@ -58,6 +61,10 @@ describe('EditPostPage', () => {
         jest.clearAllMocks();
         localStorage.setItem('token', 'test-token');
         mockedGetPostById.mockResolvedValue(post);
+        mockedGetPostComments.mockResolvedValue({
+            items: [],
+            pagination: { page: 1, limit: 20, total: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false },
+        });
         mockedUpdatePost.mockResolvedValue(post);
     });
 
@@ -69,6 +76,18 @@ describe('EditPostPage', () => {
 
         await waitFor(() => expect(mockedUpdatePost).toHaveBeenCalledWith('post-1', expect.not.objectContaining({ tags: expect.anything() })));
         expect(push).toHaveBeenCalledWith('/explore');
+    });
+
+
+    it('validates tag format before updating', async () => {
+        render(<App><EditPostPage /></App>);
+
+        expect(await screen.findByDisplayValue('Original title')).toBeInTheDocument();
+        fireEvent.change(screen.getByTestId('edit-post-tags'), { target: { value: 'travel photography' } });
+        fireEvent.click(screen.getByTestId('edit-post-submit'));
+
+        expect(await screen.findAllByText('Tags can only use letters, numbers, underscores, and hyphens.')).not.toHaveLength(0);
+        expect(mockedUpdatePost).not.toHaveBeenCalled();
     });
 
     it('shows backend update errors to the user', async () => {

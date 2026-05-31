@@ -31,6 +31,9 @@ import {
     PublicUserProfile,
     RegisterInput,
     ReportAction,
+    TagPostsResponse,
+    TagSummary,
+    TrendingTag,
     ReportInput,
     ReportStatus,
     ReportTargetType,
@@ -266,6 +269,14 @@ export const getArchivedPosts = (page = 1, limit = 20) =>
     request<ArchivedPostsResponse>("GET", "/posts/archived", { queryParams: { page, limit } });
 export const getReviewPosts = (page = 1, limit = 20) =>
     request<PaginatedResponse<IPost>>("GET", "/posts/review", { queryParams: { page, limit } });
+
+// Tags
+export const getTagSuggestions = (query: string, limit = 10) =>
+    request<TagSummary[]>("GET", "/tags/suggestions", { queryParams: { query, limit } });
+export const getTrendingTags = (limit = 20) =>
+    request<TrendingTag[]>("GET", "/tags/trending", { queryParams: { limit } });
+export const getTagPosts = (tag: string, page = 1, limit = 20) =>
+    request<TagPostsResponse>("GET", `/tags/${encodeURIComponent(tag)}/posts`, { queryParams: { page, limit } });
 
 // Users
 export const getMe = () => request<UserResponse>("GET", "/users/me");

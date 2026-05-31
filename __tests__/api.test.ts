@@ -33,6 +33,9 @@ import {
     getPostComments,
     getPostLikes,
     getRecommendedPosts,
+    getTagPosts,
+    getTagSuggestions,
+    getTrendingTags,
     getUnreadNotificationCount,
     getReviewPosts,
     getSuggestedUsers,
@@ -87,12 +90,18 @@ describe('discovery and bookmark API client', () => {
         await getTrendingPosts('month', 8);
         await getRecommendedPosts(12);
         await getSuggestedUsers();
+        await getTagSuggestions('tra', 10);
+        await getTrendingTags(20);
+        await getTagPosts('travel', 2, 12);
 
         expect(fetchMock.mock.calls[0][0]).toContain('/posts?page=1&limit=20');
         expect(fetchMock.mock.calls[1][0]).toContain('/posts/following?page=1&limit=20');
         expect(fetchMock.mock.calls[2][0]).toContain('/posts/trending?period=month&limit=8');
         expect(fetchMock.mock.calls[3][0]).toContain('/posts/recommended?limit=12');
         expect(fetchMock.mock.calls[4][0]).toContain('/users/suggested?limit=10');
+        expect(fetchMock.mock.calls[5][0]).toContain('/tags/suggestions?query=tra&limit=10');
+        expect(fetchMock.mock.calls[6][0]).toContain('/tags/trending?limit=20');
+        expect(fetchMock.mock.calls[7][0]).toContain('/tags/travel/posts?page=2&limit=12');
         expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
     });
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { Archive, Edit, EyeOff, Flag, Flame, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
+import { Archive, Edit, EyeOff, Flag, Flame, Hash, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { advancedSearchPosts, archivePost, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTrendingPosts, hidePost, muteUser, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
-import { IPost, Pagination } from "../types/user";
+import { advancedSearchPosts, archivePost, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTagPosts, getTrendingPosts, getTrendingTags, hidePost, muteUser, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
+import { IPost, Pagination, TrendingTag } from "../types/user";
 import { filterVisiblePosts } from "../utils/moderation";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
@@ -21,6 +21,8 @@ type DiscoveryFeed = "recommended" | "following" | "trending";
 export default function Explore() {
   const [posts, setPosts] = useState<IPost[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [trendingTags, setTrendingTags] = useState<TrendingTag[]>([]);
+  const [selectedTag, setSelectedTag] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchMode, setSearchMode] = useState<SearchMode>("quick");
   const [feed, setFeed] = useState<DiscoveryFeed>("trending");
@@ -36,16 +38,23 @@ export default function Explore() {
   const currentUser = useCurrentUser();
   const actionMenuRef = useRef<HTMLDivElement>(null);
 
+  const withBookmarkState = (nextPosts: IPost[]) => filterVisiblePosts(nextPosts).map((post) => ({
+    ...post,
+    isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked),
+  }));
+
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const hasToken = Boolean(localStorage.getItem("token"));
-        const [nextPosts, bookmarks] = await Promise.all([
+        const [nextPosts, bookmarks, nextTags] = await Promise.all([
           getTrendingPosts("week"),
           hasToken ? getBookmarkedPosts().catch(() => []) : Promise.resolve([]),
+          getTrendingTags().catch(() => []),
         ]);
         const nextBookmarkedIds = new Set(bookmarks.map((post) => post._id));
         setBookmarkedIds(nextBookmarkedIds);
+        setTrendingTags(nextTags);
         setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: nextBookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked) })));
       } catch (err: unknown) {
         setSearchError(getErrorMessage(err, "Failed to fetch posts."));
@@ -73,6 +82,7 @@ export default function Explore() {
   const loadDiscoveryFeed = async (nextFeed: DiscoveryFeed, period: TrendingPeriod) => {
     setFeed(nextFeed);
     setTrendingPeriod(period);
+    setSelectedTag("");
     setResultLabel("");
     setSearching(true);
     setSearchError("");
@@ -92,13 +102,33 @@ export default function Explore() {
           ? await getRecommendedPosts()
           : await getTrendingPosts(period);
       setPagination(followingResponse?.pagination || null);
-      setPosts(filterVisiblePosts(nextPosts).map((post) => ({
-        ...post,
-        isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked),
-      })));
+      setPosts(withBookmarkState(nextPosts));
     } catch (err: unknown) {
       setPosts([]);
       setSearchError(getErrorMessage(err, "Failed to fetch posts."));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const loadTagPosts = async (tag: string, page = 1, append = false) => {
+    const normalizedTag = tag.trim().toLowerCase();
+    if (!normalizedTag) return;
+
+    setSelectedTag(normalizedTag);
+    setFeed("trending");
+    setResultLabel(`#${normalizedTag}`);
+    setSearching(true);
+    setSearchError("");
+
+    try {
+      const response = await getTagPosts(normalizedTag, page);
+      const nextPosts = withBookmarkState(response.items);
+      setPosts((currentPosts) => append ? [...currentPosts, ...nextPosts] : nextPosts);
+      setPagination(response.pagination);
+    } catch (err: unknown) {
+      setPosts([]);
+      setSearchError(getErrorMessage(err, "Failed to fetch tag posts."));
     } finally {
       setSearching(false);
     }
@@ -113,10 +143,7 @@ export default function Explore() {
       const response = await getFollowingPosts(pagination.page + 1, pagination.limit);
       setPosts((currentPosts) => [
         ...currentPosts,
-        ...filterVisiblePosts(response.items).map((post) => ({
-          ...post,
-          isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked),
-        })),
+        ...withBookmarkState(response.items),
       ]);
       setPagination(response.pagination);
     } catch (err: unknown) {
@@ -124,6 +151,11 @@ export default function Explore() {
     } finally {
       setSearching(false);
     }
+  };
+
+  const loadMoreTagPosts = async () => {
+    if (!selectedTag || !pagination?.hasNextPage) return;
+    await loadTagPosts(selectedTag, pagination.page + 1, true);
   };
 
   const setBookmarkState = (postId: string, bookmarked: boolean) => {
@@ -146,11 +178,13 @@ export default function Explore() {
       return;
     }
 
+    setSelectedTag("");
+    setPagination(null);
     setSearching(true);
     setSearchError("");
     try {
       const nextPosts = await searchPosts(query);
-      setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked) })));
+      setPosts(withBookmarkState(nextPosts));
       setResultLabel(`Results for "${query}"`);
     } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to search posts."));
@@ -161,11 +195,13 @@ export default function Explore() {
 
   const handleAdvancedSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSelectedTag("");
+    setPagination(null);
     setSearching(true);
     setSearchError("");
     try {
       const nextPosts = await advancedSearchPosts(filters);
-      setPosts(filterVisiblePosts(nextPosts).map((post) => ({ ...post, isBookmarked: bookmarkedIds.has(post._id) || Boolean(post.isSavedByMe ?? post.isBookmarked) })));
+      setPosts(withBookmarkState(nextPosts));
       setResultLabel("Advanced search results");
     } catch (err: unknown) {
       setSearchError(getErrorMessage(err, "Failed to search posts."));
@@ -304,6 +340,33 @@ export default function Explore() {
           )}
         </div>
       </section>
+
+      {trendingTags.length > 0 && (
+        <section className="surface mb-7 p-4 sm:p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <Hash size={16} className="text-[#F26C4F]" />
+            Trending tags
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {trendingTags.map((tag) => (
+              <button
+                key={tag.tag}
+                type="button"
+                onClick={() => void loadTagPosts(tag.tag)}
+                aria-pressed={selectedTag === tag.tag}
+                className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                  selectedTag === tag.tag
+                    ? "border-[#9CC4E4] bg-[#E9F2F9] text-[#1B325F]"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-[#9CC4E4] hover:text-[#1B325F]"
+                }`}
+              >
+                #{tag.tag}
+                <span className="ml-1 text-xs font-medium text-slate-400">{tag.postsCount}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="surface mb-7 p-4 sm:p-5">
         <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -552,6 +615,11 @@ export default function Explore() {
       </div>
       {feed === "following" && !resultLabel && pagination?.hasNextPage && (
         <button type="button" onClick={() => void loadMoreFollowingPosts()} disabled={searching} className="secondary-button mx-auto mt-7 flex">
+          {searching ? "Loading..." : "Load more"}
+        </button>
+      )}
+      {selectedTag && pagination?.hasNextPage && (
+        <button type="button" onClick={() => void loadMoreTagPosts()} disabled={searching} className="secondary-button mx-auto mt-7 flex">
           {searching ? "Loading..." : "Load more"}
         </button>
       )}

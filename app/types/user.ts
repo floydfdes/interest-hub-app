@@ -121,6 +121,17 @@ export interface PaginatedResponse<T> {
     pagination: Pagination;
 }
 
+export interface TagSummary {
+    tag: string;
+    postsCount: number;
+}
+
+export interface TrendingTag extends TagSummary {
+    lastUsedAt: string;
+}
+
+export type TagPostsResponse = PaginatedResponse<IPost>;
+
 export interface ModerationNotice {
     needsReview: true;
     reasons: string[];
