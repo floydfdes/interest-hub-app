@@ -13,6 +13,7 @@ import { useCurrentUser } from "../hooks/useCurrentUser";
 import BookmarkButton from "@/components/features/BookmarkButton";
 import SuggestedUsers from "@/components/features/SuggestedUsers";
 import ReportModal from "@/components/features/ReportModal";
+import RichText from "@/components/features/RichText";
 import ShareModal from "@/components/features/ShareModal";
 
 type ViewMode = "cards" | "list";
@@ -527,7 +528,7 @@ export default function Explore() {
               <div className={viewMode === "cards" ? "p-5" : "min-w-0 flex-1 py-1"}>
                 <span className="tag-pill">{post.category}</span>
                 <h2 className={`${viewMode === "cards" ? "mt-4" : "mt-3"} text-xl font-semibold tracking-tight text-slate-900`}>{post.title}</h2>
-                <p className={`mt-2 text-sm leading-6 text-slate-500 ${viewMode === "cards" ? "line-clamp-2" : "line-clamp-3"}`}>{post.content}</p>
+                <p className={`mt-2 text-sm leading-6 text-slate-500 ${viewMode === "cards" ? "line-clamp-2" : "line-clamp-3"}`}><RichText text={post.content} /></p>
                 <div className={`${viewMode === "cards" ? "mt-5" : "mt-4"} flex items-center gap-2 text-sm text-slate-500`}>
                   <Image
                     src={post.author?.profilePic || "/DefaultAvatar.png"}

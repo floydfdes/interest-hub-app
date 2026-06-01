@@ -63,6 +63,16 @@ const Register = () => {
                         <Input data-testid="register-name" className="soft-input" prefix={<UserOutlined className="text-slate-400" />} placeholder="Your name" />
                     </Form.Item>
                     <Form.Item
+                        name="username"
+                        rules={[
+                            { min: 3, message: 'Username must be at least 3 characters.' },
+                            { max: 30, message: 'Username must be 30 characters or fewer.' },
+                            { pattern: /^[A-Za-z0-9_]+$/, message: 'Username can only use letters, numbers, and underscores.' },
+                        ]}
+                    >
+                        <Input data-testid="register-username" className="soft-input" prefix={<UserOutlined className="text-slate-400" />} placeholder="Username (optional)" />
+                    </Form.Item>
+                    <Form.Item
                         name="email"
                         rules={[
                             { required: true, message: 'Please input your Email!' },

@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import BookmarkButton from "@/components/features/BookmarkButton";
+import RichText from "@/components/features/RichText";
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -46,7 +47,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
                 <span className="tag-pill mt-6">{post.category}</span>
                 <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900">{post.title}</h1>
-                <p className="mt-3 text-base leading-7 text-slate-600">{post.content}</p>
+                <p className="mt-3 text-base leading-7 text-slate-600"><RichText text={post.content} /></p>
 
                 <div className="mt-5 flex items-center gap-4 text-sm font-medium text-slate-500">
                     <span><span className="font-medium">Likes:</span> {post.likesCount ?? post.likes?.length ?? 0}</span>
@@ -68,7 +69,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                                 />
                                 <div>
                                     <h4 className="text-sm font-semibold">{comment.user.name}</h4>
-                                    <p className="text-sm text-slate-600">{comment.content}</p>
+                                    <p className="text-sm text-slate-600"><RichText text={comment.content} /></p>
                                 </div>
                             </div>
 
@@ -91,7 +92,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                                                 />
                                                 <div>
                                                     <h4 className="text-sm font-semibold">{reply.user.name}</h4>
-                                                    <p className="text-sm text-slate-600">{reply.content}</p>
+                                                    <p className="text-sm text-slate-600"><RichText text={reply.content} /></p>
                                                 </div>
                                             </div>
                                             <div className="mt-1 text-xs text-gray-500">

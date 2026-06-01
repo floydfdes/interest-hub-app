@@ -8,6 +8,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import { App, Button, Card, Form, Input, Select, Typography, Upload } from 'antd';
 import type { UploadChangeParam, UploadFile } from 'antd/es/upload/interface';
 import { ImagePlus, Sparkles } from 'lucide-react';
+import MentionSuggestions from './MentionSuggestions';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -113,12 +114,22 @@ const PostForm = () => {
                 >
                     <Input data-testid="post-title" className="soft-input" placeholder="What is this interest about?" />
                 </Form.Item>
-                <Form.Item
-                    label="Content"
-                    name="content"
-                    rules={[{ required: true, message: 'Please write something!' }]}
-                >
-                    <TextArea data-testid="post-content" className="soft-input !min-h-36 !p-4" rows={5} placeholder="What's on your mind?" showCount maxLength={500} />
+                <Form.Item label="Content" required>
+                    <Form.Item
+                        name="content"
+                        rules={[{ required: true, message: 'Please write something!' }]}
+                        noStyle
+                    >
+                        <TextArea data-testid="post-content" className="soft-input !min-h-36 !p-4" rows={5} placeholder="What's on your mind? Use @username or #tag" showCount maxLength={500} />
+                    </Form.Item>
+                    <Form.Item noStyle shouldUpdate={(previous, current) => previous.content !== current.content}>
+                        {({ getFieldValue, setFieldValue }) => (
+                            <MentionSuggestions
+                                value={getFieldValue('content') || ''}
+                                onChange={(nextValue) => setFieldValue('content', nextValue)}
+                            />
+                        )}
+                    </Form.Item>
                 </Form.Item>
                 <Form.Item
                     label="Category"

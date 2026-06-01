@@ -6,12 +6,15 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { IUser } from "@/app/types/user";
 import { Flag, MoreHorizontal, Search, UsersRound } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import Avatar from "react-avatar";
 import Swal from "sweetalert2";
 import ReportModal from "@/components/features/ReportModal";
 
 export default function UserSearchPage() {
-    const [query, setQuery] = useState("");
+    const searchParams = useSearchParams();
+    const initialQuery = searchParams?.get("query") || "";
+    const [query, setQuery] = useState(initialQuery);
     const [results, setResults] = useState<IUser[]>([]);
     const [followingIds, setFollowingIds] = useState<string[]>([]);
     const [requestedIds, setRequestedIds] = useState<string[]>([]);
@@ -40,7 +43,7 @@ export default function UserSearchPage() {
             }
 
             try {
-                const initialUsers = await searchUsers("") as IUser[];
+                const initialUsers = await searchUsers(initialQuery) as IUser[];
                 setResults(initialUsers);
                 setRequestedIds(initialUsers.filter((user) => user.hasRequestedFollow).map((user) => user._id));
             } catch {
@@ -48,7 +51,7 @@ export default function UserSearchPage() {
             }
         };
         void fetchInitial();
-    }, []);
+    }, [initialQuery]);
 
     useEffect(() => {
         if (!actionMenuUserId) return;

@@ -6,7 +6,9 @@ import { useCurrentUser } from "@/app/hooks/useCurrentUser";
 import { IComment, IPost, PostInput } from "@/app/types/user";
 import { filterVisibleComments, getModerationNoticeMessage } from "@/app/utils/moderation";
 import { applyTagSuggestion, parseAndValidateTags } from "@/app/utils/postTags";
+import MentionSuggestions from "@/components/features/MentionSuggestions";
 import TagSuggestionChips from "@/components/features/TagSuggestionChips";
+import RichText from "@/components/features/RichText";
 import { Edit, ThumbsUp, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -280,11 +282,12 @@ export default function EditPostPage() {
 
                 <textarea
                     data-testid="edit-post-content"
-                    placeholder="Content"
-                    className="soft-input mb-4 min-h-[120px] w-full p-4 outline-none"
+                    placeholder="Content with @username or #tag"
+                    className="soft-input mb-3 min-h-[120px] w-full p-4 outline-none"
                     value={form.content}
                     onChange={(e) => handleChange("content", e.target.value)}
                 />
+                <MentionSuggestions value={form.content} onChange={(value) => handleChange("content", value)} />
 
                 <select
                     data-testid="edit-post-category"
@@ -439,7 +442,7 @@ export default function EditPostPage() {
                                             }
                                         />
                                     ) : (
-                                        <p className="text-gray-800">{comment.content}</p>
+                                        <p className="text-gray-800"><RichText text={comment.content} /></p>
                                     )}
 
                                     <div className="flex gap-4 mt-2 items-center">
@@ -536,7 +539,7 @@ export default function EditPostPage() {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <p className="text-gray-800">{reply.content}</p>
+                                                    <p className="text-gray-800"><RichText text={reply.content} /></p>
                                                     <div className="flex gap-4 mt-2 items-center">
                                                         <button
                                                             onClick={() => handleLikeReply(comment._id, index)}

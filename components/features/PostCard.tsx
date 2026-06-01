@@ -18,6 +18,7 @@ import { IPost, IUser } from '@/app/types/user';
 import BookmarkButton from './BookmarkButton';
 import ReportModal from './ReportModal';
 import ShareModal from './ShareModal';
+import RichText from './RichText';
 
 interface PostCardProps {
     post: IPost;
@@ -111,7 +112,7 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
 
             <Link href={`/posts/${post._id}`} className="block">
                 {post.title && <h3 className="mt-5 text-xl font-semibold tracking-tight text-slate-900">{post.title}</h3>}
-                <p className="mt-2 whitespace-pre-line text-[0.96rem] leading-7 text-slate-600">{post.content}</p>
+                <p className="mt-2 whitespace-pre-line text-[0.96rem] leading-7 text-slate-600"><RichText text={post.content} /></p>
                 <div className="mt-5 overflow-hidden rounded-2xl bg-slate-100">
                     <Image
                         src={postImage}

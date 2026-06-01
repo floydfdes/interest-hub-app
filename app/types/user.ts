@@ -1,6 +1,7 @@
 export interface IUser {
     _id: string;
     name: string;
+    username?: string;
     email: string;
     role: "user" | "admin";
     profilePic: string;
@@ -36,6 +37,7 @@ export interface IUser {
 export interface IUserPreview {
     _id: string;
     name: string;
+    username?: string;
     profilePic: string;
 }
 
@@ -233,6 +235,7 @@ export interface UserReport {
 export type NotificationType =
     | "post_liked"
     | "user_followed"
+    | "user_mentioned"
     | "post_shared"
     | "profile_shared"
     | "comment_created"
@@ -270,6 +273,7 @@ export interface LoginInput {
 
 export interface RegisterInput extends LoginInput {
     name: string;
+    username?: string;
 }
 
 export interface PostInput {
@@ -386,6 +390,7 @@ export type SharesResponse = PaginatedResponse<UserShare>;
 
 export interface AdminUserInput {
     name: string;
+    username?: string;
     email: string;
     password?: string;
     role: IUser["role"];

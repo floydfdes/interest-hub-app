@@ -18,6 +18,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { Flag, MoreHorizontal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ReportModal from './ReportModal';
+import MentionSuggestions from './MentionSuggestions';
+import RichText from './RichText';
 import { filterVisibleComments, getModerationNoticeMessage } from '@/app/utils/moderation';
 
 const { Text } = Typography;
@@ -172,7 +174,7 @@ const CommentItem = ({
                             </Button>
                         </div>
                     ) : (
-                        <Text className="!text-slate-600">{comment.content}</Text>
+                        <Text className="!text-slate-600"><RichText text={comment.content} /></Text>
                     )}
                     <div className="flex gap-4 mt-2">
                         <Button
@@ -214,13 +216,16 @@ const CommentItem = ({
 
             {showReply && (
                 <div className="ml-10 mt-2 flex gap-2">
-                    <Input
-                        data-testid="reply-input"
-                        value={replyContent}
-                        onChange={(event) => setReplyContent(event.target.value)}
-                        placeholder="Write a reply..."
-                        onPressEnter={() => void handleSubmitReply()}
-                    />
+                    <div className="flex-1">
+                        <Input
+                            data-testid="reply-input"
+                            value={replyContent}
+                            onChange={(event) => setReplyContent(event.target.value)}
+                            placeholder="Write a reply... use @username"
+                            onPressEnter={() => void handleSubmitReply()}
+                        />
+                        <MentionSuggestions value={replyContent} onChange={setReplyContent} />
+                    </div>
                     <Button data-testid="reply-submit" type="primary" onClick={() => void handleSubmitReply()}>Reply</Button>
                 </div>
             )}
@@ -348,9 +353,10 @@ const CommentList = ({ comments, postId, onCommentAdded }: CommentListProps) => 
                             rows={2}
                             value={newComment}
                             onChange={(event) => setNewComment(event.target.value)}
-                            placeholder="Write a comment..."
+                            placeholder="Write a comment... use @username"
                             className="soft-input mb-3"
                         />
+                        <MentionSuggestions value={newComment} onChange={setNewComment} />
                         <Button data-testid="comment-submit" type="primary" onClick={() => void handleAddComment()} loading={submitting}>
                             Comment
                         </Button>

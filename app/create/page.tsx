@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { createPost, getErrorMessage } from "../api/api";
 import { compressAndConvertToBase64 } from "../api/imageUtil";
 import { PostInput } from "../types/user";
+import MentionSuggestions from "@/components/features/MentionSuggestions";
 import TagSuggestionChips from "@/components/features/TagSuggestionChips";
 import { getModerationNoticeMessage } from "../utils/moderation";
 import { applyTagSuggestion, parseAndValidateTags } from "../utils/postTags";
@@ -115,11 +116,12 @@ export default function CreatePostPage() {
                 {/* Content */}
                 <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
                 <textarea
-                    placeholder="Write something interesting..."
-                    className="soft-input mb-5 min-h-[120px] w-full resize-none p-4 outline-none"
+                    placeholder="Write something interesting... use @username or #tag"
+                    className="soft-input mb-3 min-h-[120px] w-full resize-none p-4 outline-none"
                     value={form.content}
                     onChange={(e) => handleChange("content", e.target.value)}
                 />
+                <MentionSuggestions value={form.content} onChange={(value) => handleChange("content", value)} />
 
                 {/* Category */}
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>

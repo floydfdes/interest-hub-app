@@ -15,6 +15,7 @@ function getNotificationMessage(notification: UserNotification) {
 
     if (notification.type === 'post_liked') return `${actorName} liked your post.`;
     if (notification.type === 'user_followed') return `${actorName} followed you.`;
+    if (notification.type === 'user_mentioned') return `${actorName} mentioned you.`;
     if (notification.type === 'post_shared') return `${actorName} shared a post with you.`;
     if (notification.type === 'profile_shared') return `${actorName} shared a profile with you.`;
     if (notification.type === 'comment_created') return `${actorName} commented on your post.`;
