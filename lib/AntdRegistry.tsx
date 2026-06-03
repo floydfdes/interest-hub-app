@@ -28,7 +28,7 @@ const StyledComponentsRegistry = ({ children }: React.PropsWithChildren) => {
                         borderRadius: 12,
                         borderRadiusLG: 18,
                         controlHeightLG: 48,
-                        fontFamily: 'Inter, "Avenir Next", Arial, sans-serif',
+                        fontFamily: 'var(--font-inter), "Avenir Next", Arial, sans-serif',
                     },
                 }}
             >

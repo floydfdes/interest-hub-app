@@ -1,5 +1,6 @@
 import {
     acceptFollowRequest,
+    addPostToSavedCollection,
     archivePost,
     bulkDeleteAdminComments,
     bulkDeleteAdminPosts,
@@ -9,6 +10,7 @@ import {
     blockUser,
     checkAdminAccess,
     createAdminUser,
+    createSavedCollection,
     createShare,
     createDraftPost,
     deleteAdminComment,
@@ -31,10 +33,14 @@ import {
     clearAllNotifications,
     clearReadNotifications,
     deleteNotification,
+    deleteSavedCollection,
     getNotifications,
     getPostComments,
     getPostLikes,
+    getRecentlyViewedPosts,
     getRecommendedPosts,
+    getSavedCollectionPosts,
+    getSavedCollections,
     getTagPosts,
     getTagSuggestions,
     getTrendingTags,
@@ -60,6 +66,7 @@ import {
     markNotificationRead,
     muteUser,
     removeBookmark,
+    removePostFromSavedCollection,
     unhidePost,
     unarchivePost,
     unmuteUser,
@@ -67,6 +74,7 @@ import {
     rejectFollowRequest,
     submitReport,
     updateDraftPost,
+    updateSavedCollection,
     publishDraftPost,
     updateAdminReportStatus,
     applyAdminReportAction,
@@ -270,6 +278,32 @@ describe('discovery and bookmark API client', () => {
             body: JSON.stringify({ targetType: 'post', targetId: 'post-7', reason: 'spam', details: 'Repeated ads' }),
         });
         expect(fetchMock.mock.calls[1][0]).toContain('/reports/me?page=2&limit=20');
+    });
+
+
+    it('manages saved collections and recently viewed posts', async () => {
+        await getSavedCollections();
+        await createSavedCollection('Travel');
+        await updateSavedCollection('collection-1', 'Trips');
+        await deleteSavedCollection('collection-1');
+        await getSavedCollectionPosts('collection-1', 2, 10);
+        await addPostToSavedCollection('collection-1', 'post-1');
+        await removePostFromSavedCollection('collection-1', 'post-1');
+        await getRecentlyViewedPosts(3, 5);
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/posts/saved-collections');
+        expect(fetchMock.mock.calls[1][0]).toContain('/posts/saved-collections');
+        expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ name: 'Travel' }) });
+        expect(fetchMock.mock.calls[2][0]).toContain('/posts/saved-collections/collection-1');
+        expect(fetchMock.mock.calls[2][1]).toMatchObject({ method: 'PUT', body: JSON.stringify({ name: 'Trips' }) });
+        expect(fetchMock.mock.calls[3][0]).toContain('/posts/saved-collections/collection-1');
+        expect(fetchMock.mock.calls[3][1].method).toBe('DELETE');
+        expect(fetchMock.mock.calls[4][0]).toContain('/posts/saved-collections/collection-1/posts?page=2&limit=10');
+        expect(fetchMock.mock.calls[5][0]).toContain('/posts/saved-collections/collection-1/posts/post-1');
+        expect(fetchMock.mock.calls[5][1].method).toBe('POST');
+        expect(fetchMock.mock.calls[6][0]).toContain('/posts/saved-collections/collection-1/posts/post-1');
+        expect(fetchMock.mock.calls[6][1].method).toBe('DELETE');
+        expect(fetchMock.mock.calls[7][0]).toContain('/posts/recently-viewed?page=3&limit=5');
     });
 
     it('uses bookmark list, create, and delete endpoints', async () => {

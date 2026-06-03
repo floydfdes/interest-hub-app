@@ -1,12 +1,14 @@
 'use client';
 
 import { getErrorMessage, getMyActivities } from '@/app/api/api';
-import { ActivityType, Pagination, UserActivity } from '@/app/types/user';
+import { ActivityType, MyActivitiesResponse, Pagination, UserActivity } from '@/app/types/user';
 import { Empty, Skeleton } from 'antd';
 import { format } from 'date-fns';
 import { Activity, ArrowLeft, Heart, LogIn, NotebookPen, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+
+let initialActivitiesRequest: Promise<MyActivitiesResponse> | null = null;
 
 const activityFilters: Array<{ value: ActivityType | ''; label: string }> = [
     { value: '', label: 'All' },
@@ -92,7 +94,9 @@ export default function MyActivitiesPage() {
             }
 
             try {
-                const response = await getMyActivities();
+                const request = initialActivitiesRequest ?? getMyActivities();
+                initialActivitiesRequest = request;
+                const response = await request;
                 if (!cancelled) {
                     setActivities(response.items);
                     setPagination(response.pagination);
@@ -100,6 +104,7 @@ export default function MyActivitiesPage() {
             } catch (err: unknown) {
                 if (!cancelled) setError(getErrorMessage(err, 'Failed to load your activity.'));
             } finally {
+                initialActivitiesRequest = null;
                 if (!cancelled) setLoading(false);
             }
         };
@@ -126,7 +131,13 @@ export default function MyActivitiesPage() {
                 limit: pagination.limit,
                 type: type || undefined,
             });
-            setActivities((currentActivities) => [...currentActivities, ...response.items]);
+            setActivities((currentActivities) => {
+                const existingIds = new Set(currentActivities.map((activity) => activity._id));
+                return [
+                    ...currentActivities,
+                    ...response.items.filter((activity) => !existingIds.has(activity._id)),
+                ];
+            });
             setPagination(response.pagination);
         } catch (err: unknown) {
             setError(getErrorMessage(err, 'Failed to load more activity.'));

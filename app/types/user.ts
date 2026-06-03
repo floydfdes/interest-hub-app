@@ -363,6 +363,20 @@ export type ArchivedPostsResponse = PaginatedResponse<IPost>;
 
 export type UserPostsResponse = PaginatedResponse<IPost>;
 
+export interface SavedCollection {
+    _id: string;
+    name: string;
+    postsCount: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export type SavedCollectionsResponse = SavedCollection[];
+
+export type CollectionPostsResponse = PaginatedResponse<IPost>;
+
+export type RecentlyViewedPostsResponse = PaginatedResponse<IPost>;
+
 export type ShareTargetType = "post" | "profile";
 
 export interface ShareInput {

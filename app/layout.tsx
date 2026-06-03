@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import StyledComponentsRegistry from "@/lib/AntdRegistry";
 import Navbar from "@/components/Navbar";
 import Footer from "@/app/components/Footer";
 import GlobalLoader from "@/app/components/GlobalLoader";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 
 export const metadata: Metadata = {
   title: "InterestHub",
@@ -24,7 +33,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
+      <body className={poppins.variable}>
         <StyledComponentsRegistry>
           <GlobalLoader />
           <Navbar />

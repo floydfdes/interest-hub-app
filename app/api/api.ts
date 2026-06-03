@@ -33,6 +33,10 @@ import {
     PublicUserProfile,
     RegisterInput,
     ReportAction,
+    SavedCollection,
+    SavedCollectionsResponse,
+    CollectionPostsResponse,
+    RecentlyViewedPostsResponse,
     TagPostsResponse,
     TagSummary,
     TrendingTag,
@@ -264,6 +268,21 @@ export const getRecommendedPosts = (limit = 20) =>
 export const getBookmarkedPosts = () => request<IPost[]>("GET", "/posts/bookmarks");
 export const bookmarkPost = (id: string) => request<MessageResponse>("POST", `/posts/${id}/bookmark`);
 export const removeBookmark = (id: string) => request<MessageResponse>("DELETE", `/posts/${id}/bookmark`);
+export const getSavedCollections = () => request<SavedCollectionsResponse>("GET", "/posts/saved-collections");
+export const createSavedCollection = (name: string) =>
+    request<SavedCollection>("POST", "/posts/saved-collections", { body: { name } });
+export const updateSavedCollection = (collectionId: string, name: string) =>
+    request<SavedCollection>("PUT", `/posts/saved-collections/${collectionId}`, { body: { name } });
+export const deleteSavedCollection = (collectionId: string) =>
+    request<MessageResponse>("DELETE", `/posts/saved-collections/${collectionId}`);
+export const getSavedCollectionPosts = (collectionId: string, page = 1, limit = 20) =>
+    request<CollectionPostsResponse>("GET", `/posts/saved-collections/${collectionId}/posts`, { queryParams: { page, limit } });
+export const addPostToSavedCollection = (collectionId: string, postId: string) =>
+    request<MessageResponse>("POST", `/posts/saved-collections/${collectionId}/posts/${postId}`);
+export const removePostFromSavedCollection = (collectionId: string, postId: string) =>
+    request<MessageResponse>("DELETE", `/posts/saved-collections/${collectionId}/posts/${postId}`);
+export const getRecentlyViewedPosts = (page = 1, limit = 20) =>
+    request<RecentlyViewedPostsResponse>("GET", "/posts/recently-viewed", { queryParams: { page, limit } });
 export const hidePost = (id: string) => request<MessageResponse>("POST", `/posts/${id}/hide`);
 export const unhidePost = (id: string) => request<MessageResponse>("DELETE", `/posts/${id}/hide`);
 export const getHiddenPosts = (page = 1, limit = 20) =>
