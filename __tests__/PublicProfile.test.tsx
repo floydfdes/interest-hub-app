@@ -83,6 +83,18 @@ describe('PublicProfilePage', () => {
             followersCount: 10,
             followingCount: 4,
             postsCount: 1,
+            mutualFollowers: [
+                { _id: 'user-3', name: 'Alex', username: 'alex', profilePic: null },
+                { _id: 'user-4', name: 'Sam', username: 'sam', profilePic: null },
+            ],
+            mutualFollowersCount: 6,
+            pinnedPost: {
+                _id: 'post-pinned',
+                title: 'Pinned thought',
+                image: '/pinned.png',
+                isPinned: true,
+                pinnedAt: '2026-06-03T00:00:00.000Z',
+            },
         });
         mockedGetUserPosts.mockResolvedValue({
             items: [{
@@ -112,6 +124,9 @@ describe('PublicProfilePage', () => {
         render(<PublicProfilePage />);
 
         expect(await screen.findByText('Jane post')).toBeInTheDocument();
+        expect(screen.getByText('Followed by Alex, Sam and 4 others')).toBeInTheDocument();
+        expect(screen.getByText('Pinned thought')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /Pinned thought/ })).toHaveAttribute('href', '/posts/post-pinned');
         expect(screen.getAllByText('Posts')).toHaveLength(2);
         expect(screen.getByText('1')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Jane post' })).toHaveAttribute('href', '/posts/post-1');

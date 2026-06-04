@@ -1,4 +1,4 @@
-import { archivePost, hidePost, submitReport } from '@/app/api/api';
+import { archivePost, hidePost, pinPost, submitReport, unpinPost } from '@/app/api/api';
 import { IPost, IUser } from '@/app/types/user';
 import PostCard from '@/components/features/PostCard';
 import { App } from 'antd';
@@ -9,14 +9,18 @@ jest.mock('@/app/api/api', () => ({
     archivePost: jest.fn(),
     hidePost: jest.fn(),
     likePost: jest.fn(),
+    pinPost: jest.fn(),
     removeBookmark: jest.fn(),
     submitReport: jest.fn(),
     unlikePost: jest.fn(),
+    unpinPost: jest.fn(),
 }));
 
 const mockedHidePost = jest.mocked(hidePost);
 const mockedArchivePost = jest.mocked(archivePost);
 const mockedSubmitReport = jest.mocked(submitReport);
+const mockedPinPost = jest.mocked(pinPost);
+const mockedUnpinPost = jest.mocked(unpinPost);
 
 describe('PostCard hide action', () => {
     it('hides another user post and removes it from its visible feed owner', async () => {
@@ -73,6 +77,34 @@ describe('PostCard hide action', () => {
 
         await waitFor(() => expect(mockedArchivePost).toHaveBeenCalledWith('post-2'));
         expect(onArchive).toHaveBeenCalledWith('post-2');
+    });
+
+
+    it('pins and unpins an owned post from the overflow menu', async () => {
+        mockedPinPost.mockResolvedValue({ message: 'Post pinned' });
+        mockedUnpinPost.mockResolvedValue({ message: 'Post unpinned' });
+        const post = {
+            _id: 'post-4',
+            title: 'Pin this',
+            content: 'Post content',
+            author: { _id: 'me', name: 'Me', profilePic: '' },
+            likes: [],
+            comments: [],
+            status: 'published',
+        } as unknown as IPost;
+
+        render(<App><PostCard post={post} currentUser={{ _id: 'me' } as IUser} /></App>);
+
+        fireEvent.click(screen.getByRole('button', { name: 'More post actions' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Pin to profile' }));
+
+        await waitFor(() => expect(mockedPinPost).toHaveBeenCalledWith('post-4'));
+        expect(screen.getByText('Pinned')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'More post actions' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Unpin from profile' }));
+
+        await waitFor(() => expect(mockedUnpinPost).toHaveBeenCalledWith('post-4'));
     });
 
     it('submits a report for another user post without hiding it', async () => {

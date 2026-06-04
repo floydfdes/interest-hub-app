@@ -230,7 +230,7 @@ export default function SavedPostsPage() {
     }
 
     return (
-        <div className="shell-container max-w-4xl">
+        <div className="shell-container max-w-5xl">
             <header className="mb-8">
                 <span className="eyebrow"><Bookmark size={12} /> Saved</span>
                 <h1 className="gradient-heading mt-4 text-4xl font-bold">Your bookmarks</h1>
@@ -249,42 +249,58 @@ export default function SavedPostsPage() {
             ) : tab === 'all' ? (
                 <SavedPostGrid posts={posts} emptyDescription="No saved posts yet." />
             ) : (
-                <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
-                    <aside className="space-y-3">
+                <div className="grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
+                    <aside className="space-y-4">
                         <div className="surface p-4">
-                            <label className="text-sm font-medium text-slate-700" htmlFor="collection-name">New collection</label>
-                            <div className="mt-2 flex gap-2">
-                                <input id="collection-name" value={collectionName} onChange={(event) => setCollectionName(event.target.value)} className="soft-input min-w-0 flex-1 px-3 text-sm outline-none" placeholder="Travel" />
-                                <button type="button" onClick={() => void createCollection()} disabled={savingCollection} className="secondary-button !min-h-0 !px-3 !py-2"><Plus size={15} /></button>
+                            <label className="text-sm font-semibold text-slate-800" htmlFor="collection-name">New collection</label>
+                            <div className="mt-3 flex items-center gap-2">
+                                <input id="collection-name" value={collectionName} onChange={(event) => setCollectionName(event.target.value)} className="soft-input h-11 min-w-0 flex-1 px-3 text-sm outline-none" placeholder="Travel" />
+                                <button type="button" onClick={() => void createCollection()} disabled={savingCollection} className="secondary-button h-11 shrink-0 !min-h-0 !px-3" aria-label="Create collection"><Plus size={16} /></button>
                             </div>
                         </div>
-                        {collections.map((collection) => (
-                            <div key={collection._id} className={`surface p-3 ${activeCollection?._id === collection._id ? 'ring-2 ring-[#9CC4E4]' : ''}`}>
-                                {editingCollectionId === collection._id ? (
-                                    <div className="flex gap-2">
-                                        <input value={editingName} onChange={(event) => setEditingName(event.target.value)} className="soft-input min-w-0 flex-1 px-3 text-sm outline-none" />
-                                        <button type="button" onClick={() => void renameCollection(collection)} disabled={savingCollection} className="secondary-button !min-h-0 !px-3 !py-2">Save</button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-start justify-between gap-2">
-                                        <button type="button" onClick={() => void openCollection(collection)} className="min-w-0 flex-1 text-left">
-                                            <p className="truncate font-semibold text-slate-900"><Folder size={15} className="mr-1 inline" />{collection.name}</p>
-                                            <p className="text-xs text-slate-500">{collection.postsCount} posts</p>
-                                        </button>
-                                        <button type="button" onClick={() => { setEditingCollectionId(collection._id); setEditingName(collection.name); }} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-50"><Pencil size={14} /></button>
-                                        <button type="button" onClick={() => void removeCollection(collection)} disabled={savingCollection} className="rounded-lg p-1.5 text-rose-500 hover:bg-rose-50"><Trash2 size={14} /></button>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+
+                        <div className="space-y-2">
+                            {collections.map((collection) => (
+                                <div key={collection._id} className={`surface p-3 transition ${activeCollection?._id === collection._id ? 'bg-[#E9F2F9] ring-2 ring-[#9CC4E4]' : ''}`}>
+                                    {editingCollectionId === collection._id ? (
+                                        <div className="flex items-center gap-2">
+                                            <input value={editingName} onChange={(event) => setEditingName(event.target.value)} className="soft-input h-10 min-w-0 flex-1 px-3 text-sm outline-none" />
+                                            <button type="button" onClick={() => void renameCollection(collection)} disabled={savingCollection} className="secondary-button h-10 shrink-0 !min-h-0 !px-3">Save</button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-3">
+                                            <button type="button" onClick={() => void openCollection(collection)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                                                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-[#1B325F] shadow-sm">
+                                                    <Folder size={17} />
+                                                </span>
+                                                <span className="min-w-0">
+                                                    <span className="block truncate font-semibold text-slate-900">{collection.name}</span>
+                                                    <span className="block text-xs text-slate-500">{collection.postsCount} posts</span>
+                                                </span>
+                                            </button>
+                                            <div className="flex shrink-0 items-center gap-1">
+                                                <button type="button" onClick={() => { setEditingCollectionId(collection._id); setEditingName(collection.name); }} className="rounded-lg p-2 text-slate-500 hover:bg-white" aria-label={`Rename ${collection.name}`}><Pencil size={14} /></button>
+                                                <button type="button" onClick={() => void removeCollection(collection)} disabled={savingCollection} className="rounded-lg p-2 text-rose-500 hover:bg-rose-50" aria-label={`Delete ${collection.name}`}><Trash2 size={14} /></button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </aside>
-                    <section>
+                    <section className="min-w-0">
                         {!activeCollection ? (
                             <div className="surface px-6 py-14"><Empty description="Select a collection" /></div>
                         ) : collectionLoading && collectionPosts.length === 0 ? (
                             <div className="surface p-6"><Skeleton active avatar paragraph={{ rows: 4 }} /></div>
                         ) : (
                             <div className="space-y-5">
+                                <div className="surface flex flex-wrap items-center justify-between gap-3 p-4">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-lg font-semibold text-slate-900">{activeCollection.name}</p>
+                                        <p className="text-sm text-slate-500">{activeCollection.postsCount} posts in this collection</p>
+                                    </div>
+                                </div>
                                 <SavedPostGrid
                                     posts={collectionPosts}
                                     emptyDescription="No posts in this collection"

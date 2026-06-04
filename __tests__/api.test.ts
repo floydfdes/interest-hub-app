@@ -62,6 +62,7 @@ import {
     getUserPosts,
     getUserProfile,
     hidePost,
+    pinPost,
     markAllNotificationsRead,
     markNotificationRead,
     muteUser,
@@ -69,6 +70,7 @@ import {
     removePostFromSavedCollection,
     unhidePost,
     unarchivePost,
+    unpinPost,
     unmuteUser,
     unblockUser,
     rejectFollowRequest,
@@ -200,6 +202,8 @@ describe('discovery and bookmark API client', () => {
         await rejectFollowRequest('user-3');
         await archivePost('post-2');
         await unarchivePost('post-2');
+        await pinPost('post-2');
+        await unpinPost('post-2');
         await getArchivedPosts(3, 20);
         await getReviewPosts(2, 10);
 
@@ -211,8 +215,11 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[5][0]).toContain('/posts/post-2/archive');
         expect(fetchMock.mock.calls[5][1].method).toBe('PATCH');
         expect(fetchMock.mock.calls[6][0]).toContain('/posts/post-2/unarchive');
-        expect(fetchMock.mock.calls[7][0]).toContain('/posts/archived?page=3&limit=20');
-        expect(fetchMock.mock.calls[8][0]).toContain('/posts/review?page=2&limit=10');
+        expect(fetchMock.mock.calls[7][0]).toContain('/posts/post-2/pin');
+        expect(fetchMock.mock.calls[7][1].method).toBe('PATCH');
+        expect(fetchMock.mock.calls[8][0]).toContain('/posts/post-2/unpin');
+        expect(fetchMock.mock.calls[9][0]).toContain('/posts/archived?page=3&limit=20');
+        expect(fetchMock.mock.calls[10][0]).toContain('/posts/review?page=2&limit=10');
     });
 
     it('requests only the current user activity with supported filters', async () => {

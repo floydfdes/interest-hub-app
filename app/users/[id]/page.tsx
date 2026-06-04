@@ -2,15 +2,30 @@
 
 import { followUser, getErrorMessage, getUserPosts, getUserProfile, unfollowUser } from '@/app/api/api';
 import { useCurrentUser } from '@/app/hooks/useCurrentUser';
-import { IPost, Pagination, PublicUserProfile } from '@/app/types/user';
+import { BasicUserSummary, IPost, Pagination, PublicUserProfile } from '@/app/types/user';
 import { Avatar, Empty, Skeleton } from 'antd';
 import Image from 'next/image';
-import { ArrowLeft, Flag, LockKeyhole, MessageCircle, MoreHorizontal, Share2, ThumbsUp } from 'lucide-react';
+import { ArrowLeft, Flag, LockKeyhole, MessageCircle, MoreHorizontal, Pin, Share2, ThumbsUp } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import ReportModal from '@/components/features/ReportModal';
 import ShareModal from '@/components/features/ShareModal';
+
+function formatMutualFollowers(followers: BasicUserSummary[] = [], count = 0) {
+    if (followers.length === 0 || count === 0) return '';
+
+    const names = followers.slice(0, 2).map((follower) => follower.name);
+    const remaining = Math.max(0, count - names.length);
+
+    if (names.length === 1) {
+        return remaining > 0 ? `Followed by ${names[0]} and ${remaining} others` : `Followed by ${names[0]}`;
+    }
+
+    return remaining > 0
+        ? `Followed by ${names[0]}, ${names[1]} and ${remaining} others`
+        : `Followed by ${names[0]} and ${names[1]}`;
+}
 
 export default function PublicProfilePage() {
     const { id } = useParams<{ id: string }>();
@@ -28,6 +43,7 @@ export default function PublicProfilePage() {
     const [postsError, setPostsError] = useState('');
     const actionMenuRef = useRef<HTMLDivElement>(null);
     const currentUser = useCurrentUser();
+    const mutualFollowersText = profile ? formatMutualFollowers(profile.mutualFollowers, profile.mutualFollowersCount) : '';
 
     useEffect(() => {
         let cancelled = false;
@@ -125,6 +141,10 @@ export default function PublicProfilePage() {
         return <div className="surface shell-container max-w-lg p-10 text-center text-slate-500">{error || 'Profile not found.'}</div>;
     }
 
+    const visibleProfilePosts = profile.pinnedPost
+        ? [profile.pinnedPost, ...posts.filter((post) => post._id !== profile.pinnedPost?._id)]
+        : posts;
+
     return (
         <div className="shell-container max-w-4xl">
             <Link href="/users" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600">
@@ -188,6 +208,9 @@ export default function PublicProfilePage() {
                     </div>
                 </div>
                 {error && <p className="mt-5 rounded-xl bg-rose-50 p-3 text-sm font-medium text-rose-600">{error}</p>}
+                {mutualFollowersText && (
+                    <p className="mt-5 text-sm font-medium text-slate-500">{mutualFollowersText}</p>
+                )}
                 <div className="mt-7 grid grid-cols-3 gap-3">
                     <div className="rounded-xl bg-slate-50 p-4 text-center"><p className="text-2xl font-semibold text-slate-900">{profile.followersCount}</p><p className="text-sm text-slate-500">Followers</p></div>
                     <div className="rounded-xl bg-slate-50 p-4 text-center"><p className="text-2xl font-semibold text-slate-900">{profile.followingCount}</p><p className="text-sm text-slate-500">Following</p></div>
@@ -218,17 +241,18 @@ export default function PublicProfilePage() {
 
                     {postsError && <p className="surface mb-5 p-4 text-sm font-medium text-rose-600">{postsError}</p>}
 
+
                     {postsLoading ? (
                         <div className="grid grid-cols-3 gap-2 sm:gap-3">
                             {Array.from({ length: 6 }).map((_, index) => (
                                 <div key={index} className="aspect-square rounded-2xl bg-slate-100" />
                             ))}
                         </div>
-                    ) : posts.length === 0 ? (
+                    ) : visibleProfilePosts.length === 0 ? (
                         <div className="surface px-6 py-14"><Empty description={`${profile.name} has no visible posts yet`} /></div>
                     ) : (
                         <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                            {posts.map((post) => {
+                            {visibleProfilePosts.map((post) => {
                                 const postImage = post.image || '/default_image.png';
                                 return (
                                     <Link
@@ -246,6 +270,7 @@ export default function PublicProfilePage() {
                                             className="object-cover transition duration-300 group-hover:scale-105"
                                         />
                                         <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-slate-950/70 to-transparent p-3 text-white opacity-0 transition group-hover:opacity-100">
+                                            {post.isPinned && <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[0.68rem] font-semibold text-[#1B325F]"><Pin size={11} /> Pinned</span>}
                                             <p className="truncate text-sm font-semibold">{post.title}</p>
                                         </div>
                                         <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-slate-950/75 to-transparent p-3 text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">

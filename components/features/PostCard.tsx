@@ -9,11 +9,11 @@ import {
     UserOutlined,
 } from '@ant-design/icons';
 import { formatDistanceToNow } from 'date-fns';
-import { Archive, EyeOff, Flag, Globe2, MoreHorizontal, Share2 } from 'lucide-react';
+import { Archive, EyeOff, Flag, Globe2, MoreHorizontal, Pin, PinOff, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { archivePost, hidePost, likePost, unlikePost } from '@/app/api/api';
+import { archivePost, hidePost, likePost, pinPost, unlikePost, unpinPost } from '@/app/api/api';
 import { IPost, IUser } from '@/app/types/user';
 import BookmarkButton from './BookmarkButton';
 import ReportModal from './ReportModal';
@@ -36,8 +36,11 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
     const [actionsOpen, setActionsOpen] = useState(false);
     const [reportOpen, setReportOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
+    const [pinned, setPinned] = useState(Boolean(post.isPinned));
     const actionMenuRef = useRef<HTMLDivElement>(null);
     const isLiked = Boolean(currentUser && likedByMe);
+    const isOwner = Boolean(currentUser && post.author?._id === currentUser._id);
+    const canPin = isOwner && post.status !== 'draft' && !post.isArchived && !post.needsReview;
     const postImage = post.image || '/default_image.png';
 
     useEffect(() => {
@@ -88,6 +91,21 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
         }
     };
 
+    const handlePinToggle = async () => {
+        setActionsOpen(false);
+        try {
+            if (pinned) {
+                await unpinPost(post._id);
+                setPinned(false);
+            } else {
+                await pinPost(post._id);
+                setPinned(true);
+            }
+        } catch {
+            // Keep the current pinned state if the server rejects the action.
+        }
+    };
+
     return (
         <article className="surface overflow-hidden p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_48px_-26px_rgba(15,23,42,0.28)] sm:p-6">
             <header className="flex items-start justify-between gap-4">
@@ -99,7 +117,14 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
                         className="bg-indigo-100 text-indigo-600"
                     />
                     <div>
-                        <p className="font-semibold text-slate-900">{post.author?.name || 'Unknown User'}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-slate-900">{post.author?.name || 'Unknown User'}</p>
+                            {pinned && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-[#E9F2F9] px-2 py-0.5 text-[0.68rem] font-semibold text-[#1B325F]">
+                                    <Pin size={11} /> Pinned
+                                </span>
+                            )}
+                        </div>
                         <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
                             <span>{post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : ''}</span>
                             <span>·</span>
@@ -160,7 +185,7 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
                         />
                         {actionsOpen && (
                             <div className="absolute bottom-11 right-0 z-10 min-w-32 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg">
-                                {post.author?._id === currentUser._id ? (
+                                {isOwner ? (
                                     <>
                                         <button
                                             type="button"
@@ -172,6 +197,15 @@ const PostCard = ({ post, onDelete, currentUser, isBookmarked, onBookmarkChange,
                                         >
                                             <Share2 size={15} /> Share
                                         </button>
+                                        {canPin && (
+                                            <button
+                                                type="button"
+                                                onClick={() => void handlePinToggle()}
+                                                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                                            >
+                                                {pinned ? <PinOff size={15} /> : <Pin size={15} />} {pinned ? 'Unpin from profile' : 'Pin to profile'}
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
                                             onClick={() => void handleArchive()}

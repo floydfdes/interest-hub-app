@@ -94,6 +94,8 @@ export interface IPost {
     isBookmarked?: boolean;
     isArchived?: boolean;
     archivedAt?: string | null;
+    isPinned?: boolean;
+    pinnedAt?: string | null;
     needsReview?: boolean;
     moderationReasons?: string[];
     moderationNotice?: ModerationNotice;
@@ -153,6 +155,7 @@ export type ActivityType =
 export interface BasicUserSummary {
     _id: string;
     name: string;
+    username?: string;
     profilePic: string | null;
 }
 
@@ -310,6 +313,9 @@ export interface PublicUserProfile {
     followersCount: number;
     followingCount: number;
     postsCount: number;
+    mutualFollowers?: BasicUserSummary[];
+    mutualFollowersCount?: number;
+    pinnedPost?: Partial<IPost> & Pick<IPost, "_id" | "title" | "image" | "isPinned" | "pinnedAt"> | null;
     posts?: IPost[];
 }
 

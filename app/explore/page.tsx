@@ -1,8 +1,8 @@
 "use client";
 
-import { Archive, Edit, EyeOff, Flag, Flame, Hash, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, RotateCcw, Search, Share2, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
+import { Archive, Edit, EyeOff, Flag, Flame, Hash, LayoutGrid, List, MessageCircle, MoreHorizontal, PenLine, Pin, PinOff, RotateCcw, Search, Share2, SlidersHorizontal, Sparkles, ThumbsUp, Trash2, UsersRound, VolumeX } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { advancedSearchPosts, archivePost, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTagPosts, getTrendingPosts, getTrendingTags, hidePost, muteUser, PostAdvancedSearchFilters, searchPosts, TrendingPeriod } from "../api/api";
+import { advancedSearchPosts, archivePost, deletePost, getBookmarkedPosts, getErrorMessage, getFollowingPosts, getRecommendedPosts, getTagPosts, getTrendingPosts, getTrendingTags, hidePost, muteUser, pinPost, PostAdvancedSearchFilters, searchPosts, TrendingPeriod, unpinPost } from "../api/api";
 import { IPost, Pagination, TrendingTag } from "../types/user";
 import { filterVisiblePosts } from "../utils/moderation";
 import { formatDistanceToNow } from "date-fns";
@@ -286,6 +286,25 @@ export default function Explore() {
     }
   };
 
+  const handlePinToggle = async (post: IPost) => {
+    setActionMenuPostId(null);
+    try {
+      if (post.isPinned) {
+        await unpinPost(post._id);
+        setPosts((previous) => previous.map((item) => item._id === post._id ? { ...item, isPinned: false, pinnedAt: null } : item));
+      } else {
+        await pinPost(post._id);
+        setPosts((previous) => previous.map((item) => ({
+          ...item,
+          isPinned: item._id === post._id,
+          pinnedAt: item._id === post._id ? new Date().toISOString() : item.pinnedAt,
+        })));
+      }
+    } catch (err: unknown) {
+      setSearchError(getErrorMessage(err, post.isPinned ? "Failed to unpin post." : "Failed to pin post."));
+    }
+  };
+
   return (
     <div className="shell-container">
       <header className="mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -526,7 +545,10 @@ export default function Explore() {
                 className={viewMode === "cards" ? "h-52 w-full object-cover" : "h-40 w-full shrink-0 rounded-2xl object-cover sm:w-56"}
               />
               <div className={viewMode === "cards" ? "p-5" : "min-w-0 flex-1 py-1"}>
-                <span className="tag-pill">{post.category}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="tag-pill">{post.category}</span>
+                  {post.isPinned && <span className="inline-flex items-center gap-1 rounded-full bg-[#E9F2F9] px-2 py-1 text-xs font-semibold text-[#1B325F]"><Pin size={12} /> Pinned</span>}
+                </div>
                 <h2 className={`${viewMode === "cards" ? "mt-4" : "mt-3"} text-xl font-semibold tracking-tight text-slate-900`}>{post.title}</h2>
                 <p className={`mt-2 text-sm leading-6 text-slate-500 ${viewMode === "cards" ? "line-clamp-2" : "line-clamp-3"}`}><RichText text={post.content} /></p>
                 <div className={`${viewMode === "cards" ? "mt-5" : "mt-4"} flex items-center gap-2 text-sm text-slate-500`}>
@@ -569,6 +591,11 @@ export default function Explore() {
                         <button type="button" onClick={() => { setActionMenuPostId(null); setSharePost(post); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
                           <Share2 size={15} /> Share
                         </button>
+                        {post.status !== "draft" && !post.isArchived && !post.needsReview && (
+                          <button type="button" onClick={() => void handlePinToggle(post)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                            {post.isPinned ? <PinOff size={15} /> : <Pin size={15} />} {post.isPinned ? "Unpin from profile" : "Pin to profile"}
+                          </button>
+                        )}
                         <button type="button" onClick={() => void handleArchive(post._id)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
                           <Archive size={15} /> Archive
                         </button>

@@ -289,6 +289,8 @@ export const getHiddenPosts = (page = 1, limit = 20) =>
     request<PaginatedResponse<IPost>>("GET", "/posts/hidden", { queryParams: { page, limit } });
 export const archivePost = (id: string) => request<ArchivedPostResponse>("PATCH", `/posts/${id}/archive`);
 export const unarchivePost = (id: string) => request<ArchivedPostResponse>("PATCH", `/posts/${id}/unarchive`);
+export const pinPost = (id: string) => request<MessageResponse>("PATCH", `/posts/${id}/pin`);
+export const unpinPost = (id: string) => request<MessageResponse>("PATCH", `/posts/${id}/unpin`);
 export const getArchivedPosts = (page = 1, limit = 20) =>
     request<ArchivedPostsResponse>("GET", "/posts/archived", { queryParams: { page, limit } });
 export const getReviewPosts = (page = 1, limit = 20) =>

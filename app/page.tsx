@@ -66,17 +66,23 @@ export default function Home() {
         </section>
 
         <aside className="surface sticky top-24 hidden p-5 lg:block">
-          <p className="text-sm font-semibold text-slate-900">Browse topics</p>
-          <p className="mt-1 text-sm leading-6 text-slate-500">Follow what sparks your curiosity.</p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <span key={category} className="tag-pill">{category}</span>
-            ))}
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Browse topics</p>
+              <p className="mt-1 text-sm leading-6 text-slate-500">Follow what sparks your curiosity.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {categories.map((category) => (
+                <span key={category} className="tag-pill justify-center text-center">{category}</span>
+              ))}
+            </div>
+
+            <Link href="/explore" className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50">
+              Explore all
+              <ArrowRight size={15} />
+            </Link>
           </div>
-          <Link href="/explore" className="mt-6 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50">
-            Explore all
-            <ArrowRight size={15} />
-          </Link>
         </aside>
       </div>
     </div>
