@@ -103,6 +103,7 @@ export default function ProfilePage() {
     const followingCount = user.following?.length || user.followingCount || 0;
     const pinnedPosts = posts.filter((post) => post.isPinned).sort((first, second) => new Date(second.pinnedAt || 0).getTime() - new Date(first.pinnedAt || 0).getTime());
     const profilePosts = [...pinnedPosts, ...posts.filter((post) => !post.isPinned)];
+    const completion = user.profileCompletion;
 
     return (
         <div className="shell-container max-w-5xl">
@@ -147,6 +148,23 @@ export default function ProfilePage() {
                     {user.interests?.length > 0 && (
                         <div className="mt-5 flex flex-wrap gap-2">
                             {user.interests.map((interest) => <span key={interest} className="tag-pill">{interest}</span>)}
+                        </div>
+                    )}
+
+                    {completion && completion.percentage < 100 && (
+                        <div className="mt-6 max-w-2xl rounded-2xl border border-[#9CC4E4]/50 bg-[#E9F2F9]/70 p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-bold text-[#1B325F]">Profile {completion.percentage}% complete</p>
+                                    {completion.missingFields.length > 0 && (
+                                        <p className="mt-1 text-sm text-slate-500">Add {completion.missingFields.join(', ')} to complete your profile.</p>
+                                    )}
+                                </div>
+                                <button type="button" onClick={() => router.push('/profile/edit')} className="secondary-button !min-h-0 !py-2">Update profile</button>
+                            </div>
+                            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                                <div className="h-full rounded-full bg-[#1B325F]" style={{ width: `${completion.percentage}%` }} />
+                            </div>
                         </div>
                     )}
 

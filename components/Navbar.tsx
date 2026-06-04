@@ -12,7 +12,8 @@ import { useEffect, useState } from 'react';
 
 const navItems = [
     { href: '/', label: 'Feed', icon: Compass, authOnly: false },
-    { href: '/explore', label: 'Explore', icon: Search, authOnly: false },
+    { href: '/search', label: 'Search', icon: Search, authOnly: false },
+    { href: '/explore', label: 'Explore', icon: Compass, authOnly: false },
     { href: '/users', label: 'People', icon: UserRound, authOnly: false },
     { href: '/saved', label: 'Saved', icon: Bookmark, authOnly: true },
 ];

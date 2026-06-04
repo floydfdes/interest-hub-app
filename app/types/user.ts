@@ -1,3 +1,9 @@
+export interface ProfileCompletion {
+    percentage: number;
+    completedFields: string[];
+    missingFields: string[];
+}
+
 export interface IUser {
     _id: string;
     name: string;
@@ -19,6 +25,7 @@ export interface IUser {
     canViewProfile?: boolean;
     followersCount?: number;
     followingCount?: number;
+    profileCompletion?: ProfileCompletion;
     otp: string | null;
     otpExpires: string | null;
     is2FAEnabled: boolean;
@@ -136,6 +143,13 @@ export interface TrendingTag extends TagSummary {
 }
 
 export type TagPostsResponse = PaginatedResponse<IPost>;
+
+export interface GlobalSearchResponse {
+    query: string;
+    users: IUser[];
+    posts: IPost[];
+    tags: TagSummary[];
+}
 
 export interface ModerationNotice {
     needsReview: true;
@@ -316,6 +330,7 @@ export interface PublicUserProfile {
     mutualFollowers?: BasicUserSummary[];
     mutualFollowersCount?: number;
     pinnedPost?: Partial<IPost> & Pick<IPost, "_id" | "title" | "image" | "isPinned" | "pinnedAt"> | null;
+    profileCompletion?: ProfileCompletion;
     posts?: IPost[];
 }
 

@@ -17,6 +17,7 @@ import {
     BasicUserSummary,
     DraftPostInput,
     DraftPostsResponse,
+    GlobalSearchResponse,
     IComment,
     IReply,
     IPost,
@@ -238,6 +239,8 @@ export const getAllPosts = (page = 1, limit = 20) =>
     request<PaginatedResponse<IPost>>("GET", "/posts", { queryParams: { page, limit } });
 export const searchPosts = (query: string) =>
     request<IPost[]>("GET", "/posts/search", { queryParams: { query } });
+export const globalSearch = (query: string, limit = 5) =>
+    request<GlobalSearchResponse>("GET", "/search", { queryParams: { query, limit } });
 export const advancedSearchPosts = (filters: PostAdvancedSearchFilters) => {
     const queryParams = Object.fromEntries(
         Object.entries(filters).filter(([, value]) => value?.trim())

@@ -27,6 +27,7 @@ import {
     getFollowing,
     getFollowRequests,
     getFollowingPosts,
+    globalSearch,
     getMyActivities,
     getMyReports,
     getMutedUsers,
@@ -110,6 +111,7 @@ describe('discovery and bookmark API client', () => {
         await getTagSuggestions('tra', 10);
         await getTrendingTags(20);
         await getTagPosts('travel', 2, 12);
+        await globalSearch('travel', 5);
 
         expect(fetchMock.mock.calls[0][0]).toContain('/posts?page=1&limit=20');
         expect(fetchMock.mock.calls[1][0]).toContain('/posts/following?page=1&limit=20');
@@ -119,6 +121,7 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[5][0]).toContain('/tags/suggestions?query=tra&limit=10');
         expect(fetchMock.mock.calls[6][0]).toContain('/tags/trending?limit=20');
         expect(fetchMock.mock.calls[7][0]).toContain('/tags/travel/posts?page=2&limit=12');
+        expect(fetchMock.mock.calls[8][0]).toContain('/search?query=travel&limit=5');
         expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
     });
 
