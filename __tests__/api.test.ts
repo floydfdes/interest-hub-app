@@ -16,6 +16,7 @@ import {
     deleteAdminComment,
     deleteAdminPost,
     deleteAdminReply,
+    deactivateUser,
     deleteAdminUser,
     bookmarkPost,
     getHiddenPosts,
@@ -35,6 +36,7 @@ import {
     clearReadNotifications,
     deleteNotification,
     deleteSavedCollection,
+    getNotificationPreferences,
     getNotifications,
     getPostComments,
     getPostLikes,
@@ -74,6 +76,7 @@ import {
     unpinPost,
     unmuteUser,
     unblockUser,
+    reactivateUser,
     rejectFollowRequest,
     submitReport,
     updateDraftPost,
@@ -82,6 +85,7 @@ import {
     updateAdminReportStatus,
     applyAdminReportAction,
     updateAdminUser,
+    updateNotificationPreferences,
 } from '@/app/api/api';
 
 function mockResponse(data: unknown) {
@@ -328,6 +332,35 @@ describe('discovery and bookmark API client', () => {
         expect(fetchMock.mock.calls[1][0]).toContain('/posts/post-7/bookmark');
         expect(fetchMock.mock.calls[1][1].method).toBe('POST');
         expect(fetchMock.mock.calls[2][1].method).toBe('DELETE');
+    });
+
+
+    it('requests notification preferences, account deactivation, and reactivation', async () => {
+        fetchMock.mockImplementation((url: string) => (
+            url.includes('/auth/reactivate')
+                ? mockResponse({ token: 'token', user: { _id: 'user-1', name: 'User' } })
+                : mockResponse({ message: 'ok' })
+        ));
+
+        await getNotificationPreferences();
+        await updateNotificationPreferences({ likes: false, shares: true });
+        await deactivateUser();
+        await reactivateUser({ email: 'user@example.com', password: 'password123' });
+
+        expect(fetchMock.mock.calls[0][0]).toContain('/notifications/preferences');
+        expect(fetchMock.mock.calls[0][1].method).toBe('GET');
+        expect(fetchMock.mock.calls[1][0]).toContain('/notifications/preferences');
+        expect(fetchMock.mock.calls[1][1]).toMatchObject({
+            method: 'PATCH',
+            body: JSON.stringify({ likes: false, shares: true }),
+        });
+        expect(fetchMock.mock.calls[2][0]).toContain('/users/deactivate');
+        expect(fetchMock.mock.calls[2][1].method).toBe('PATCH');
+        expect(fetchMock.mock.calls[3][0]).toContain('/auth/reactivate');
+        expect(fetchMock.mock.calls[3][1]).toMatchObject({
+            method: 'POST',
+            body: JSON.stringify({ email: 'user@example.com', password: 'password123' }),
+        });
     });
 
     it('surfaces validation error arrays from failed API responses', async () => {

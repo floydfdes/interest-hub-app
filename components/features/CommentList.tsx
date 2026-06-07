@@ -15,11 +15,12 @@ import { IComment, IReply, IUser, Like } from '@/app/types/user';
 import { LikeFilled, LikeOutlined, UserOutlined } from '@ant-design/icons';
 import { App, Avatar, Button, Input, Typography } from 'antd';
 import { formatDistanceToNow } from 'date-fns';
-import { Flag, MoreHorizontal } from 'lucide-react';
+import { Flag, MoreHorizontal, Share2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ReportModal from './ReportModal';
 import MentionSuggestions from './MentionSuggestions';
 import RichText from './RichText';
+import ShareModal from './ShareModal';
 import { filterVisibleComments, getModerationNoticeMessage } from '@/app/utils/moderation';
 
 const { Text } = Typography;
@@ -60,13 +61,16 @@ const CommentItem = ({
     const [editContent, setEditContent] = useState(comment.content);
     const [likes, setLikes] = useState<Like[]>(comment.likes || []);
     const [reportOpen, setReportOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
     const [reportActionsOpen, setReportActionsOpen] = useState(false);
     const reportMenuRef = useRef<HTMLDivElement>(null);
     const { message } = App.useApp();
-    const isLiked = Boolean(currentUser && likes.some((like) => belongsToUser(like, currentUser._id)));
+    const isDeleted = Boolean(comment.isDeleted);
+    const isLiked = Boolean(currentUser && !isDeleted && likes.some((like) => belongsToUser(like, currentUser._id)));
     const isReply = parentCommentId !== undefined && replyIndex !== undefined;
-    const canManage = Boolean(currentUser && comment.user?._id === currentUser._id);
-    const canReport = Boolean(currentUser && !canManage && !isReply);
+    const canManage = Boolean(currentUser && !isDeleted && comment.user?._id === currentUser._id);
+    const canReport = Boolean(currentUser && !isDeleted && !canManage && !isReply);
+    const canShare = Boolean(currentUser && !isDeleted && !isReply);
 
     useEffect(() => {
         if (!reportActionsOpen) return;
@@ -82,7 +86,7 @@ const CommentItem = ({
     }, [reportActionsOpen]);
 
     const handleLike = async () => {
-        if (!currentUser) return;
+        if (!currentUser || isDeleted) return;
 
         try {
             const response = await (isLiked ? unlikeComment(comment._id) : likeComment(comment._id));
@@ -157,7 +161,9 @@ const CommentItem = ({
                             )}
                         </div>
                     </div>
-                    {editing ? (
+                    {isDeleted ? (
+                        <Text className="!italic !text-slate-400">This comment was deleted.</Text>
+                    ) : editing ? (
                         <div className="flex gap-2">
                             <Input
                                 data-testid={isReply ? 'reply-edit-input' : 'comment-edit-input'}
@@ -176,7 +182,7 @@ const CommentItem = ({
                     ) : (
                         <Text className="!text-slate-600"><RichText text={comment.content} /></Text>
                     )}
-                    <div className="flex gap-4 mt-2">
+                    {!isDeleted && <div className="flex gap-4 mt-2">
                         <Button
                             type="text"
                             size="small"
@@ -189,6 +195,11 @@ const CommentItem = ({
                         <Button data-testid="reply-toggle" type="text" size="small" onClick={() => setShowReply(!showReply)}>
                             Reply
                         </Button>
+                        {canShare && (
+                            <Button type="text" size="small" onClick={() => setShareOpen(true)}>
+                                <Share2 size={14} /> Share
+                            </Button>
+                        )}
                         {canManage && (
                             <>
                                 <Button
@@ -210,11 +221,11 @@ const CommentItem = ({
                                 </Button>
                             </>
                         )}
-                    </div>
+                    </div>}
                 </div>
             </div>
 
-            {showReply && (
+            {!isDeleted && showReply && (
                 <div className="ml-10 mt-2 flex gap-2">
                     <div className="flex-1">
                         <Input
@@ -247,6 +258,15 @@ const CommentItem = ({
                         />
                     ))}
                 </div>
+            )}
+            {shareOpen && (
+                <ShareModal
+                    targetType="comment"
+                    targetId={comment._id}
+                    targetLabel={comment.content}
+                    currentUserId={currentUser?._id}
+                    onClose={() => setShareOpen(false)}
+                />
             )}
             {reportOpen && (
                 <ReportModal

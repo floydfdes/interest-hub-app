@@ -1,4 +1,4 @@
-import { NotificationsResponse, UnreadNotificationsResponse } from "@/app/types/user";
+import { NotificationPreferences, NotificationsResponse, UnreadNotificationsResponse } from "@/app/types/user";
 import { request } from "./client";
 import { ClearNotificationsResponse, MessageResponse, RawUnreadNotificationsResponse } from "./contracts";
 
@@ -18,3 +18,8 @@ export const clearReadNotifications = () =>
     request<ClearNotificationsResponse>("DELETE", "/notifications/read");
 export const clearAllNotifications = () =>
     request<ClearNotificationsResponse>("DELETE", "/notifications");
+
+export const getNotificationPreferences = () =>
+    request<NotificationPreferences>("GET", "/notifications/preferences");
+export const updateNotificationPreferences = (preferences: Partial<NotificationPreferences>) =>
+    request<NotificationPreferences>("PATCH", "/notifications/preferences", { body: { ...preferences } });

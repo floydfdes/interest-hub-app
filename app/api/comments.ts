@@ -6,7 +6,7 @@ export const createComment = (postId: string, content: string) =>
 export const editComment = (commentId: string, content: string) =>
     request<IComment>("PATCH", `/comments/${commentId}`, { body: { content } });
 export const deleteComment = (commentId: string) =>
-    request<void>("DELETE", `/comments/${commentId}`);
+    request<IComment>("DELETE", `/comments/${commentId}`);
 export const likeComment = (commentId: string) =>
     request<Pick<IComment, "likes">>("POST", `/comments/${commentId}/like`);
 export const unlikeComment = (commentId: string) =>
@@ -16,7 +16,7 @@ export const replyToComment = (commentId: string, content: string) =>
 export const editReply = (commentId: string, replyIndex: number, content: string) =>
     request<IReply>("PATCH", `/comments/${commentId}/reply/${replyIndex}`, { body: { content } });
 export const deleteReply = (commentId: string, replyIndex: number) =>
-    request<void>("DELETE", `/comments/${commentId}/reply/${replyIndex}`);
+    request<IReply>("DELETE", `/comments/${commentId}/reply/${replyIndex}`);
 export const likeReply = (commentId: string, replyIndex: number) =>
     request<void>("POST", `/comments/${commentId}/reply/${replyIndex}/like`);
 export const unlikeReply = (commentId: string, replyIndex: number) =>

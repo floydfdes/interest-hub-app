@@ -55,6 +55,8 @@ export interface IReply {
     user: IUserPreview;
     content: string;
     likes: Like[];
+    isDeleted?: boolean;
+    deletedAt?: string | null;
     needsReview?: boolean;
     moderationReasons?: string[];
     moderationNotice?: ModerationNotice;
@@ -68,6 +70,8 @@ export interface IComment {
     post: string;
     content: string;
     likes: Like[];
+    isDeleted?: boolean;
+    deletedAt?: string | null;
     replies: IReply[];
     needsReview?: boolean;
     moderationReasons?: string[];
@@ -255,6 +259,7 @@ export type NotificationType =
     | "user_mentioned"
     | "post_shared"
     | "profile_shared"
+    | "comment_shared"
     | "comment_created"
     | "reply_created"
     | "moderation_review"
@@ -398,7 +403,7 @@ export type CollectionPostsResponse = PaginatedResponse<IPost>;
 
 export type RecentlyViewedPostsResponse = PaginatedResponse<IPost>;
 
-export type ShareTargetType = "post" | "profile";
+export type ShareTargetType = "post" | "profile" | "comment";
 
 export interface ShareInput {
     recipientId: string;
@@ -422,6 +427,17 @@ export interface UserShare {
 }
 
 export type SharesResponse = PaginatedResponse<UserShare>;
+
+export interface NotificationPreferences {
+    likes: boolean;
+    comments: boolean;
+    replies: boolean;
+    follows: boolean;
+    followRequests: boolean;
+    mentions: boolean;
+    shares: boolean;
+    moderation: boolean;
+}
 
 export interface AdminUserInput {
     name: string;

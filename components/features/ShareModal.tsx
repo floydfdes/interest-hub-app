@@ -53,7 +53,7 @@ export default function ShareModal({ targetType, targetId, targetLabel, currentU
                 targetId,
                 ...(note.trim() ? { message: note.trim() } : {}),
             });
-            message.success(`${targetType === 'post' ? 'Post' : 'Profile'} shared with ${recipient.name}`);
+            message.success(`${targetType === 'post' ? 'Post' : targetType === 'comment' ? 'Comment' : 'Profile'} shared with ${recipient.name}`);
             onClose();
         } catch (err: unknown) {
             setError(getErrorMessage(err, 'Failed to share.'));
@@ -111,7 +111,7 @@ export default function ShareModal({ targetType, targetId, targetLabel, currentU
                     onChange={(event) => setNote(event.target.value)}
                     rows={3}
                     className="soft-input mt-2 w-full resize-none px-4 py-3 text-sm outline-none"
-                    placeholder={targetType === 'post' ? 'Check this out' : 'You may like this profile'}
+                    placeholder={targetType === 'post' ? 'Check this out' : targetType === 'comment' ? 'Read this comment' : 'You may like this profile'}
                 />
 
                 {error && <p className="mt-4 text-sm font-medium text-rose-600">{error}</p>}

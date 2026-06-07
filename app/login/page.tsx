@@ -77,10 +77,15 @@ const Login = () => {
                             Log in <ArrowRight size={15} />
                         </Button>
                     </Form.Item>
-                    <div className="text-center">
-                        <Text>Don&apos;t have an account? </Text>
-                        <Link href="/register" className="font-semibold text-indigo-600 hover:text-indigo-700">
-                            Create an account
+                    <div className="space-y-2 text-center">
+                        <div>
+                            <Text>Don&apos;t have an account? </Text>
+                            <Link href="/register" className="font-semibold text-indigo-600 hover:text-indigo-700">
+                                Create an account
+                            </Link>
+                        </div>
+                        <Link href="/reactivate" className="block text-sm font-semibold text-slate-500 hover:text-indigo-600">
+                            Reactivate a deactivated account
                         </Link>
                     </div>
                 </Form>

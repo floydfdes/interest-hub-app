@@ -19,6 +19,7 @@ export const getUserPosts = (id: string, page = 1, limit = 20) =>
 export const updateUser = (data: ProfileUpdateInput) =>
     request<UserResponse>("PATCH", "/users/update", { body: { ...data } });
 export const deleteUser = () => request<void>("DELETE", "/users/delete");
+export const deactivateUser = () => request<void>("PATCH", "/users/deactivate");
 export const followUser = (id: string) => request<FollowResponse>("POST", `/users/follow/${id}`);
 export const unfollowUser = (id: string) => request<void>("POST", `/users/unfollow/${id}`);
 export const getFollowers = (id: string, page = 1, limit = 20) =>

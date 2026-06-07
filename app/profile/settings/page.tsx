@@ -2,11 +2,14 @@
 
 import {
     changePassword,
+    deactivateUser,
     deleteUser,
     forgotPassword,
     getErrorMessage,
     getMe,
+    getNotificationPreferences,
     resetPassword,
+    updateNotificationPreferences,
     updateUser
 } from "@/app/api/api";
 
@@ -14,9 +17,21 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { notifyAuthChanged } from "@/app/hooks/useCurrentUser";
 import Link from "next/link";
+import { NotificationPreferences } from "@/app/types/user";
+
+const notificationPreferenceLabels: Record<keyof NotificationPreferences, string> = {
+    likes: "Likes",
+    comments: "Comments",
+    replies: "Replies",
+    follows: "Follows",
+    followRequests: "Follow requests",
+    mentions: "Mentions",
+    shares: "Shares",
+    moderation: "Moderation",
+};
 
 export default function SettingsPage() {
-    const [modal, setModal] = useState<null | "change" | "forgot" | "reset" | "delete">(null);
+    const [modal, setModal] = useState<null | "change" | "forgot" | "reset" | "delete" | "deactivate">(null);
     const [form, setForm] = useState({
         currentPassword: "",
         newPassword: "",
@@ -29,6 +44,8 @@ export default function SettingsPage() {
     const [isPrivate, setIsPrivate] = useState(false);
     const [privacyLoading, setPrivacyLoading] = useState(true);
     const [privacySaving, setPrivacySaving] = useState(false);
+    const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+    const [preferencesSaving, setPreferencesSaving] = useState<keyof NotificationPreferences | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -39,8 +56,14 @@ export default function SettingsPage() {
                 return;
             }
             try {
-                const response = await getMe();
-                if (!cancelled) setIsPrivate(Boolean(response.user.isPrivate));
+                const [response, notificationPreferences] = await Promise.all([
+                    getMe(),
+                    getNotificationPreferences().catch(() => null),
+                ]);
+                if (!cancelled) {
+                    setIsPrivate(Boolean(response.user.isPrivate));
+                    if (notificationPreferences) setPreferences(notificationPreferences);
+                }
             } catch {
                 // Settings actions surface their own request failures.
             } finally {
@@ -65,6 +88,23 @@ export default function SettingsPage() {
             setError(getErrorMessage(err, "Failed to update account privacy"));
         } finally {
             setPrivacySaving(false);
+        }
+    };
+
+    const handlePreferenceChange = async (key: keyof NotificationPreferences, value: boolean) => {
+        if (!preferences) return;
+
+        const previous = preferences;
+        setPreferences({ ...preferences, [key]: value });
+        setPreferencesSaving(key);
+        setError("");
+        try {
+            setPreferences(await updateNotificationPreferences({ [key]: value }));
+        } catch (err: unknown) {
+            setPreferences(previous);
+            setError(getErrorMessage(err, "Failed to update notification preference"));
+        } finally {
+            setPreferencesSaving(null);
         }
     };
 
@@ -117,6 +157,13 @@ export default function SettingsPage() {
                 router.push("/login");
             }
 
+            if (modal === "deactivate") {
+                await deactivateUser();
+                localStorage.clear();
+                notifyAuthChanged();
+                router.push("/login");
+            }
+
             closeModal();
         } catch (err: unknown) {
             setError(getErrorMessage(err, "Something went wrong"));
@@ -132,7 +179,7 @@ export default function SettingsPage() {
 
                 <div className="surface relative w-full max-w-md p-6">
                     <h2 className="mb-5 text-xl font-semibold capitalize text-slate-900">
-                        {modal === "delete" ? "Delete Account" : modal + " Password"}
+                        {modal === "delete" ? "Delete Account" : modal === "deactivate" ? "Deactivate Account" : modal + " Password"}
                     </h2>
 
                     {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
@@ -198,6 +245,12 @@ export default function SettingsPage() {
                         </p>
                     )}
 
+                    {modal === "deactivate" && (
+                        <p className="mb-4 text-slate-600">
+                            Deactivating signs you out and hides access until you reactivate with your email and password.
+                        </p>
+                    )}
+
                     <div className="flex justify-end gap-2">
                         <button
                             onClick={closeModal}
@@ -212,7 +265,7 @@ export default function SettingsPage() {
                                 }`}
                             disabled={loading}
                         >
-                            {loading ? "Processing..." : modal === "delete" ? "Delete" : "Submit"}
+                            {loading ? "Processing..." : modal === "delete" ? "Delete" : modal === "deactivate" ? "Deactivate" : "Submit"}
                         </button>
                     </div>
                 </div>
@@ -240,6 +293,29 @@ export default function SettingsPage() {
                     />
                 </div>
                 {!modal && error && <p className="mb-5 rounded-xl bg-rose-50 p-3 text-sm font-medium text-rose-600">{error}</p>}
+
+                {preferences && (
+                    <div className="mb-5 rounded-xl bg-slate-50 px-5 py-4">
+                        <div className="mb-4">
+                            <p className="font-medium text-slate-700">Notification preferences</p>
+                            <p className="mt-1 text-sm text-slate-500">Choose which notifications the backend should create for your account.</p>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {(Object.keys(notificationPreferenceLabels) as Array<keyof NotificationPreferences>).map((key) => (
+                                <label key={key} className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 text-sm font-medium text-slate-700">
+                                    {notificationPreferenceLabels[key]}
+                                    <input
+                                        type="checkbox"
+                                        checked={preferences[key]}
+                                        onChange={(event) => void handlePreferenceChange(key, event.target.checked)}
+                                        disabled={preferencesSaving === key}
+                                        className="h-5 w-5 accent-indigo-600"
+                                    />
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex flex-col space-y-3">
                     <Link
@@ -329,6 +405,12 @@ export default function SettingsPage() {
 
                     <hr className="my-4" />
 
+                    <button
+                        onClick={() => setModal("deactivate")}
+                        className="rounded-xl bg-amber-50 px-5 py-4 text-left font-medium text-amber-700 transition hover:bg-amber-100"
+                    >
+                        Deactivate Account
+                    </button>
                     <button
                         onClick={() => setModal("delete")}
                         className="rounded-xl bg-rose-50 px-5 py-4 text-left font-medium text-rose-600 transition hover:bg-rose-100"

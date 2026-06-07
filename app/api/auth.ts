@@ -27,3 +27,6 @@ export const forgotPassword = (email: string) =>
     request<void>("POST", "/auth/forgot-password", { body: { email } });
 export const resetPassword = (data: { token: string; newPassword: string }) =>
     request<void>("POST", "/auth/reset-password", { body: { ...data } });
+
+export const reactivateUser = async (data: LoginInput) =>
+    normalizeAuthResponse(await request<RawAuthResponse>("POST", "/auth/reactivate", { body: { ...data } }));
