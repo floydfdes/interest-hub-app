@@ -1,7 +1,7 @@
 "use client";
 
 import { ApiError, blockUser, followUser, getMe, muteUser, searchUsers, unblockUser, unfollowUser, unmuteUser } from "@/app/api/api";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import { IUser } from "@/app/types/user";
 import { Flag, MoreHorizontal, Search, UsersRound } from "lucide-react";
@@ -11,7 +11,7 @@ import Avatar from "react-avatar";
 import Swal from "sweetalert2";
 import ReportModal from "@/components/features/ReportModal";
 
-export default function UserSearchPage() {
+function UserSearchContent() {
     const searchParams = useSearchParams();
     const initialQuery = searchParams?.get("query") || "";
     const [query, setQuery] = useState(initialQuery);
@@ -332,3 +332,12 @@ export default function UserSearchPage() {
         </div>
     );
 }
+
+export default function UserSearchPage() {
+    return (
+        <Suspense fallback={<div className="surface shell-container p-10 text-center text-slate-500">Loading people...</div>}>
+            <UserSearchContent />
+        </Suspense>
+    );
+}
+

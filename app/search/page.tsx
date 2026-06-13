@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,7 +16,7 @@ const emptyResults: GlobalSearchResponse = {
     tags: [],
 };
 
-export default function GlobalSearchPage() {
+function GlobalSearchContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const initialQuery = searchParams?.get("query") || searchParams?.get("q") || "";
@@ -165,3 +165,16 @@ export default function GlobalSearchPage() {
         </div>
     );
 }
+
+export default function GlobalSearchPage() {
+    return (
+        <Suspense fallback={
+            <div className="shell-container max-w-5xl">
+                <div className="surface p-6"><Skeleton active paragraph={{ rows: 6 }} /></div>
+            </div>
+        }>
+            <GlobalSearchContent />
+        </Suspense>
+    );
+}
+
