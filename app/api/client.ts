@@ -31,7 +31,12 @@ function stopLoader() {
 }
 
 export function getErrorMessage(error: unknown, fallback: string) {
-    return error instanceof Error && error.message ? error.message : fallback;
+    if (!(error instanceof Error) || !error.message) return fallback;
+    const message = error.message.trim();
+    if (!message || message === "Request failed" || message.startsWith("Cannot read properties")) {
+        return fallback;
+    }
+    return message;
 }
 
 function getApiErrorMessage(data: unknown) {

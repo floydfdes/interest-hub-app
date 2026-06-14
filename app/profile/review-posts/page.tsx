@@ -70,7 +70,9 @@ export default function ReviewPostsPage() {
                 <p className="mt-2 text-slate-500">Posts hidden from normal feeds while moderation checks them.</p>
             </header>
             {error && <p className="surface mb-5 p-4 text-sm font-medium text-rose-600">{error}</p>}
-            {loading ? (
+            {!loading && error && posts.length === 0 ? (
+                <div className="surface px-6 py-14 text-center text-sm text-slate-500">We could not load posts under review right now. Please try again in a moment.</div>
+            ) : loading ? (
                 <div className="surface p-6"><Skeleton active avatar paragraph={{ rows: 4 }} /></div>
             ) : posts.length === 0 ? (
                 <div className="surface px-6 py-14"><Empty description="You have no posts under review" /></div>

@@ -76,7 +76,9 @@ export default function MutedUsersPage() {
                 <p className="mt-2 text-slate-500">Muted users remain followed, but their posts stay out of personalized feeds.</p>
             </header>
             {error && <p className="surface mb-5 p-4 text-sm font-medium text-rose-600">{error}</p>}
-            {loading ? (
+            {!loading && error && users.length === 0 ? (
+                <div className="surface px-6 py-14 text-center text-sm text-slate-500">We could not load muted users right now. Please try again in a moment.</div>
+            ) : loading ? (
                 <div className="surface p-6"><Skeleton active avatar paragraph={{ rows: 4 }} /></div>
             ) : users.length === 0 ? (
                 <div className="surface px-6 py-14"><Empty description="You have not muted anyone" /></div>

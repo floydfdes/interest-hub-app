@@ -1,13 +1,14 @@
 'use client';
 
 import { getDraftPosts, getErrorMessage, publishDraftPost, updateDraftPost } from '@/app/api/api';
+import { resizeImageToBase64 } from '@/app/api/imageUtil';
 import { IPost, Pagination } from '@/app/types/user';
 import { parseAndValidateTags } from '@/app/utils/postTags';
 import { Empty, Skeleton } from 'antd';
-import { ArrowLeft, Edit, FileText, Send } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, ImagePlus, Send, Upload } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const categories = ['Tech', 'Health', 'Travel', 'Design', 'Education'];
 const visibilities: Array<{ value: IPost['visibility']; label: string }> = [
@@ -37,6 +38,7 @@ function draftToForm(post: IPost): DraftForm {
 }
 
 export default function DraftPostsPage() {
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [posts, setPosts] = useState<IPost[]>([]);
     const [pagination, setPagination] = useState<Pagination | null>(null);
     const [editingPost, setEditingPost] = useState<IPost | null>(null);
@@ -77,6 +79,16 @@ export default function DraftPostsPage() {
         setForm((current) => current ? { ...current, [field]: value } : current);
     };
 
+    const uploadDraftImage = async (file: File) => {
+        setError('');
+        const image = await resizeImageToBase64(file, 900, 540);
+        if (!image) {
+            setError('We could not process that image. Please try another file.');
+            return;
+        }
+        updateField('image', image);
+    };
+
     const saveDraft = async () => {
         if (!editingPost || !form) return;
         const { tags, error: tagError } = parseAndValidateTags(form.tags);
@@ -107,6 +119,18 @@ export default function DraftPostsPage() {
     };
 
     const publishDraft = async (post: IPost) => {
+        const missingFields = [
+            !post.title?.trim() ? 'title' : '',
+            !post.content?.trim() ? 'content' : '',
+            !post.category?.trim() ? 'category' : '',
+            !post.image?.trim() ? 'image' : '',
+        ].filter(Boolean);
+
+        if (missingFields.length > 0) {
+            setError(`Draft is missing required fields: ${missingFields.join(', ')}.`);
+            return;
+        }
+
         setUpdatingId(post._id);
         setError('');
         try {
@@ -116,6 +140,49 @@ export default function DraftPostsPage() {
                 setEditingPost(null);
                 setForm(null);
             }
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, 'Failed to publish draft.'));
+        } finally {
+            setUpdatingId('');
+        }
+    };
+
+    const publishEditingDraft = async () => {
+        if (!editingPost || !form) return;
+
+        const { tags, error: tagError } = parseAndValidateTags(form.tags);
+        if (tagError) {
+            setError(tagError);
+            return;
+        }
+
+        const missingFields = [
+            !form.title.trim() ? 'title' : '',
+            !form.content.trim() ? 'content' : '',
+            !form.category.trim() ? 'category' : '',
+            !form.image.trim() ? 'image' : '',
+        ].filter(Boolean);
+
+        if (missingFields.length > 0) {
+            setError(`Draft is missing required fields: ${missingFields.join(', ')}.`);
+            return;
+        }
+
+        setUpdatingId(editingPost._id);
+        setError('');
+        try {
+            const updated = await updateDraftPost(editingPost._id, {
+                title: form.title,
+                content: form.content,
+                category: form.category,
+                image: form.image,
+                tags,
+                visibility: form.visibility,
+            });
+            await publishDraftPost(updated._id);
+            setPosts((current) => current.filter((item) => item._id !== updated._id));
+            setEditingPost(null);
+            setForm(null);
         } catch (err: unknown) {
             setError(getErrorMessage(err, 'Failed to publish draft.'));
         } finally {
@@ -167,7 +234,38 @@ export default function DraftPostsPage() {
                             <option value="">Select Category</option>
                             {categories.map((category) => <option key={category}>{category}</option>)}
                         </select>
-                        <input value={form.image} onChange={(event) => updateField('image', event.target.value)} className="soft-input px-4 outline-none" placeholder="Image URL, base64, or data URI" />
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">Cover image</p>
+                                    <p className="mt-1 text-xs text-slate-500">Required before publishing. Uploading is safer than pasting a URL.</p>
+                                </div>
+                                <button type="button" onClick={() => fileInputRef.current?.click()} className="secondary-button !min-h-0 !py-2">
+                                    <Upload size={15} /> Upload image
+                                </button>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(event) => {
+                                    const file = event.target.files?.[0];
+                                    if (file) void uploadDraftImage(file);
+                                    event.target.value = '';
+                                }}
+                            />
+                            {form.image ? (
+                                <div className="relative h-44 overflow-hidden rounded-xl bg-slate-100">
+                                    <Image src={form.image} alt="Draft cover preview" fill className="object-cover" unoptimized={form.image.startsWith('data:')} />
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm text-slate-500">
+                                    <ImagePlus size={16} /> No cover selected yet.
+                                </div>
+                            )}
+                            <input value={form.image} onChange={(event) => updateField('image', event.target.value)} className="soft-input mt-3 w-full px-4 outline-none" placeholder="Or paste image URL, base64, or data URI" />
+                        </div>
                         <input value={form.tags} onChange={(event) => updateField('tags', event.target.value)} className="soft-input px-4 outline-none" placeholder="Tags, comma separated" />
                         <select value={form.visibility} onChange={(event) => updateField('visibility', event.target.value as IPost['visibility'])} className="soft-input px-4 outline-none">
                             {visibilities.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -177,7 +275,7 @@ export default function DraftPostsPage() {
                         <button type="button" onClick={() => void saveDraft()} disabled={updatingId === editingPost._id} className="secondary-button">
                             {updatingId === editingPost._id ? 'Saving...' : 'Save draft'}
                         </button>
-                        <button type="button" onClick={() => void publishDraft(editingPost)} disabled={updatingId === editingPost._id} className="primary-button">
+                        <button type="button" onClick={() => void publishEditingDraft()} disabled={updatingId === editingPost._id} className="primary-button">
                             <Send size={15} /> {updatingId === editingPost._id ? 'Publishing...' : 'Publish'}
                         </button>
                     </div>

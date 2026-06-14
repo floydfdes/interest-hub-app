@@ -77,7 +77,9 @@ export default function HiddenPostsPage() {
                 <p className="mt-2 text-slate-500">Restore posts you previously removed from personalized feeds.</p>
             </header>
             {error && <p className="surface mb-5 p-4 text-sm font-medium text-rose-600">{error}</p>}
-            {loading ? (
+            {!loading && error && posts.length === 0 ? (
+                <div className="surface px-6 py-14 text-center text-sm text-slate-500">We could not load hidden posts right now. Please try again in a moment.</div>
+            ) : loading ? (
                 <div className="surface p-6"><Skeleton active avatar paragraph={{ rows: 4 }} /></div>
             ) : posts.length === 0 ? (
                 <div className="surface px-6 py-14"><Empty description="You have no hidden posts" /></div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ApiError, blockUser, followUser, getMe, muteUser, searchUsers, unblockUser, unfollowUser, unmuteUser } from "@/app/api/api";
+import { ApiError, blockUser, followUser, getErrorMessage, getMe, muteUser, searchUsers, unblockUser, unfollowUser, unmuteUser } from "@/app/api/api";
 import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import { IUser } from "@/app/types/user";
@@ -8,6 +8,7 @@ import { Flag, MoreHorizontal, Search, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Avatar from "react-avatar";
+import { App } from "antd";
 import Swal from "sweetalert2";
 import ReportModal from "@/components/features/ReportModal";
 
@@ -27,6 +28,7 @@ function UserSearchContent() {
     const [selectedInterest, setSelectedInterest] = useState("All");
     const [sortBy, setSortBy] = useState("name");
     const actionMenuRef = useRef<HTMLDivElement>(null);
+    const { message } = App.useApp();
 
     useEffect(() => {
         const fetchInitial = async () => {
@@ -71,8 +73,8 @@ function UserSearchContent() {
             const users = await searchUsers(query) as IUser[];
             setResults(users);
             setRequestedIds(users.filter((user) => user.hasRequestedFollow).map((user) => user._id));
-        } catch {
-            setError("Search failed");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Search failed"));
         }
     };
 
@@ -86,13 +88,16 @@ function UserSearchContent() {
             if (isFollowing) {
                 await unfollowUser(userId);
                 setFollowingIds((prev) => prev.filter((id) => id !== userId));
+                message.success("User unfollowed");
             } else {
                 const response = await followUser(userId);
                 if (response?.status === "requested") {
                     setRequestedIds((prev) => [...new Set([...prev, userId])]);
+                    message.success("Follow request sent");
                 } else {
                     setFollowingIds((prev) => [...new Set([...prev, userId])]);
                     setRequestedIds((prev) => prev.filter((id) => id !== userId));
+                    message.success(response?.status === "existing" ? "Already following" : "User followed");
                 }
             }
         } catch (err: unknown) {
@@ -122,13 +127,15 @@ function UserSearchContent() {
             if (isBlocked) {
                 await unblockUser(user._id);
                 setBlockedIds((previous) => previous.filter((id) => id !== user._id));
+                message.success("User unblocked");
             } else {
                 await blockUser(user._id);
                 setBlockedIds((previous) => [...previous, user._id]);
                 setFollowingIds((previous) => previous.filter((id) => id !== user._id));
+                message.success("User blocked");
             }
-        } catch {
-            setError(`Failed to ${isBlocked ? "unblock" : "block"} user`);
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, `Failed to ${isBlocked ? "unblock" : "block"} user`));
         }
     };
 
@@ -139,12 +146,14 @@ function UserSearchContent() {
             if (isMuted) {
                 await unmuteUser(user._id);
                 setMutedIds((previous) => previous.filter((id) => id !== user._id));
+                message.success("User unmuted");
             } else {
                 await muteUser(user._id);
                 setMutedIds((previous) => [...previous, user._id]);
+                message.success("User muted");
             }
-        } catch {
-            setError(`Failed to ${isMuted ? "unmute" : "mute"} user`);
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, `Failed to ${isMuted ? "unmute" : "mute"} user`));
         }
     };
 
@@ -214,7 +223,7 @@ function UserSearchContent() {
                 </select>
             </form>
 
-            {error && <p className="text-red-500 mb-4">{error}</p>}
+            {error && <p role="alert" className="surface mb-4 p-3 text-sm font-medium text-rose-600">{error}</p>}
 
             {/* Results */}
             <div className="grid w-full gap-4 lg:grid-cols-2">
@@ -340,4 +349,3 @@ export default function UserSearchPage() {
         </Suspense>
     );
 }
-

@@ -30,6 +30,31 @@ const notificationPreferenceLabels: Record<keyof NotificationPreferences, string
     moderation: "Moderation",
 };
 
+function validatePasswordModal(
+    modal: null | "change" | "forgot" | "reset" | "delete" | "deactivate",
+    form: { currentPassword: string; newPassword: string; confirmPassword: string; resetToken: string; email: string }
+) {
+    if (modal === "change") {
+        if (!form.currentPassword.trim()) return "Please enter your current password.";
+        if (!form.newPassword.trim()) return "Please enter a new password.";
+        if (form.newPassword.length < 6) return "Password must be at least 6 characters.";
+        if (!form.confirmPassword.trim()) return "Please confirm your new password.";
+        if (form.newPassword !== form.confirmPassword) return "Passwords do not match.";
+    }
+
+    if (modal === "forgot") {
+        if (!form.email.trim()) return "Please enter your email address.";
+    }
+
+    if (modal === "reset") {
+        if (!form.resetToken.trim()) return "Please enter the reset token.";
+        if (!form.newPassword.trim()) return "Please enter a new password.";
+        if (form.newPassword.length < 6) return "Password must be at least 6 characters.";
+    }
+
+    return "";
+}
+
 export default function SettingsPage() {
     const [modal, setModal] = useState<null | "change" | "forgot" | "reset" | "delete" | "deactivate">(null);
     const [form, setForm] = useState({
@@ -81,10 +106,13 @@ export default function SettingsPage() {
         setError("");
         try {
             const response = await updateUser({ isPrivate: nextPrivate });
-            setIsPrivate(Boolean(response.user.isPrivate));
-            localStorage.setItem("user", JSON.stringify(response.user));
+            const updatedUser = response.user;
+            if (!updatedUser) throw new Error("Privacy updated, but the response was missing user data. Please refresh and check again.");
+            setIsPrivate(Boolean(updatedUser.isPrivate));
+            localStorage.setItem("user", JSON.stringify(updatedUser));
             notifyAuthChanged();
         } catch (err: unknown) {
+            setIsPrivate(!nextPrivate);
             setError(getErrorMessage(err, "Failed to update account privacy"));
         } finally {
             setPrivacySaving(false);
@@ -122,17 +150,17 @@ export default function SettingsPage() {
     };
 
     const handleSubmit = async () => {
+        const validationMessage = validatePasswordModal(modal, form);
+        if (validationMessage) {
+            setError(validationMessage);
+            return;
+        }
+
         setLoading(true);
         setError("");
 
         try {
             if (modal === "change") {
-                if (form.newPassword !== form.confirmPassword) {
-                    setError("Passwords do not match");
-                    setLoading(false);
-                    return;
-                }
-
                 await changePassword({
                     currentPassword: form.currentPassword,
                     newPassword: form.newPassword
@@ -186,6 +214,7 @@ export default function SettingsPage() {
 
                     {modal === "change" && (
                         <>
+                            <p className="mb-3 text-sm text-slate-500">Use at least 6 characters for your new password.</p>
                             <input
                                 type="password"
                                 placeholder="Current Password"
@@ -211,17 +240,21 @@ export default function SettingsPage() {
                     )}
 
                     {modal === "forgot" && (
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            className="soft-input mb-3 w-full px-4 outline-none"
-                            value={form.email}
-                            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                        />
+                        <>
+                            <p className="mb-3 text-sm text-slate-500">Enter your account email and we will request a reset token.</p>
+                            <input
+                                type="email"
+                                placeholder="Email"
+                                className="soft-input mb-3 w-full px-4 outline-none"
+                                value={form.email}
+                                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                            />
+                        </>
                     )}
 
                     {modal === "reset" && (
                         <>
+                            <p className="mb-3 text-sm text-slate-500">Paste the reset token and choose a new password of at least 6 characters.</p>
                             <input
                                 type="text"
                                 placeholder="Reset Token"

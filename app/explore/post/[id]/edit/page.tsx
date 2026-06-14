@@ -184,6 +184,11 @@ export default function EditPostPage() {
             const response = await editComment(commentId, updatedContent);
             const moderationMessage = getModerationNoticeMessage(response);
             if (moderationMessage) message.warning(moderationMessage);
+            setComments((prev) => prev.map((comment) => (
+                comment._id === commentId
+                    ? { ...comment, content: updatedContent, isEditing: false, editContent: undefined }
+                    : comment
+            )));
             await fetchComments();
         } catch (err: unknown) {
             setCommentError(getErrorMessage(err, "Failed to edit comment"));

@@ -5,7 +5,7 @@ import { notifyAuthChanged, useCurrentUser } from '@/app/hooks/useCurrentUser';
 import { useAdminAccess } from '@/app/hooks/useAdminAccess';
 import { setTheme, useTheme } from '@/app/hooks/useTheme';
 import { Avatar, Dropdown } from 'antd';
-import { Bell, Bookmark, ChevronDown, Compass, LogIn, LogOut, Moon, PenLine, Search, Shield, Sun, UserRound } from 'lucide-react';
+import { Bell, Bookmark, ChevronDown, Compass, LogIn, LogOut, Menu, Moon, PenLine, Search, Shield, Sun, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -25,6 +25,7 @@ const Navbar = () => {
     const { isAdmin } = useAdminAccess();
     const theme = useTheme();
     const [unreadNotifications, setUnreadNotifications] = useState(0);
+    const visibleNavItems = navItems.filter((item) => !item.authOnly || user);
 
 
     useEffect(() => {
@@ -79,6 +80,12 @@ const Navbar = () => {
         },
     ];
 
+    const mobileNavMenu = visibleNavItems.map(({ href, label, icon: Icon }) => ({
+        key: href,
+        label: <Link href={href}>{label}</Link>,
+        icon: <Icon size={15} />,
+    }));
+
     return (
         <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/78 backdrop-blur-xl">
             <div className="shell-container flex h-[4.5rem] items-center justify-between gap-4 px-4 sm:px-6">
@@ -92,8 +99,8 @@ const Navbar = () => {
                     </div>
                 </Link>
 
-                <nav className="flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-slate-50/90 p-1">
-                    {navItems.filter((item) => !item.authOnly || user).map(({ href, label, icon: Icon }) => {
+                <nav className="hidden items-center gap-1 rounded-2xl border border-slate-200/80 bg-slate-50/90 p-1 md:flex">
+                    {visibleNavItems.map(({ href, label, icon: Icon }) => {
                         const selected = pathname === href || (href !== '/' && pathname.startsWith(href));
                         return (
                             <Link
@@ -112,6 +119,15 @@ const Navbar = () => {
                 </nav>
 
                 <div className="flex items-center gap-2">
+                    <Dropdown menu={{ items: mobileNavMenu }} placement="bottomRight" trigger={['click']}>
+                        <button
+                            type="button"
+                            aria-label="Open navigation menu"
+                            className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 md:hidden"
+                        >
+                            <Menu size={18} />
+                        </button>
+                    </Dropdown>
                     <button
                         type="button"
                         aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
