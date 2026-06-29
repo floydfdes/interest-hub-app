@@ -1,10 +1,10 @@
 'use client';
 
-import { getErrorMessage, loginUser } from '@/app/api/api';
+import { forgotPassword, getErrorMessage, loginUser } from '@/app/api/api';
 import { notifyAuthChanged } from '@/app/hooks/useCurrentUser';
 import { LoginInput } from '@/app/types/user';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
-import { App, Button, Card, Form, Input, Typography } from 'antd';
+import { App, Button, Card, Form, Input, Modal, Typography } from 'antd';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,9 @@ const { Title, Text } = Typography;
 const Login = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [forgotOpen, setForgotOpen] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotLoading, setForgotLoading] = useState(false);
     const { message } = App.useApp();
 
     const onFinish = async (values: LoginInput) => {
@@ -30,6 +33,26 @@ const Login = () => {
             message.error(getErrorMessage(error, 'Login failed'));
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        const email = forgotEmail.trim();
+        if (!email) {
+            message.error('Please enter your email address.');
+            return;
+        }
+
+        setForgotLoading(true);
+        try {
+            await forgotPassword(email);
+            message.success('Password reset instructions sent if that email exists.');
+            setForgotOpen(false);
+            setForgotEmail('');
+        } catch (error: unknown) {
+            message.error(getErrorMessage(error, 'Failed to request password reset.'));
+        } finally {
+            setForgotLoading(false);
         }
     };
 
@@ -72,6 +95,16 @@ const Login = () => {
                         <Input.Password data-testid="login-password" className="soft-input" prefix={<LockOutlined className="text-slate-400" />} placeholder="Password" />
                     </Form.Item>
 
+                    <div className="-mt-2 mb-5 text-right">
+                        <button
+                            type="button"
+                            onClick={() => setForgotOpen(true)}
+                            className="text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
+                        >
+                            Forgot password?
+                        </button>
+                    </div>
+
                     <Form.Item>
                         <Button data-testid="login-submit" type="primary" htmlType="submit" block loading={loading} className="!h-12 !rounded-xl !font-semibold">
                             Log in <ArrowRight size={15} />
@@ -90,6 +123,39 @@ const Login = () => {
                     </div>
                 </Form>
             </Card>
+
+            <Modal
+                title="Forgot password"
+                open={forgotOpen}
+                onCancel={() => {
+                    setForgotOpen(false);
+                    setForgotEmail('');
+                }}
+                footer={null}
+                destroyOnHidden
+            >
+                <p className="mb-4 text-sm text-slate-500">
+                    Enter your account email and we will send reset instructions.
+                </p>
+                <Input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(event) => setForgotEmail(event.target.value)}
+                    onPressEnter={() => void handleForgotPassword()}
+                    className="soft-input"
+                    prefix={<MailOutlined className="text-slate-400" />}
+                    placeholder="Email address"
+                    autoFocus
+                />
+                <div className="mt-5 flex justify-end gap-2">
+                    <Button onClick={() => setForgotOpen(false)} disabled={forgotLoading}>
+                        Cancel
+                    </Button>
+                    <Button type="primary" loading={forgotLoading} onClick={() => void handleForgotPassword()}>
+                        Send reset link
+                    </Button>
+                </div>
+            </Modal>
         </div>
     );
 };
